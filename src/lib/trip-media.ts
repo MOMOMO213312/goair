@@ -4,13 +4,28 @@ import destNasr from "@/assets/dest-nasr-city.jpg";
 import destSaida from "@/assets/dest-saida.jpg";
 import destTripoli from "@/assets/dest-tripoli.jpg";
 import destZamalek from "@/assets/dest-zamalek.jpg";
-import egyptImage from "@/assets/route-egypt.jpg";
-import lebanonImage from "@/assets/route-lebanon.jpg";
-import heroImage from "@/assets/hero-airport.jpg";
 import vehicleBus from "@/assets/vehicle-bus.jpg";
 import vehicleHiace from "@/assets/vehicle-hiace.jpg";
 import vehicleVan from "@/assets/vehicle-van.jpg";
 import type { Trip } from "@/lib/goair";
+
+const heroImage =
+  "https://images.unsplash.com/photo-1566212774847-025968e5bf56?fm=jpg&q=80&w=1920&auto=format&fit=crop";
+
+const egyptImage =
+  "https://images.unsplash.com/photo-1524686975162-f6fb4d39759c?fm=jpg&q=80&w=1600&auto=format&fit=crop";
+
+const lebanonImage =
+  "https://images.unsplash.com/photo-1622142338658-eecd4db4e32f?fm=jpg&q=80&w=1600&auto=format&fit=crop";
+
+const destOctober =
+  "https://images.unsplash.com/photo-1568322445389-f64ac2515020?fm=jpg&q=80&w=1200&auto=format&fit=crop";
+
+const destNewCairo =
+  "https://images.unsplash.com/photo-1626692880062-35c360fb6afc?fm=jpg&q=80&w=1200&auto=format&fit=crop";
+
+const destBeirut =
+  "https://images.unsplash.com/photo-1622142338658-eecd4db4e32f?fm=jpg&q=80&w=1200&auto=format&fit=crop";
 
 /** Destination photos mapped to canonical city names from Supabase. */
 export const DESTINATION_IMAGES: Record<string, string> = {
@@ -20,6 +35,10 @@ export const DESTINATION_IMAGES: Record<string, string> = {
   جبيل: destJbeil,
   صيدا: destSaida,
   طرابلس: destTripoli,
+  "6 أكتوبر": destOctober,
+  "٦ أكتوبر": destOctober,
+  "القاهرة الجديدة": destNewCairo,
+  بيروت: destBeirut,
 };
 
 /** Obvious naming variants → canonical destination keys (existing assets only). */
