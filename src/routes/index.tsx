@@ -12,7 +12,6 @@ import { CountryExploreCard } from "@/components/goair/country-explore-card";
 import { DestinationCard } from "@/components/goair/destination-card";
 import { EmptyState } from "@/components/goair/empty-state";
 import { HeroTrustStrip } from "@/components/goair/hero-trust-strip";
-import { ResultPreview } from "@/components/goair/result-preview";
 import { RideTypesSection } from "@/components/goair/ride-types-section";
 import { RouteCard } from "@/components/goair/route-card";
 import { SectionHeader } from "@/components/goair/section-header";
@@ -99,8 +98,6 @@ function Home() {
     [trips, countries],
   );
 
-  const previewTrip = featuredRoutes[0] ?? publicTrips[0] ?? null;
-
   const sampleDestinationsByAirport = useMemo(() => {
     const map: Record<string, string> = {};
     for (const trip of publicTrips) {
@@ -162,20 +159,6 @@ function Home() {
       {/* Operational highlights */}
       <ServiceHighlights />
 
-      {/* Result preview */}
-      {previewTrip ? (
-        <section className="border-b border-border bg-background py-10">
-          <div className="mx-auto max-w-6xl px-4">
-            <SectionHeader
-              title="شكل نتيجة البحث"
-              description="بعد البحث، ستظهر لك الرحلة والسعر والمسافة بهذا الشكل قبل اختيار الموعد."
-              className="mb-6"
-            />
-            <ResultPreview trip={previewTrip} />
-          </div>
-        </section>
-      ) : null}
-
       {/* Available routes */}
       <section className="py-14 sm:py-16">
         <div className="mx-auto max-w-6xl px-4">
@@ -234,7 +217,7 @@ function Home() {
         <div className="mx-auto max-w-6xl px-4">
           <SectionHeader
             title="وجهات مميزة"
-            description="استكشف الوجهات المتاحة — الصور للوجهات التي لدينا لها أصول بصرية فقط."
+            description="كل الوجهات المتاحة من وإلى المطار — بسعر ثابت لكل مقعد."
           />
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {destinations.map((item) => (
