@@ -3,7 +3,6 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 
-import heroImage from "@/assets/hero-airport.jpg";
 import { AirportGrid } from "@/components/goair/airport-card";
 import { AnnouncementTicker } from "@/components/goair/announcement-ticker";
 import { BrandTrustStrip } from "@/components/goair/brand-trust-strip";
@@ -33,6 +32,9 @@ import {
   getFeaturedRoutes,
   filterPublicTrips,
 } from "@/lib/trip-stats";
+
+const heroImage =
+  "https://images.unsplash.com/photo-1566212774847-025968e5bf56?fm=jpg&q=80&w=1920&auto=format&fit=crop";
 
 const marketsQuery = queryOptions({
   queryKey: ["goair", "markets"],
