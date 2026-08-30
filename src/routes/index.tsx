@@ -34,9 +34,6 @@ import {
   filterPublicTrips,
 } from "@/lib/trip-stats";
 
-const heroImage =
-  "https://images.unsplash.com/photo-1566212774847-025968e5bf56?fm=jpg&q=80&w=1920&auto=format&fit=crop";
-
 const marketsQuery = queryOptions({
   queryKey: ["goair", "markets"],
   queryFn: async () => {
