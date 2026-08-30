@@ -3,6 +3,7 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 
+import heroImage from "@/assets/hero-goair-van.png";
 import { AirportGrid } from "@/components/goair/airport-card";
 import { AnnouncementTicker } from "@/components/goair/announcement-ticker";
 import { BrandTrustStrip } from "@/components/goair/brand-trust-strip";
