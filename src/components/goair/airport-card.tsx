@@ -76,7 +76,7 @@ type AirportGridProps = {
 
 export function AirportGrid({ airports, sampleDestinations }: AirportGridProps) {
   return (
-    <section className="py-14 sm:py-16">
+    <section id="stations" className="scroll-mt-24 py-14 sm:py-16">
       <div className="mx-auto max-w-6xl px-4">
         <SectionHeader
           title="استكشف حسب المطار"

@@ -5,10 +5,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 const links = [
-  { to: "/", label: "الرئيسية" },
-  { to: "/my-bookings", label: "حجوزاتي" },
-  { to: "/partner", label: "برامج الشراكات" },
-  { to: "/contact", label: "تواصل معنا" },
+  { to: "/", hash: undefined, label: "الرئيسية" },
+  { to: "/my-bookings", hash: undefined, label: "حجوزاتي" },
+  { to: "/", hash: "stations", label: "محطاتنا" },
 ] as const;
 
 export function SiteHeader() {
@@ -29,9 +28,10 @@ export function SiteHeader() {
         <nav className="hidden items-center gap-1 md:flex">
           {links.map((link) => (
             <Link
-              key={link.to}
+              key={link.label}
               to={link.to}
-              activeOptions={{ exact: link.to === "/" }}
+              hash={link.hash}
+              activeOptions={{ exact: link.to === "/" && !link.hash }}
               className="rounded-md px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
               activeProps={{ className: "text-primary bg-secondary" }}
             >
@@ -60,8 +60,9 @@ export function SiteHeader() {
         <nav className="border-t border-border bg-background px-4 py-2 md:hidden">
           {links.map((link) => (
             <Link
-              key={link.to}
+              key={link.label}
               to={link.to}
+              hash={link.hash}
               onClick={() => setOpen(false)}
               className="block rounded-md px-3 py-3 text-sm font-semibold text-muted-foreground"
               activeProps={{ className: "text-primary" }}

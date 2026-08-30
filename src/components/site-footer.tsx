@@ -61,7 +61,7 @@ export function SiteFooter() {
           <h3 className="font-display text-sm font-bold">GoAir</h3>
           <ul className="mt-4 space-y-2 text-sm text-primary-foreground/75">
             <li><Link to="/my-bookings">حجوزاتي</Link></li>
-            <li><Link to="/partner">شركاء الطيران</Link></li>
+            <li><Link to="/partner">برامج الشراكات</Link></li>
             <li><Link to="/contact">تواصل معنا</Link></li>
           </ul>
         </div>
