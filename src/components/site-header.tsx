@@ -8,6 +8,7 @@ const links = [
   { to: "/", hash: undefined, label: "الرئيسية" },
   { to: "/my-bookings", hash: undefined, label: "حجوزاتي" },
   { to: "/", hash: "stations", label: "محطاتنا" },
+  { to: "/packages", hash: undefined, label: "الباقات" },
 ] as const;
 
 export function SiteHeader() {
