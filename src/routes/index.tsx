@@ -129,23 +129,25 @@ function Home() {
           height={1088}
           className="absolute inset-0 -z-10 size-full object-cover"
         />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-l from-primary/95 via-primary/85 to-primary/70" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-primary/95 via-primary/75 to-transparent" />
         <FlightPath className="pointer-events-none absolute inset-x-0 top-8 -z-10 h-28 w-full text-accent/35 sm:top-12 sm:h-32" />
 
         <div className="mx-auto max-w-6xl px-4 pb-14 pt-14 sm:pb-20 sm:pt-20">
-          <p className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1 text-xs font-bold text-primary-foreground">
-            <Sparkles className="size-3.5 text-accent" />
-            مصر ولبنان — متاح الآن
-          </p>
-          <h1 className="mt-5 max-w-2xl font-display text-4xl font-extrabold leading-[1.15] text-primary-foreground sm:text-5xl">
-            شبكة واحدة تعمل من أجل راحتك
-          </h1>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-primary-foreground/90 sm:text-lg">
-            حلول سفر متكاملة مصممة لكل رحلة
-          </p>
+          <div className="mr-auto max-w-2xl">
+            <p className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1 text-xs font-bold text-primary-foreground">
+              <Sparkles className="size-3.5 text-accent" />
+              مصر ولبنان — متاح الآن
+            </p>
+            <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.15] text-primary-foreground sm:text-5xl">
+              شبكة واحدة تعمل من أجل راحتك
+            </h1>
+            <p className="mt-4 text-base leading-relaxed text-primary-foreground/90 sm:text-lg">
+              حلول سفر متكاملة مصممة لكل رحلة
+            </p>
 
-          <div id="find-your-ride" className="mt-8 max-w-4xl scroll-mt-24">
-            <SearchWidget trips={trips} countries={countries} />
+            <div id="find-your-ride" className="mt-8 scroll-mt-24">
+              <SearchWidget trips={trips} countries={countries} />
+            </div>
           </div>
         </div>
       </section>
