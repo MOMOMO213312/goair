@@ -9,7 +9,13 @@ import { BookingMobileCta } from "@/components/goair/booking/booking-mobile-cta"
 import { BookingPassengerForm } from "@/components/goair/booking/booking-passenger-form";
 import { BookingPriceSummary } from "@/components/goair/booking/booking-price-summary";
 import { BookingTripSummary } from "@/components/goair/booking/booking-trip-summary";
-import { createBookingSafe, fetchActivePackages, fetchTrips, friendlyErrorMessage } from "@/lib/goair";
+import {
+  createBookingSafe,
+  createPrivateBookingSafe,
+  fetchActivePackages,
+  fetchTrips,
+  friendlyErrorMessage,
+} from "@/lib/goair";
 
 const FORM_ID = "goair-booking-form";
 
@@ -22,6 +28,10 @@ type BookSearch = {
   time: string;
   price: number;
   packageId?: string;
+  /** 'private' = whole-vehicle charter (flat price); default 'shared' = per-seat, unchanged. */
+  bookingType: "shared" | "private";
+  /** Required when bookingType === 'private' — which vehicle tier was picked. */
+  vehicleTypeId?: string;
 };
 
 export const Route = createFileRoute("/book")({
@@ -34,6 +44,8 @@ export const Route = createFileRoute("/book")({
     time: String(search["time"] ?? ""),
     price: Number(search["price"]) || 0,
     packageId: typeof search["packageId"] === "string" ? search["packageId"] : undefined,
+    bookingType: search["bookingType"] === "private" ? "private" : "shared",
+    vehicleTypeId: typeof search["vehicleTypeId"] === "string" ? search["vehicleTypeId"] : undefined,
   }),
   head: () => ({
     meta: [
@@ -65,8 +77,13 @@ function BookPage() {
   const packagesQuery = useQuery({ queryKey: ["goair", "packages"], queryFn: fetchActivePackages });
   const selectedPackage = packagesQuery.data?.find((p) => p.id === search.packageId);
 
+  const isPrivate = search.bookingType === "private";
   const packagePricePerSeat = selectedPackage?.priceUsd ?? 0;
-  const total = (search.price + packagePricePerSeat) * search.seats;
+  // Private = flat vehicle price + package add-on per passenger.
+  // Shared = unchanged: (seat + package) × seats.
+  const total = isPrivate
+    ? search.price + packagePricePerSeat * search.seats
+    : (search.price + packagePricePerSeat) * search.seats;
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -78,24 +95,41 @@ function BookPage() {
       toast.error("اكتب رقم موبايل صحيح.");
       return;
     }
+    if (isPrivate && !search.vehicleTypeId) {
+      toast.error("نوع العربية مش محدد — ارجع لصفحة البحث واختار من جديد.");
+      return;
+    }
 
     setBusy(true);
     try {
-      const { ticketCode } = await createBookingSafe({
-        tripId: search.tripId,
-        scheduleId: search.scheduleId,
-        tripOptionId: search.tripOptionId || null,
-        travelDate: search.date,
-        travelDatetime: search.time ? `${search.date}T${search.time}` : null,
-        departureTime: search.time.slice(0, 5),
-        seatsCount: search.seats,
-        fullName: fullName.trim(),
-        phoneNumber: phone.trim(),
-        flightNumber: flight.trim() || null,
-        luggageCount: luggage,
-        packageId: search.packageId || null,
-      });
-      toast.success("تم تثبيت مقعدك — باقي الدفع.");
+      const { ticketCode } = isPrivate
+        ? await createPrivateBookingSafe({
+            tripId: search.tripId,
+            vehicleTypeId: search.vehicleTypeId!,
+            travelDate: search.date,
+            travelDatetime: search.time ? `${search.date}T${search.time}` : null,
+            seatsCount: search.seats,
+            fullName: fullName.trim(),
+            phoneNumber: phone.trim(),
+            flightNumber: flight.trim() || null,
+            luggageCount: luggage,
+            packageId: search.packageId || null,
+          })
+        : await createBookingSafe({
+            tripId: search.tripId,
+            scheduleId: search.scheduleId,
+            tripOptionId: search.tripOptionId || null,
+            travelDate: search.date,
+            travelDatetime: search.time ? `${search.date}T${search.time}` : null,
+            departureTime: search.time.slice(0, 5),
+            seatsCount: search.seats,
+            fullName: fullName.trim(),
+            phoneNumber: phone.trim(),
+            flightNumber: flight.trim() || null,
+            luggageCount: luggage,
+            packageId: search.packageId || null,
+          });
+      toast.success(isPrivate ? "تم تثبيت الحجز الخاص — باقي الدفع." : "تم تثبيت مقعدك — باقي الدفع.");
       navigate({ to: "/payment", search: { ticket: ticketCode } });
     } catch (error) {
       toast.error(
@@ -154,6 +188,7 @@ function BookPage() {
                 total={total}
                 packageName={selectedPackage?.name}
                 packagePricePerSeat={packagePricePerSeat}
+                isPrivate={isPrivate}
               />
             </div>
           </div>
@@ -174,6 +209,7 @@ function BookPage() {
                 total={total}
                 packageName={selectedPackage?.name}
                 packagePricePerSeat={packagePricePerSeat}
+                isPrivate={isPrivate}
               />
               <button
                 type="submit"

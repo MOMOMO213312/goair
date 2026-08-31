@@ -9,6 +9,7 @@ import {
 import { SearchEmptyState } from "@/components/goair/search/search-empty-state";
 import { SearchFiltersPanel } from "@/components/goair/search/search-filters-panel";
 import { SearchFiltersSheet } from "@/components/goair/search/search-filters-sheet";
+import { PrivateBookingSection } from "@/components/goair/search/private-booking-section";
 import { SearchResultCard } from "@/components/goair/search/search-result-card";
 import { SearchResultsSkeleton } from "@/components/goair/search/search-results-skeleton";
 import { SearchSortDesktop, SearchSortMobile, type SortKey } from "@/components/goair/search/search-sort";
@@ -115,6 +116,15 @@ function SearchPage() {
           date={params.date}
           seats={params.seats}
         />
+
+        {trip ? (
+          <PrivateBookingSection
+            trip={trip}
+            destination={params.destination}
+            date={params.date}
+            seats={params.seats}
+          />
+        ) : null}
 
         {tripNotFound ? (
           <div className="mt-8">

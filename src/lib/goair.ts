@@ -101,6 +101,79 @@ export async function fetchVehicleTypes(): Promise<VehicleType[]> {
   }));
 }
 
+/**
+ * Private/charter option for one trip — book the whole vehicle instead of
+ * a shared seat. `priceUsd` here is the FLAT total for the vehicle, not a
+ * per-seat rate (unlike shared trip_options). Auto-priced server-side from
+ * the market's average $/seat/km for that vehicle tier (see the DB function
+ * `estimate_private_price`), so every route gets a sane private price
+ * without pricing each one by hand.
+ */
+export type PrivateOption = {
+  tripOptionId: string;
+  vehicleTypeId: string;
+  vehicleCode: string;
+  vehicleLabelAr: string;
+  capacity: number;
+  maxLuggage: number | null;
+  priceUsd: number;
+};
+
+export async function fetchPrivateTripOptions(tripId: string): Promise<PrivateOption[]> {
+  const { data, error } = await supabase.rpc("get_private_trip_options", { p_trip_id: tripId });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+    tripOptionId: String(pick(row, ["trip_option_id"])),
+    vehicleTypeId: String(pick(row, ["vehicle_type_id"])),
+    vehicleCode: String(pick(row, ["vehicle_code"]) ?? ""),
+    vehicleLabelAr: String(pick(row, ["vehicle_label_ar"]) ?? ""),
+    capacity: Number(pick(row, ["capacity"]) ?? 0),
+    maxLuggage: pick<number>(row, ["max_luggage"]),
+    priceUsd: Number(pick(row, ["price_usd"]) ?? 0),
+  }));
+}
+
+export type CreatePrivateBookingInput = {
+  tripId: string;
+  vehicleTypeId: string;
+  travelDate: string;
+  travelDatetime: string | null;
+  seatsCount: number;
+  fullName: string;
+  phoneNumber: string;
+  flightNumber: string | null;
+  luggageCount: number;
+  referralCodeOverride?: string | null;
+  packageId?: string | null;
+};
+
+/** Reserve a whole vehicle for one group — flat price, no shared-capacity contention. */
+export async function createPrivateBookingSafe(input: CreatePrivateBookingInput) {
+  const pendingReferralCode =
+    input.referralCodeOverride !== undefined ? input.referralCodeOverride : getStoredReferralCode();
+
+  const { data, error } = await supabase.rpc("create_private_booking_safe", {
+    p_trip_id: input.tripId,
+    p_vehicle_type_id: input.vehicleTypeId,
+    p_travel_date: input.travelDate,
+    p_travel_datetime: input.travelDatetime,
+    p_seats_count: input.seatsCount,
+    p_full_name: input.fullName,
+    p_phone_number: input.phoneNumber,
+    p_luggage_count: input.luggageCount,
+    p_flight_number: input.flightNumber,
+    ...(pendingReferralCode ? { p_referral_code: pendingReferralCode } : {}),
+    ...(input.packageId ? { p_package_id: input.packageId } : {}),
+  });
+
+  if (error) throw new Error(error.message);
+  const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
+  const ticketCode = row ? pick<string>(row, ["ticket_code"]) : null;
+  if (!ticketCode) throw new Error("تم إنشاء الحجز لكن لم يرجع كود التذكرة — كلمنا فورًا على الدعم.");
+  clearStoredReferralCode();
+  return { ticketCode, raw: row };
+}
+
 export async function fetchTrips(): Promise<Trip[]> {
   const { data, error } = await supabase
     .from("trip")

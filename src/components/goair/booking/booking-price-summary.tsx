@@ -10,6 +10,8 @@ type BookingPriceSummaryProps = {
   compact?: boolean;
   packageName?: string;
   packagePricePerSeat?: number;
+  /** Private/charter booking — whole vehicle, flat price (not per seat). */
+  isPrivate?: boolean;
 };
 
 export function BookingPriceSummary({
@@ -20,6 +22,7 @@ export function BookingPriceSummary({
   compact = false,
   packageName,
   packagePricePerSeat,
+  isPrivate = false,
 }: BookingPriceSummaryProps) {
   return (
     <Card
@@ -30,14 +33,21 @@ export function BookingPriceSummary({
       )}
     >
       <h2 className="font-display text-sm font-bold text-primary">ملخص السعر</h2>
+      {isPrivate ? (
+        <span className="mt-1 inline-block rounded-md bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
+          حجز خاص — العربية كلها لمجموعتك
+        </span>
+      ) : null}
 
       <dl className={cn("mt-4 space-y-3", compact && "mt-3 space-y-2 text-sm")}>
         <div className="flex items-center justify-between gap-3">
-          <dt className="text-muted-foreground">عدد المقاعد</dt>
+          <dt className="text-muted-foreground">{isPrivate ? "عدد الركاب" : "عدد المقاعد"}</dt>
           <dd className="font-bold text-primary">{seats}</dd>
         </div>
         <div className="flex items-center justify-between gap-3">
-          <dt className="text-muted-foreground">سعر المقعد</dt>
+          <dt className="text-muted-foreground">
+            {isPrivate ? "السعر الكامل للعربية" : "سعر المقعد"}
+          </dt>
           <dd className="font-bold text-primary">{formatUsd(pricePerSeat)}</dd>
         </div>
         {packageName && packagePricePerSeat ? (
