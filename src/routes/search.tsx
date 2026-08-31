@@ -23,6 +23,7 @@ export const Route = createFileRoute("/search")({
     destination: String(search["destination"] ?? ""),
     date: String(search["date"] ?? new Date().toISOString().slice(0, 10)),
     seats: Math.max(1, Number(search["seats"]) || 1),
+    packageId: typeof search["packageId"] === "string" ? search["packageId"] : undefined,
   }),
   head: () => ({
     meta: [
@@ -180,6 +181,7 @@ function SearchPage() {
                       option={option}
                       seats={params.seats}
                       travelDate={params.date}
+                      packageId={params.packageId}
                     />
                   ))
                 ) : (
