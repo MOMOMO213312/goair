@@ -29,10 +29,12 @@ export function SearchWidget({
   trips,
   countries,
   initial,
+  packageId,
   className,
 }: {
   trips: Trip[];
   countries: string[];
+  packageId?: string;
   initial?: {
     country?: string;
     airport?: string;
@@ -122,12 +124,18 @@ export function SearchWidget({
         destination,
         date,
         seats,
+        ...(packageId ? { packageId } : {}),
       },
     });
   }
 
   return (
     <>
+    {packageId ? (
+      <div className="mb-3 rounded-xl border border-accent/40 bg-accent/10 px-4 py-2.5 text-sm font-bold text-primary">
+        ✓ اخترت باقة إضافية — هتتضاف تلقائيًا لإجمالي حجزك
+      </div>
+    ) : null}
     <form
       onSubmit={onSubmit}
       className={cn(
@@ -244,7 +252,7 @@ export function SearchWidget({
             onClick={() =>
               navigate({
                 to: "/search",
-                search: { country: trip.country, airport: trip.airport_code, destination: trip.destination, date, seats },
+                search: { country: trip.country, airport: trip.airport_code, destination: trip.destination, date, seats, ...(packageId ? { packageId } : {}) },
               })
             }
             className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:border-accent hover:text-accent"
