@@ -19,6 +19,7 @@ type SearchResultCardProps = {
   option: ScheduleOption;
   seats: number;
   travelDate: string;
+  packageId?: string;
   className?: string;
 };
 
@@ -52,6 +53,7 @@ export function SearchResultCard({
   option,
   seats,
   travelDate,
+  packageId,
   className,
 }: SearchResultCardProps) {
   const fallback = isFallbackSchedule(option.scheduleId);
@@ -271,6 +273,7 @@ function BookButton({
           seats,
           time: option.departureTime,
           price: option.pricePerSeat,
+          ...(packageId ? { packageId } : {}),
         }}
       >
         احجز الآن
