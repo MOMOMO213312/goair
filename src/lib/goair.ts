@@ -52,6 +52,39 @@ export type VehicleType = {
 };
 
 /** Real vehicle tiers from `vehicle_types` — no fabricated tiers. */
+export type PackageTier = {
+  id: string;
+  name: string;
+  tagline: string | null;
+  priceUsd: number;
+  iconName: string;
+  features: string[];
+  isHighlighted: boolean;
+};
+
+export async function fetchActivePackages(): Promise<PackageTier[]> {
+  const { data, error } = await supabase
+    .from("packages")
+    .select("*")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => ({
+    id: String(pick(row, ["id"])),
+    name: String(pick(row, ["name"]) ?? ""),
+    tagline: pick<string>(row, ["tagline"]),
+    priceUsd: Number(pick(row, ["price_usd"]) ?? 0),
+    iconName: String(pick(row, ["icon_name"]) ?? "Sparkles"),
+    features: (pick<string[]>(row, ["features"]) ?? []) as string[],
+    isHighlighted: pick<boolean>(row, ["is_highlighted"]) === true,
+  }));
+}
+
+export async function fetchPackageById(id: string): Promise<PackageTier | null> {
+  const all = await fetchActivePackages();
+  return all.find((p) => p.id === id) ?? null;
+}
+
 export async function fetchVehicleTypes(): Promise<VehicleType[]> {
   const { data, error } = await supabase
     .from("vehicle_types")
@@ -263,6 +296,8 @@ export type CreateBookingInput = {
    * omitted, same as before.
    */
   referralCodeOverride?: string | null;
+  /** Selected add-on package (from /packages) — adds its price per seat. */
+  packageId?: string | null;
 };
 
 /** A configured hourly departure (or legacy fallback slot) that has no stored `schedules` row yet. */
@@ -303,6 +338,7 @@ export async function createBookingSafe(input: CreateBookingInput) {
     p_flight_number: input.flightNumber,
     p_luggage_count: input.luggageCount,
     ...(pendingReferralCode ? { p_referral_code: pendingReferralCode } : {}),
+    ...(input.packageId ? { p_package_id: input.packageId } : {}),
   };
 
   let { data, error } = await supabase.rpc("create_booking_safe", {

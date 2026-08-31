@@ -295,3 +295,76 @@ export function contactMessageStatusLabel(status: string) {
   const map: Record<string, string> = { new: "جديدة", read: "مقروءة", replied: "تم الرد" };
   return map[status] ?? status;
 }
+
+export type AdminPackage = {
+  id: string;
+  name: string;
+  tagline: string | null;
+  priceUsd: number;
+  iconName: string;
+  features: string[];
+  isHighlighted: boolean;
+  isActive: boolean;
+  sortOrder: number;
+};
+
+function mapAdminPackage(r: Record<string, unknown>): AdminPackage {
+  return {
+    id: String(r["id"]),
+    name: String(r["name"] ?? ""),
+    tagline: (r["tagline"] as string | null) ?? null,
+    priceUsd: Number(r["price_usd"] ?? 0),
+    iconName: String(r["icon_name"] ?? "Sparkles"),
+    features: (r["features"] as string[]) ?? [],
+    isHighlighted: r["is_highlighted"] === true,
+    isActive: r["is_active"] === true,
+    sortOrder: Number(r["sort_order"] ?? 0),
+  };
+}
+
+export async function adminListPackages(token: string): Promise<AdminPackage[]> {
+  const { data, error } = await supabase.rpc("admin_list_packages", { p_access_token: token });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map(mapAdminPackage);
+}
+
+export async function adminCreatePackage(
+  token: string,
+  pkg: { name: string; tagline: string; priceUsd: number; iconName: string; features: string[]; isHighlighted: boolean; sortOrder: number },
+) {
+  const { error } = await supabase.rpc("admin_create_package", {
+    p_access_token: token,
+    p_name: pkg.name,
+    p_tagline: pkg.tagline,
+    p_price_usd: pkg.priceUsd,
+    p_icon_name: pkg.iconName,
+    p_features: pkg.features,
+    p_is_highlighted: pkg.isHighlighted,
+    p_sort_order: pkg.sortOrder,
+  });
+  if (error) rpcError(error);
+}
+
+export async function adminUpdatePackage(
+  token: string,
+  pkg: AdminPackage,
+) {
+  const { error } = await supabase.rpc("admin_update_package", {
+    p_access_token: token,
+    p_id: pkg.id,
+    p_name: pkg.name,
+    p_tagline: pkg.tagline,
+    p_price_usd: pkg.priceUsd,
+    p_icon_name: pkg.iconName,
+    p_features: pkg.features,
+    p_is_highlighted: pkg.isHighlighted,
+    p_is_active: pkg.isActive,
+    p_sort_order: pkg.sortOrder,
+  });
+  if (error) rpcError(error);
+}
+
+export async function adminDeletePackage(token: string, id: string) {
+  const { error } = await supabase.rpc("admin_delete_package", { p_access_token: token, p_id: id });
+  if (error) rpcError(error);
+}
