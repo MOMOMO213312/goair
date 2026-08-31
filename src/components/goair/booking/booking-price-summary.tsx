@@ -8,6 +8,8 @@ type BookingPriceSummaryProps = {
   total: number;
   className?: string;
   compact?: boolean;
+  packageName?: string;
+  packagePricePerSeat?: number;
 };
 
 export function BookingPriceSummary({
@@ -16,6 +18,8 @@ export function BookingPriceSummary({
   total,
   className,
   compact = false,
+  packageName,
+  packagePricePerSeat,
 }: BookingPriceSummaryProps) {
   return (
     <Card
@@ -36,6 +40,12 @@ export function BookingPriceSummary({
           <dt className="text-muted-foreground">سعر المقعد</dt>
           <dd className="font-bold text-primary">{formatUsd(pricePerSeat)}</dd>
         </div>
+        {packageName && packagePricePerSeat ? (
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-accent">+ {packageName}</dt>
+            <dd className="font-bold text-accent">{formatUsd(packagePricePerSeat)}</dd>
+          </div>
+        ) : null}
       </dl>
 
       <div
