@@ -99,9 +99,12 @@ function PackageCard({ pkg }: { pkg: PackageTier }) {
         className={cn("mt-6 w-full font-bold", pkg.isHighlighted ? "bg-accent text-accent-foreground hover:bg-accent/90" : "bg-primary text-primary-foreground hover:bg-primary/90")}
       >
         <Link to="/" search={{ packageId: pkg.id }} hash="find-your-ride">
-          اختار الباقة دي
+          اختار الباقة دي وابحث عن رحلتك
         </Link>
       </Button>
+      <p className={cn("mt-2 text-center text-xs", pkg.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>
+        الخطوة الجاية: اختار رحلتك، والباقة هتتضاف تلقائيًا
+      </p>
     </div>
   );
 }

@@ -10,13 +10,33 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as AgencyRouteImport } from './routes/agency'
 import { Route as BookRouteImport } from './routes/book'
 import { Route as ConfirmationRouteImport } from './routes/confirmation'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as MyBookingsRouteImport } from './routes/my-bookings'
+import { Route as OperatorRouteImport } from './routes/operator'
+import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as PartnerRouteImport } from './routes/partner'
 import { Route as PaymentRouteImport } from './routes/payment'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminAnnouncementsRouteImport } from './routes/admin.announcements'
+import { Route as AdminFleetRouteImport } from './routes/admin.fleet'
+import { Route as AdminPackagesRouteImport } from './routes/admin.packages'
+import { Route as AdminRequestsRouteImport } from './routes/admin.requests'
+import { Route as AgencyIndexRouteImport } from './routes/agency.index'
+import { Route as AgencyBookRouteImport } from './routes/agency.book'
+import { Route as AgencyBookingsRouteImport } from './routes/agency.bookings'
+import { Route as AgencyStatementsRouteImport } from './routes/agency.statements'
+import { Route as OperatorIndexRouteImport } from './routes/operator.index'
+import { Route as OperatorFleetRouteImport } from './routes/operator.fleet'
+import { Route as OperatorStatementsRouteImport } from './routes/operator.statements'
+import { Route as OperatorTripsRouteImport } from './routes/operator.trips'
 import { Route as PartnerIndexRouteImport } from './routes/partner.index'
 import { Route as PartnerBookingsRouteImport } from './routes/partner.bookings'
 import { Route as PartnerCapacityRouteImport } from './routes/partner.capacity'
@@ -26,6 +46,16 @@ import { Route as PartnerTermsRouteImport } from './routes/partner.terms'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgencyRoute = AgencyRouteImport.update({
+  id: '/agency',
+  path: '/agency',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BookRoute = BookRouteImport.update({
@@ -43,9 +73,24 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MyBookingsRoute = MyBookingsRouteImport.update({
   id: '/my-bookings',
   path: '/my-bookings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperatorRoute = OperatorRouteImport.update({
+  id: '/operator',
+  path: '/operator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PackagesRoute = PackagesRouteImport.update({
+  id: '/packages',
+  path: '/packages',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PartnerRoute = PartnerRouteImport.update({
@@ -58,10 +103,85 @@ const PaymentRoute = PaymentRouteImport.update({
   path: '/payment',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
   getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAnnouncementsRoute = AdminAnnouncementsRouteImport.update({
+  id: '/announcements',
+  path: '/announcements',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFleetRoute = AdminFleetRouteImport.update({
+  id: '/fleet',
+  path: '/fleet',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPackagesRoute = AdminPackagesRouteImport.update({
+  id: '/packages',
+  path: '/packages',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRequestsRoute = AdminRequestsRouteImport.update({
+  id: '/requests',
+  path: '/requests',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AgencyIndexRoute = AgencyIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AgencyRoute,
+} as any)
+const AgencyBookRoute = AgencyBookRouteImport.update({
+  id: '/book',
+  path: '/book',
+  getParentRoute: () => AgencyRoute,
+} as any)
+const AgencyBookingsRoute = AgencyBookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
+  getParentRoute: () => AgencyRoute,
+} as any)
+const AgencyStatementsRoute = AgencyStatementsRouteImport.update({
+  id: '/statements',
+  path: '/statements',
+  getParentRoute: () => AgencyRoute,
+} as any)
+const OperatorIndexRoute = OperatorIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => OperatorRoute,
+} as any)
+const OperatorFleetRoute = OperatorFleetRouteImport.update({
+  id: '/fleet',
+  path: '/fleet',
+  getParentRoute: () => OperatorRoute,
+} as any)
+const OperatorStatementsRoute = OperatorStatementsRouteImport.update({
+  id: '/statements',
+  path: '/statements',
+  getParentRoute: () => OperatorRoute,
+} as any)
+const OperatorTripsRoute = OperatorTripsRouteImport.update({
+  id: '/trips',
+  path: '/trips',
+  getParentRoute: () => OperatorRoute,
 } as any)
 const PartnerIndexRoute = PartnerIndexRouteImport.update({
   id: '/',
@@ -91,17 +211,37 @@ const PartnerTermsRoute = PartnerTermsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/agency': typeof AgencyRouteWithChildren
   '/book': typeof BookRoute
   '/confirmation': typeof ConfirmationRoute
   '/contact': typeof ContactRoute
+  '/faq': typeof FaqRoute
   '/my-bookings': typeof MyBookingsRoute
+  '/operator': typeof OperatorRouteWithChildren
+  '/packages': typeof PackagesRoute
   '/partner': typeof PartnerRouteWithChildren
   '/payment': typeof PaymentRoute
+  '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
+  '/terms': typeof TermsRoute
+  '/admin/announcements': typeof AdminAnnouncementsRoute
+  '/admin/fleet': typeof AdminFleetRoute
+  '/admin/packages': typeof AdminPackagesRoute
+  '/admin/requests': typeof AdminRequestsRoute
+  '/agency/book': typeof AgencyBookRoute
+  '/agency/bookings': typeof AgencyBookingsRoute
+  '/agency/statements': typeof AgencyStatementsRoute
+  '/operator/fleet': typeof OperatorFleetRoute
+  '/operator/statements': typeof OperatorStatementsRoute
+  '/operator/trips': typeof OperatorTripsRoute
   '/partner/bookings': typeof PartnerBookingsRoute
   '/partner/capacity': typeof PartnerCapacityRoute
   '/partner/statements': typeof PartnerStatementsRoute
   '/partner/terms': typeof PartnerTermsRoute
+  '/admin/': typeof AdminIndexRoute
+  '/agency/': typeof AgencyIndexRoute
+  '/operator/': typeof OperatorIndexRoute
   '/partner/': typeof PartnerIndexRoute
 }
 export interface FileRoutesByTo {
@@ -109,46 +249,103 @@ export interface FileRoutesByTo {
   '/book': typeof BookRoute
   '/confirmation': typeof ConfirmationRoute
   '/contact': typeof ContactRoute
+  '/faq': typeof FaqRoute
   '/my-bookings': typeof MyBookingsRoute
+  '/packages': typeof PackagesRoute
   '/payment': typeof PaymentRoute
+  '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
+  '/terms': typeof TermsRoute
+  '/admin/announcements': typeof AdminAnnouncementsRoute
+  '/admin/fleet': typeof AdminFleetRoute
+  '/admin/packages': typeof AdminPackagesRoute
+  '/admin/requests': typeof AdminRequestsRoute
+  '/agency/book': typeof AgencyBookRoute
+  '/agency/bookings': typeof AgencyBookingsRoute
+  '/agency/statements': typeof AgencyStatementsRoute
+  '/operator/fleet': typeof OperatorFleetRoute
+  '/operator/statements': typeof OperatorStatementsRoute
+  '/operator/trips': typeof OperatorTripsRoute
   '/partner/bookings': typeof PartnerBookingsRoute
   '/partner/capacity': typeof PartnerCapacityRoute
   '/partner/statements': typeof PartnerStatementsRoute
   '/partner/terms': typeof PartnerTermsRoute
+  '/admin': typeof AdminIndexRoute
+  '/agency': typeof AgencyIndexRoute
+  '/operator': typeof OperatorIndexRoute
   '/partner': typeof PartnerIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/agency': typeof AgencyRouteWithChildren
   '/book': typeof BookRoute
   '/confirmation': typeof ConfirmationRoute
   '/contact': typeof ContactRoute
+  '/faq': typeof FaqRoute
   '/my-bookings': typeof MyBookingsRoute
+  '/operator': typeof OperatorRouteWithChildren
+  '/packages': typeof PackagesRoute
   '/partner': typeof PartnerRouteWithChildren
   '/payment': typeof PaymentRoute
+  '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
+  '/terms': typeof TermsRoute
+  '/admin/announcements': typeof AdminAnnouncementsRoute
+  '/admin/fleet': typeof AdminFleetRoute
+  '/admin/packages': typeof AdminPackagesRoute
+  '/admin/requests': typeof AdminRequestsRoute
+  '/agency/book': typeof AgencyBookRoute
+  '/agency/bookings': typeof AgencyBookingsRoute
+  '/agency/statements': typeof AgencyStatementsRoute
+  '/operator/fleet': typeof OperatorFleetRoute
+  '/operator/statements': typeof OperatorStatementsRoute
+  '/operator/trips': typeof OperatorTripsRoute
   '/partner/bookings': typeof PartnerBookingsRoute
   '/partner/capacity': typeof PartnerCapacityRoute
   '/partner/statements': typeof PartnerStatementsRoute
   '/partner/terms': typeof PartnerTermsRoute
+  '/admin/': typeof AdminIndexRoute
+  '/agency/': typeof AgencyIndexRoute
+  '/operator/': typeof OperatorIndexRoute
   '/partner/': typeof PartnerIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
+    | '/agency'
     | '/book'
     | '/confirmation'
     | '/contact'
+    | '/faq'
     | '/my-bookings'
+    | '/operator'
+    | '/packages'
     | '/partner'
     | '/payment'
+    | '/privacy'
     | '/search'
+    | '/terms'
+    | '/admin/announcements'
+    | '/admin/fleet'
+    | '/admin/packages'
+    | '/admin/requests'
+    | '/agency/book'
+    | '/agency/bookings'
+    | '/agency/statements'
+    | '/operator/fleet'
+    | '/operator/statements'
+    | '/operator/trips'
     | '/partner/bookings'
     | '/partner/capacity'
     | '/partner/statements'
     | '/partner/terms'
+    | '/admin/'
+    | '/agency/'
+    | '/operator/'
     | '/partner/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -156,40 +353,84 @@ export interface FileRouteTypes {
     | '/book'
     | '/confirmation'
     | '/contact'
+    | '/faq'
     | '/my-bookings'
+    | '/packages'
     | '/payment'
+    | '/privacy'
     | '/search'
+    | '/terms'
+    | '/admin/announcements'
+    | '/admin/fleet'
+    | '/admin/packages'
+    | '/admin/requests'
+    | '/agency/book'
+    | '/agency/bookings'
+    | '/agency/statements'
+    | '/operator/fleet'
+    | '/operator/statements'
+    | '/operator/trips'
     | '/partner/bookings'
     | '/partner/capacity'
     | '/partner/statements'
     | '/partner/terms'
+    | '/admin'
+    | '/agency'
+    | '/operator'
     | '/partner'
   id:
     | '__root__'
     | '/'
+    | '/admin'
+    | '/agency'
     | '/book'
     | '/confirmation'
     | '/contact'
+    | '/faq'
     | '/my-bookings'
+    | '/operator'
+    | '/packages'
     | '/partner'
     | '/payment'
+    | '/privacy'
     | '/search'
+    | '/terms'
+    | '/admin/announcements'
+    | '/admin/fleet'
+    | '/admin/packages'
+    | '/admin/requests'
+    | '/agency/book'
+    | '/agency/bookings'
+    | '/agency/statements'
+    | '/operator/fleet'
+    | '/operator/statements'
+    | '/operator/trips'
     | '/partner/bookings'
     | '/partner/capacity'
     | '/partner/statements'
     | '/partner/terms'
+    | '/admin/'
+    | '/agency/'
+    | '/operator/'
     | '/partner/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  AgencyRoute: typeof AgencyRouteWithChildren
   BookRoute: typeof BookRoute
   ConfirmationRoute: typeof ConfirmationRoute
   ContactRoute: typeof ContactRoute
+  FaqRoute: typeof FaqRoute
   MyBookingsRoute: typeof MyBookingsRoute
+  OperatorRoute: typeof OperatorRouteWithChildren
+  PackagesRoute: typeof PackagesRoute
   PartnerRoute: typeof PartnerRouteWithChildren
   PaymentRoute: typeof PaymentRoute
+  PrivacyRoute: typeof PrivacyRoute
   SearchRoute: typeof SearchRoute
+  TermsRoute: typeof TermsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -199,6 +440,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agency': {
+      id: '/agency'
+      path: '/agency'
+      fullPath: '/agency'
+      preLoaderRoute: typeof AgencyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/book': {
@@ -222,11 +477,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/my-bookings': {
       id: '/my-bookings'
       path: '/my-bookings'
       fullPath: '/my-bookings'
       preLoaderRoute: typeof MyBookingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operator': {
+      id: '/operator'
+      path: '/operator'
+      fullPath: '/operator'
+      preLoaderRoute: typeof OperatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/packages': {
+      id: '/packages'
+      path: '/packages'
+      fullPath: '/packages'
+      preLoaderRoute: typeof PackagesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/partner': {
@@ -243,12 +519,117 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PaymentRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/search': {
       id: '/search'
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/announcements': {
+      id: '/admin/announcements'
+      path: '/announcements'
+      fullPath: '/admin/announcements'
+      preLoaderRoute: typeof AdminAnnouncementsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/fleet': {
+      id: '/admin/fleet'
+      path: '/fleet'
+      fullPath: '/admin/fleet'
+      preLoaderRoute: typeof AdminFleetRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/packages': {
+      id: '/admin/packages'
+      path: '/packages'
+      fullPath: '/admin/packages'
+      preLoaderRoute: typeof AdminPackagesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/requests': {
+      id: '/admin/requests'
+      path: '/requests'
+      fullPath: '/admin/requests'
+      preLoaderRoute: typeof AdminRequestsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/agency/': {
+      id: '/agency/'
+      path: '/'
+      fullPath: '/agency/'
+      preLoaderRoute: typeof AgencyIndexRouteImport
+      parentRoute: typeof AgencyRoute
+    }
+    '/agency/book': {
+      id: '/agency/book'
+      path: '/book'
+      fullPath: '/agency/book'
+      preLoaderRoute: typeof AgencyBookRouteImport
+      parentRoute: typeof AgencyRoute
+    }
+    '/agency/bookings': {
+      id: '/agency/bookings'
+      path: '/bookings'
+      fullPath: '/agency/bookings'
+      preLoaderRoute: typeof AgencyBookingsRouteImport
+      parentRoute: typeof AgencyRoute
+    }
+    '/agency/statements': {
+      id: '/agency/statements'
+      path: '/statements'
+      fullPath: '/agency/statements'
+      preLoaderRoute: typeof AgencyStatementsRouteImport
+      parentRoute: typeof AgencyRoute
+    }
+    '/operator/': {
+      id: '/operator/'
+      path: '/'
+      fullPath: '/operator/'
+      preLoaderRoute: typeof OperatorIndexRouteImport
+      parentRoute: typeof OperatorRoute
+    }
+    '/operator/fleet': {
+      id: '/operator/fleet'
+      path: '/fleet'
+      fullPath: '/operator/fleet'
+      preLoaderRoute: typeof OperatorFleetRouteImport
+      parentRoute: typeof OperatorRoute
+    }
+    '/operator/statements': {
+      id: '/operator/statements'
+      path: '/statements'
+      fullPath: '/operator/statements'
+      preLoaderRoute: typeof OperatorStatementsRouteImport
+      parentRoute: typeof OperatorRoute
+    }
+    '/operator/trips': {
+      id: '/operator/trips'
+      path: '/trips'
+      fullPath: '/operator/trips'
+      preLoaderRoute: typeof OperatorTripsRouteImport
+      parentRoute: typeof OperatorRoute
     }
     '/partner/': {
       id: '/partner/'
@@ -288,6 +669,59 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminAnnouncementsRoute: typeof AdminAnnouncementsRoute
+  AdminFleetRoute: typeof AdminFleetRoute
+  AdminPackagesRoute: typeof AdminPackagesRoute
+  AdminRequestsRoute: typeof AdminRequestsRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAnnouncementsRoute: AdminAnnouncementsRoute,
+  AdminFleetRoute: AdminFleetRoute,
+  AdminPackagesRoute: AdminPackagesRoute,
+  AdminRequestsRoute: AdminRequestsRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface AgencyRouteChildren {
+  AgencyBookRoute: typeof AgencyBookRoute
+  AgencyBookingsRoute: typeof AgencyBookingsRoute
+  AgencyStatementsRoute: typeof AgencyStatementsRoute
+  AgencyIndexRoute: typeof AgencyIndexRoute
+}
+
+const AgencyRouteChildren: AgencyRouteChildren = {
+  AgencyBookRoute: AgencyBookRoute,
+  AgencyBookingsRoute: AgencyBookingsRoute,
+  AgencyStatementsRoute: AgencyStatementsRoute,
+  AgencyIndexRoute: AgencyIndexRoute,
+}
+
+const AgencyRouteWithChildren =
+  AgencyRoute._addFileChildren(AgencyRouteChildren)
+
+interface OperatorRouteChildren {
+  OperatorFleetRoute: typeof OperatorFleetRoute
+  OperatorStatementsRoute: typeof OperatorStatementsRoute
+  OperatorTripsRoute: typeof OperatorTripsRoute
+  OperatorIndexRoute: typeof OperatorIndexRoute
+}
+
+const OperatorRouteChildren: OperatorRouteChildren = {
+  OperatorFleetRoute: OperatorFleetRoute,
+  OperatorStatementsRoute: OperatorStatementsRoute,
+  OperatorTripsRoute: OperatorTripsRoute,
+  OperatorIndexRoute: OperatorIndexRoute,
+}
+
+const OperatorRouteWithChildren = OperatorRoute._addFileChildren(
+  OperatorRouteChildren,
+)
+
 interface PartnerRouteChildren {
   PartnerBookingsRoute: typeof PartnerBookingsRoute
   PartnerCapacityRoute: typeof PartnerCapacityRoute
@@ -309,14 +743,31 @@ const PartnerRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
+  AgencyRoute: AgencyRouteWithChildren,
   BookRoute: BookRoute,
   ConfirmationRoute: ConfirmationRoute,
   ContactRoute: ContactRoute,
+  FaqRoute: FaqRoute,
   MyBookingsRoute: MyBookingsRoute,
+  OperatorRoute: OperatorRouteWithChildren,
+  PackagesRoute: PackagesRoute,
   PartnerRoute: PartnerRouteWithChildren,
   PaymentRoute: PaymentRoute,
+  PrivacyRoute: PrivacyRoute,
   SearchRoute: SearchRoute,
+  TermsRoute: TermsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

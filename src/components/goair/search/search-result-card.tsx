@@ -178,6 +178,7 @@ export function SearchResultCard({
               seats={seats}
               travelDate={travelDate}
               disabled={notEnough}
+              packageId={packageId}
             />
           </div>
         </div>
@@ -198,6 +199,7 @@ export function SearchResultCard({
               seats={seats}
               travelDate={travelDate}
               disabled={notEnough}
+              packageId={packageId}
               className="mt-4 w-full"
             />
           </div>
@@ -238,6 +240,7 @@ function BookButton({
   seats,
   travelDate,
   disabled,
+  packageId,
   className,
 }: {
   trip: Trip;
@@ -245,6 +248,7 @@ function BookButton({
   seats: number;
   travelDate: string;
   disabled: boolean;
+  packageId?: string;
   className?: string;
 }) {
   if (disabled) {
