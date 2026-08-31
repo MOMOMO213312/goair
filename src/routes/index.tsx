@@ -44,6 +44,9 @@ const marketsQuery = queryOptions({
 });
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    packageId: typeof search["packageId"] === "string" ? search["packageId"] : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "GoAir — نقل مشترك من وإلى المطار في مصر ولبنان" },
@@ -72,6 +75,7 @@ export const Route = createFileRoute("/")({
 function Home() {
   const { data } = useSuspenseQuery(marketsQuery);
   const { trips, countries } = data;
+  const { packageId } = Route.useSearch();
 
   const publicTrips = useMemo(
     () => filterPublicTrips(trips, countries),
@@ -146,7 +150,7 @@ function Home() {
             </p>
 
             <div id="find-your-ride" className="mt-8 scroll-mt-24">
-              <SearchWidget trips={trips} countries={countries} />
+              <SearchWidget trips={trips} countries={countries} packageId={packageId} />
             </div>
           </div>
         </div>

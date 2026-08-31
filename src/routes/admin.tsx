@@ -56,6 +56,13 @@ function AdminLayout() {
             >
               الإشعارات
             </Link>
+            <Link
+              to="/admin/packages"
+              search={{ token }}
+              className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
+            >
+              الباقات
+            </Link>
           </nav>
         </header>
         <Outlet />
