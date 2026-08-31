@@ -9,7 +9,7 @@ import { BookingMobileCta } from "@/components/goair/booking/booking-mobile-cta"
 import { BookingPassengerForm } from "@/components/goair/booking/booking-passenger-form";
 import { BookingPriceSummary } from "@/components/goair/booking/booking-price-summary";
 import { BookingTripSummary } from "@/components/goair/booking/booking-trip-summary";
-import { createBookingSafe, fetchTrips, friendlyErrorMessage } from "@/lib/goair";
+import { createBookingSafe, fetchActivePackages, fetchTrips, friendlyErrorMessage } from "@/lib/goair";
 
 const FORM_ID = "goair-booking-form";
 
@@ -21,6 +21,7 @@ type BookSearch = {
   seats: number;
   time: string;
   price: number;
+  packageId?: string;
 };
 
 export const Route = createFileRoute("/book")({
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/book")({
     seats: Math.max(1, Number(search["seats"]) || 1),
     time: String(search["time"] ?? ""),
     price: Number(search["price"]) || 0,
+    packageId: typeof search["packageId"] === "string" ? search["packageId"] : undefined,
   }),
   head: () => ({
     meta: [
@@ -60,7 +62,11 @@ function BookPage() {
   const tripsQuery = useQuery({ queryKey: ["goair", "trips"], queryFn: fetchTrips });
   const trip = tripsQuery.data?.find((item) => item.id === search.tripId);
 
-  const total = search.price * search.seats;
+  const packagesQuery = useQuery({ queryKey: ["goair", "packages"], queryFn: fetchActivePackages });
+  const selectedPackage = packagesQuery.data?.find((p) => p.id === search.packageId);
+
+  const packagePricePerSeat = selectedPackage?.priceUsd ?? 0;
+  const total = (search.price + packagePricePerSeat) * search.seats;
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -87,6 +93,7 @@ function BookPage() {
         phoneNumber: phone.trim(),
         flightNumber: flight.trim() || null,
         luggageCount: luggage,
+        packageId: search.packageId || null,
       });
       toast.success("تم تثبيت مقعدك — باقي الدفع.");
       navigate({ to: "/payment", search: { ticket: ticketCode } });
@@ -145,6 +152,8 @@ function BookPage() {
                 seats={search.seats}
                 pricePerSeat={search.price}
                 total={total}
+                packageName={selectedPackage?.name}
+                packagePricePerSeat={packagePricePerSeat}
               />
             </div>
           </div>
@@ -163,6 +172,8 @@ function BookPage() {
                 seats={search.seats}
                 pricePerSeat={search.price}
                 total={total}
+                packageName={selectedPackage?.name}
+                packagePricePerSeat={packagePricePerSeat}
               />
               <button
                 type="submit"
