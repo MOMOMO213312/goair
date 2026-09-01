@@ -87,6 +87,42 @@ export function getAirportsForCountry(trips: Trip[], country: string) {
   return Array.from(map, ([code, name]) => ({ code, name }));
 }
 
+/**
+ * All destinations served from a specific airport, with price/route info —
+ * used to let the customer pick a destination instead of assuming a single one.
+ */
+export function getDestinationSummariesForAirport(
+  trips: Trip[],
+  country: string,
+  airportCode: string,
+): DestinationSummary[] {
+  const scoped = trips.filter(
+    (trip) => trip.country === country && trip.airport_code === airportCode,
+  );
+  const map = new Map<string, DestinationSummary>();
+
+  for (const trip of scoped) {
+    const price = trip.price_usd;
+    const existing = map.get(trip.destination);
+    if (existing) {
+      existing.routeCount += 1;
+      if (price != null && (existing.minPriceUsd == null || price < existing.minPriceUsd)) {
+        existing.minPriceUsd = price;
+      }
+    } else {
+      map.set(trip.destination, {
+        name: trip.destination,
+        country: trip.country,
+        airportCode: trip.airport_code,
+        minPriceUsd: price,
+        routeCount: 1,
+      });
+    }
+  }
+
+  return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, "ar"));
+}
+
 export function getDestinationsForAirport(trips: Trip[], country: string, airportCode: string) {
   return Array.from(
     new Set(
