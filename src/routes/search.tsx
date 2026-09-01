@@ -15,7 +15,9 @@ import { SearchResultsSkeleton } from "@/components/goair/search/search-results-
 import { SearchSortDesktop, SearchSortMobile, type SortKey } from "@/components/goair/search/search-sort";
 import { SearchSummary } from "@/components/goair/search/search-summary";
 import { Card } from "@/components/ui/card";
+import { DestinationCard } from "@/components/goair/destination-card";
 import { fetchScheduleOptions, fetchTrips } from "@/lib/goair";
+import { getDestinationSummariesForAirport } from "@/lib/trip-stats";
 
 export const Route = createFileRoute("/search")({
   validateSearch: (search: Record<string, unknown>): SearchParams => ({
@@ -84,8 +86,22 @@ function SearchPage() {
     [allOptions, activeMax, sort],
   );
 
+  // Airport chosen but no specific destination yet (e.g. from the homepage
+  // "Explore by airport" card) — show every route from that airport instead
+  // of guessing a single one.
+  const needsDestinationChoice = !params.destination && Boolean(params.airport);
+
+  const destinationChoices = useMemo(
+    () =>
+      needsDestinationChoice && tripsQuery.data
+        ? getDestinationSummariesForAirport(tripsQuery.data, params.country, params.airport)
+        : [],
+    [needsDestinationChoice, tripsQuery.data, params.country, params.airport],
+  );
+
   const isLoading = tripsQuery.isLoading || (Boolean(trip) && optionsQuery.isLoading);
-  const tripNotFound = !tripsQuery.isLoading && tripsQuery.data && !trip;
+  const tripNotFound =
+    !needsDestinationChoice && !tripsQuery.isLoading && tripsQuery.data && !trip;
   const activeFilterCount = maxPrice !== null && priceCeiling > priceFloor ? 1 : 0;
 
   function resetFilters() {
@@ -126,6 +142,36 @@ function SearchPage() {
           />
         ) : null}
 
+        {needsDestinationChoice ? (
+          <div className="mt-8">
+            <h2 className="font-display text-xl font-extrabold text-primary sm:text-2xl">
+              اختار وجهتك
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {destinationChoices.length}{" "}
+              {destinationChoices.length === 1 ? "وجهة متاحة من هذا المطار" : "وجهات متاحة من هذا المطار"}
+            </p>
+
+            {destinationChoices.length > 0 ? (
+              <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {destinationChoices.map((destination) => (
+                  <DestinationCard
+                    key={`${destination.country}-${destination.name}`}
+                    destination={destination}
+                  />
+                ))}
+              </div>
+            ) : !tripsQuery.isLoading ? (
+              <SearchEmptyState
+                title="لا توجد وجهات متاحة من هذا المطار حاليًا"
+                description="جرّب مطارًا آخر أو عدّل البحث من الصفحة الرئيسية."
+              />
+            ) : (
+              <SearchResultsSkeleton />
+            )}
+          </div>
+        ) : null}
+
         {tripNotFound ? (
           <div className="mt-8">
             <SearchEmptyState
@@ -135,7 +181,7 @@ function SearchPage() {
           </div>
         ) : null}
 
-        {isLoading && !tripNotFound ? (
+        {isLoading && !tripNotFound && !needsDestinationChoice ? (
           <div className="mt-8">
             <SearchResultsSkeleton />
           </div>

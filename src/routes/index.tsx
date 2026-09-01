@@ -102,14 +102,6 @@ function Home() {
     [trips, countries],
   );
 
-  const sampleDestinationsByAirport = useMemo(() => {
-    const map: Record<string, string> = {};
-    for (const trip of publicTrips) {
-      if (!map[trip.airport_code]) map[trip.airport_code] = trip.destination;
-    }
-    return map;
-  }, [publicTrips]);
-
   const sampleByCountry = useMemo(() => {
     const map: Record<string, { destination: string; airport: string }> = {};
     for (const trip of publicTrips) {
@@ -196,7 +188,7 @@ function Home() {
         </div>
       </section>
 
-      <AirportGrid airports={airports} sampleDestinations={sampleDestinationsByAirport} />
+      <AirportGrid airports={airports} />
 
       {/* Explore by country */}
       <section className="py-14 sm:py-16">
