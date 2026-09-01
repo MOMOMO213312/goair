@@ -9,11 +9,10 @@ import { cn } from "@/lib/utils";
 
 type AirportCardProps = {
   airport: AirportSummary;
-  sampleDestination: string;
   className?: string;
 };
 
-export function AirportCard({ airport, sampleDestination, className }: AirportCardProps) {
+export function AirportCard({ airport, className }: AirportCardProps) {
   const searchDate = new Date().toISOString().slice(0, 10);
 
   return (
@@ -56,7 +55,7 @@ export function AirportCard({ airport, sampleDestination, className }: AirportCa
           search={{
             country: airport.country,
             airport: airport.code,
-            destination: sampleDestination,
+            destination: "",
             date: searchDate,
             seats: 1,
           }}
@@ -71,10 +70,9 @@ export function AirportCard({ airport, sampleDestination, className }: AirportCa
 
 type AirportGridProps = {
   airports: AirportSummary[];
-  sampleDestinations: Record<string, string>;
 };
 
-export function AirportGrid({ airports, sampleDestinations }: AirportGridProps) {
+export function AirportGrid({ airports }: AirportGridProps) {
   return (
     <section id="stations" className="scroll-mt-24 py-14 sm:py-16">
       <div className="mx-auto max-w-6xl px-4">
@@ -84,11 +82,7 @@ export function AirportGrid({ airports, sampleDestinations }: AirportGridProps) 
         />
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {airports.map((airport) => (
-            <AirportCard
-              key={airport.code}
-              airport={airport}
-              sampleDestination={sampleDestinations[airport.code] ?? ""}
-            />
+            <AirportCard key={airport.code} airport={airport} />
           ))}
         </div>
       </div>
