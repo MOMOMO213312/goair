@@ -16,7 +16,7 @@ import { SearchSortDesktop, SearchSortMobile, type SortKey } from "@/components/
 import { SearchSummary } from "@/components/goair/search/search-summary";
 import { Card } from "@/components/ui/card";
 import { DestinationCard } from "@/components/goair/destination-card";
-import { fetchScheduleOptions, fetchTrips } from "@/lib/goair";
+import { fetchScheduleOptions, fetchTrips, fetchVehicleTypes, type VehicleType } from "@/lib/goair";
 import { getDestinationSummariesForAirport } from "@/lib/trip-stats";
 
 export const Route = createFileRoute("/search")({
@@ -51,6 +51,15 @@ function SearchPage() {
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
 
   const tripsQuery = useQuery({ queryKey: ["goair", "trips"], queryFn: fetchTrips });
+  const vehicleTypesQuery = useQuery({
+    queryKey: ["goair", "vehicle-types"],
+    queryFn: fetchVehicleTypes,
+  });
+  const vehicleTypesById = useMemo(() => {
+    const map = new Map<string, VehicleType>();
+    for (const vehicle of vehicleTypesQuery.data ?? []) map.set(vehicle.id, vehicle);
+    return map;
+  }, [vehicleTypesQuery.data]);
   const trip = tripsQuery.data?.find(
     (item) =>
       item.country === params.country &&
@@ -65,6 +74,10 @@ function SearchPage() {
   });
 
   const allOptions = optionsQuery.data ?? [];
+
+  const cheapestPrice = allOptions.length
+    ? Math.min(...allOptions.map((option) => option.pricePerSeat))
+    : null;
 
   const priceCeiling = allOptions.length
     ? Math.ceil(Math.max(...allOptions.map((option) => option.pricePerSeat)))
@@ -238,6 +251,14 @@ function SearchPage() {
                       seats={params.seats}
                       travelDate={params.date}
                       packageId={params.packageId}
+                      vehicleType={
+                        option.vehicleTypeId ? vehicleTypesById.get(option.vehicleTypeId) ?? null : null
+                      }
+                      isBestPrice={
+                        visibleOptions.length > 1 &&
+                        cheapestPrice !== null &&
+                        option.pricePerSeat === cheapestPrice
+                      }
                     />
                   ))
                 ) : (

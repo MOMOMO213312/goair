@@ -27,6 +27,7 @@ export type Trip = {
 export type ScheduleOption = {
   scheduleId: string;
   tripOptionId: string | null;
+  vehicleTypeId: string | null;
   departureTime: string;
   pricePerSeat: number;
   capacity: number | null;
@@ -278,6 +279,7 @@ export async function fetchScheduleOptions(
         return {
           scheduleId: String(pick(row, ["schedule_id", "id"]) ?? ""),
           tripOptionId: pick<string>(row, ["trip_option_id"]),
+          vehicleTypeId: pick<string>(row, ["vehicle_type_id"]),
           departureTime: String(pick(row, ["departure_time", "depart_at", "time"]) ?? ""),
           pricePerSeat: Number(pick(row, ["price_usd", "price_per_seat"]) ?? 0),
           capacity: Number(pick(row, ["capacity", "total_capacity"]) ?? 0) || null,
@@ -322,6 +324,7 @@ export async function fetchScheduleOptions(
     return {
       scheduleId: String(pick(row, ["id"]) ?? ""),
       tripOptionId: option ? String(pick(option, ["id"])) : null,
+      vehicleTypeId: vehicleTypeId ?? (option ? pick<string>(option, ["vehicle_type_id"]) : null),
       departureTime: String(pick(row, ["departure_time", "depart_at", "time"]) ?? ""),
       pricePerSeat: option ? Number(pick(option, ["price_usd"]) ?? 0) : defaultPrice,
       capacity,
@@ -337,6 +340,7 @@ export async function fetchScheduleOptions(
       // the booking RPC resolves/materializes it from trip + date + time.
       scheduleId: `hourly:${tripId}:${time}`,
       tripOptionId: defaultOption ? String(pick(defaultOption, ["id"])) : null,
+      vehicleTypeId: defaultOption ? pick<string>(defaultOption, ["vehicle_type_id"]) : null,
       departureTime: time,
       pricePerSeat: defaultPrice,
       capacity: null,
