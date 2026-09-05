@@ -4,6 +4,14 @@ import { ArrowLeft, Sparkles } from "lucide-react";
 
 import { SectionHeader } from "@/components/goair/section-header";
 import { fetchActivePackages, formatUsd } from "@/lib/goair";
+import { cn } from "@/lib/utils";
+
+const CARD_THEMES = [
+  "bg-primary text-primary-foreground",
+  "bg-accent text-accent-foreground",
+  "bg-background text-primary border border-border",
+  "bg-mist text-primary",
+] as const;
 
 /** Homepage teaser for the real packages/add-ons page — not a separate promise. */
 export function DealsTeaser() {
@@ -29,24 +37,36 @@ export function DealsTeaser() {
         </div>
 
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {packages.slice(0, 4).map((pkg) => (
-            <Link
-              key={pkg.id}
-              to="/packages"
-              className="group flex flex-col rounded-2xl border border-border bg-background p-5 shadow-sm transition-shadow hover:shadow-[var(--shadow-card)]"
-            >
-              <span className="flex size-10 items-center justify-center rounded-lg bg-accent/15 text-accent">
-                <Sparkles className="size-4.5" aria-hidden />
-              </span>
-              <h3 className="mt-4 font-display text-base font-extrabold text-primary">{pkg.name}</h3>
-              {pkg.tagline ? (
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{pkg.tagline}</p>
-              ) : null}
-              <p className="mt-3 font-display text-lg font-extrabold text-accent">
-                +{formatUsd(pkg.priceUsd)}
-              </p>
-            </Link>
-          ))}
+          {packages.slice(0, 4).map((pkg, index) => {
+            const theme = CARD_THEMES[index % CARD_THEMES.length] ?? CARD_THEMES[0];
+            const isTinted = !theme.includes("bg-background");
+            return (
+              <Link
+                key={pkg.id}
+                to="/packages"
+                className={cn(
+                  "group flex flex-col rounded-2xl p-5 shadow-sm transition-transform duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-card)]",
+                  theme,
+                )}
+              >
+                <Sparkles className="size-5" aria-hidden />
+                <h3 className="mt-5 font-display text-base font-extrabold">{pkg.name}</h3>
+                {pkg.tagline ? (
+                  <p
+                    className={cn(
+                      "mt-1 text-sm leading-relaxed",
+                      isTinted ? "opacity-80" : "text-muted-foreground",
+                    )}
+                  >
+                    {pkg.tagline}
+                  </p>
+                ) : null}
+                <p className="mt-4 font-display text-lg font-extrabold">
+                  +{formatUsd(pkg.priceUsd)}
+                </p>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </section>

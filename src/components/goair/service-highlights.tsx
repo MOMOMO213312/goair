@@ -10,16 +10,14 @@ const ITEMS = [
 /** Dark operational-highlights strip below the ride-types section. */
 export function ServiceHighlights() {
   return (
-    <section className="bg-primary py-6">
-      <div className="mx-auto grid max-w-6xl gap-5 px-4 sm:grid-cols-2 lg:grid-cols-4">
+    <section className="bg-primary py-8">
+      <div className="mx-auto grid max-w-6xl gap-x-8 gap-y-6 px-4 sm:grid-cols-2 lg:grid-cols-4">
         {ITEMS.map((item) => (
-          <div key={item.title} className="flex items-center gap-3">
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary-foreground/10 text-accent">
-              <item.icon className="size-5" aria-hidden />
-            </span>
+          <div key={item.title} className="flex items-start gap-3">
+            <item.icon className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
             <div className="min-w-0">
               <p className="font-display text-sm font-bold text-primary-foreground">{item.title}</p>
-              <p className="mt-0.5 text-xs text-primary-foreground/70">{item.text}</p>
+              <p className="mt-0.5 text-xs leading-relaxed text-primary-foreground/70">{item.text}</p>
             </div>
           </div>
         ))}

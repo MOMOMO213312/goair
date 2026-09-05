@@ -32,10 +32,16 @@ export function HowItWorks() {
       <div className="mx-auto max-w-6xl px-4">
         <SectionHeader title="إزاي تحجز مع GoAir" description="من البحث للاستقبال في 4 خطوات بسيطة." />
 
-        <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {STEPS.map((step, index) => (
             <div key={step.title} className="relative flex flex-col items-start">
-              <span className="flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              {index < STEPS.length - 1 ? (
+                <span
+                  className="absolute top-6 start-full hidden h-px w-8 -translate-y-1/2 bg-accent/40 lg:block"
+                  aria-hidden
+                />
+              ) : null}
+              <span className="relative z-10 flex size-12 items-center justify-center rounded-full border-2 border-accent bg-background text-accent">
                 <step.icon className="size-5" aria-hidden />
               </span>
               <p className="mt-4 text-xs font-bold text-accent">الخطوة {index + 1}</p>
