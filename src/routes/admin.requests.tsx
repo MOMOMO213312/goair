@@ -1,5 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+
+import { useAdminToken } from "@/lib/admin-session";
 import { toast } from "sonner";
 
 import { AdminAuthError, AdminLoading } from "@/components/admin/admin-shell";
@@ -23,7 +25,7 @@ export const Route = createFileRoute("/admin/requests")({
 });
 
 function RequestsPage() {
-  const { token } = Route.useSearch();
+  const token = useAdminToken();
   const queryClient = useQueryClient();
 
   const requestsQuery = useQuery({

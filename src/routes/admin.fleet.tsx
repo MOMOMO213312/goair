@@ -1,5 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+
+import { useAdminToken } from "@/lib/admin-session";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -24,7 +26,7 @@ export const Route = createFileRoute("/admin/fleet")({
 });
 
 function FleetPage() {
-  const { token } = Route.useSearch();
+  const token = useAdminToken();
   const queryClient = useQueryClient();
 
   const driversQuery = useQuery({

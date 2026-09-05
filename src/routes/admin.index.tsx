@@ -1,5 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+
+import { useAdminToken } from "@/lib/admin-session";
 import { Check, ExternalLink, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -30,7 +32,7 @@ export const Route = createFileRoute("/admin/")({
 });
 
 function AdminBookingsPage() {
-  const { token } = Route.useSearch();
+  const token = useAdminToken();
   const queryClient = useQueryClient();
 
   const bookingsQuery = useQuery({
