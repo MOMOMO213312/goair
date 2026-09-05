@@ -81,6 +81,12 @@ function SearchPage() {
     ? Math.min(...allOptions.map((option) => option.pricePerSeat))
     : null;
 
+  const earliestTime = allOptions.length
+    ? allOptions.reduce((earliest, option) =>
+        option.departureTime.localeCompare(earliest.departureTime) < 0 ? option : earliest,
+      ).departureTime
+    : null;
+
   const priceCeiling = allOptions.length
     ? Math.ceil(Math.max(...allOptions.map((option) => option.pricePerSeat)))
     : 0;
@@ -269,6 +275,12 @@ function SearchPage() {
                         visibleOptions.length > 1 &&
                         cheapestPrice !== null &&
                         option.pricePerSeat === cheapestPrice
+                      }
+                      isFastest={
+                        visibleOptions.length > 1 &&
+                        earliestTime !== null &&
+                        option.departureTime === earliestTime &&
+                        option.pricePerSeat !== cheapestPrice
                       }
                     />
                   ))

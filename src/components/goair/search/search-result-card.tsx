@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, BadgeCheck, Briefcase, CalendarX2, Clock, Info, MapPin, UserRound, Users } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Briefcase, CalendarX2, Clock, Info, MapPin, UserRound, Users, Zap } from "lucide-react";
 
 import { DestinationPlaceholder } from "@/components/goair/destination-placeholder";
 import { FlightPath } from "@/components/flight-path";
@@ -25,6 +25,8 @@ type SearchResultCardProps = {
   vehicleType?: VehicleType | null;
   /** True when this is the cheapest available departure for the search — shown as a small badge. */
   isBestPrice?: boolean;
+  /** True when this is the earliest available departure for the search — shown as a small badge. */
+  isFastest?: boolean;
   /** Carried over from the hero search — prefills the booking form, nothing more (no live tracking yet). */
   flight?: string;
 };
@@ -63,6 +65,7 @@ export function SearchResultCard({
   className,
   vehicleType,
   isBestPrice,
+  isFastest,
   flight,
 }: SearchResultCardProps) {
   const fallback = isFallbackSchedule(option.scheduleId);
@@ -116,11 +119,21 @@ export function SearchResultCard({
               </h3>
             </div>
 
-            {isBestPrice ? (
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-accent/15 px-2.5 py-1 text-[11px] font-bold text-accent">
-                <BadgeCheck className="size-3.5" aria-hidden />
-                أفضل سعر
-              </span>
+            {isBestPrice || isFastest ? (
+              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                {isBestPrice ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2.5 py-1 text-[11px] font-bold text-accent">
+                    <BadgeCheck className="size-3.5" aria-hidden />
+                    أفضل سعر
+                  </span>
+                ) : null}
+                {isFastest ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary">
+                    <Zap className="size-3.5" aria-hidden />
+                    الأسرع
+                  </span>
+                ) : null}
+              </div>
             ) : null}
           </div>
 

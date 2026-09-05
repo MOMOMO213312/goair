@@ -48,12 +48,8 @@ export function SearchSummary({
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-            تفاصيل البحث
-          </p>
-
-          <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="font-display text-lg font-extrabold text-primary sm:text-xl">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="font-display text-xl font-extrabold text-primary sm:text-2xl">
               {originLabel}
             </span>
             {code ? (
@@ -62,7 +58,7 @@ export function SearchSummary({
               </span>
             ) : null}
             <ArrowLeft className="size-5 shrink-0 text-accent" aria-hidden />
-            <span className="font-display text-lg font-extrabold text-primary sm:text-xl">
+            <span className="font-display text-xl font-extrabold text-primary sm:text-2xl">
               {destLabel}
             </span>
           </div>
