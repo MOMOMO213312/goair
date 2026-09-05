@@ -85,29 +85,6 @@ export async function fetchPackageById(id: string): Promise<PackageTier | null> 
   return all.find((p) => p.id === id) ?? null;
 }
 
-/**
- * Real "starting from" price per vehicle type — the minimum shared price
- * across ALL routes for that capacity. Honest floor figure (not a fabricated
- * per-vehicle price): the actual price for a specific route only appears
- * after a real search, since price varies by route even for the same
- * vehicle type.
- */
-export async function fetchVehicleTypeStartingPrices(): Promise<Record<string, number>> {
-  const { data, error } = await supabase
-    .from("trip_options")
-    .select("vehicle_type_id, price_usd")
-    .eq("booking_type", "shared")
-    .eq("is_active", true);
-  if (error) throw new Error(error.message);
-  const result: Record<string, number> = {};
-  for (const row of data ?? []) {
-    const id = String(pick(row, ["vehicle_type_id"]));
-    const price = Number(pick(row, ["price_usd"]) ?? 0);
-    if (!(id in result) || price < result[id]) result[id] = price;
-  }
-  return result;
-}
-
 export async function fetchVehicleTypes(): Promise<VehicleType[]> {
   const { data, error } = await supabase
     .from("vehicle_types")
