@@ -7,5 +7,8 @@ const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2cmphcHJsbmt1dG9jdmJuamhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NTk4MDMsImV4cCI6MjEwMTIzNTgwM30.Egbx6YqnEeCVBc9avOTV8V9yj_kAvGJ9itHKC4wj-vs";
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false },
+  // Session persistence is only used by the internal staff/operator/partner/
+  // agency dashboards (real Supabase Auth login). The public customer booking
+  // flow never creates a session, so this has no effect on customer-facing pages.
+  auth: { persistSession: true, autoRefreshToken: true },
 });

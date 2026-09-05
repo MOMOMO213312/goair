@@ -1,5 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+
+import { useAdminToken } from "@/lib/admin-session";
 import { useState } from "react";
 import { toast } from "sonner";
 import { AdminAuthError, AdminLoading } from "@/components/admin/admin-shell";
@@ -29,7 +31,7 @@ function emptyForm() {
 }
 
 function PackagesAdminPage() {
-  const { token } = Route.useSearch();
+  const token = useAdminToken();
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["admin-packages", token], queryFn: () => adminListPackages(token), retry: false, enabled: Boolean(token) });
   const [editingId, setEditingId] = useState<string | null>(null);
