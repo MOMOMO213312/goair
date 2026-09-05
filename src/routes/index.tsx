@@ -127,10 +127,10 @@ function Home() {
           height={1088}
           className="absolute inset-0 -z-10 size-full object-cover"
         />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-primary via-primary/70 to-primary/30 sm:bg-gradient-to-l" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ink/85 via-ink/25 to-transparent sm:from-ink/80 sm:via-ink/10" />
         <FlightPath className="pointer-events-none absolute inset-x-0 top-10 -z-10 h-24 w-full text-accent/40 sm:top-16 sm:h-32 [stroke-dasharray:1200] [stroke-dashoffset:1200] motion-safe:animate-[draw-route_1.8s_ease-out_forwards]" />
 
-        <div className="mx-auto max-w-6xl px-4 pb-28 pt-14 sm:pb-32 sm:pt-20">
+        <div className="mx-auto max-w-6xl px-4 pb-40 pt-14 sm:pb-48 sm:pt-20">
           <div className="max-w-2xl">
             <p className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1 text-xs font-bold text-primary-foreground">
               <Sparkles className="size-3.5 text-accent" />
