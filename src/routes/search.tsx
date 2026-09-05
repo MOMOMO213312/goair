@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   CustomRequestCard,
@@ -16,7 +16,7 @@ import { SearchSortDesktop, SearchSortMobile, type SortKey } from "@/components/
 import { SearchSummary } from "@/components/goair/search/search-summary";
 import { Card } from "@/components/ui/card";
 import { DestinationCard } from "@/components/goair/destination-card";
-import { fetchScheduleOptions, fetchTrips } from "@/lib/goair";
+import { fetchScheduleOptions, fetchTrips, fetchVehicleTypes, type VehicleType } from "@/lib/goair";
 import { getDestinationSummariesForAirport } from "@/lib/trip-stats";
 
 export const Route = createFileRoute("/search")({
@@ -27,6 +27,8 @@ export const Route = createFileRoute("/search")({
     date: String(search["date"] ?? new Date().toISOString().slice(0, 10)),
     seats: Math.max(1, Number(search["seats"]) || 1),
     packageId: typeof search["packageId"] === "string" ? search["packageId"] : undefined,
+    flight: typeof search["flight"] === "string" && search["flight"] ? search["flight"] : undefined,
+    focus: search["focus"] === "private" ? "private" : undefined,
   }),
   head: () => ({
     meta: [
@@ -51,6 +53,15 @@ function SearchPage() {
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
 
   const tripsQuery = useQuery({ queryKey: ["goair", "trips"], queryFn: fetchTrips });
+  const vehicleTypesQuery = useQuery({
+    queryKey: ["goair", "vehicle-types"],
+    queryFn: fetchVehicleTypes,
+  });
+  const vehicleTypesById = useMemo(() => {
+    const map = new Map<string, VehicleType>();
+    for (const vehicle of vehicleTypesQuery.data ?? []) map.set(vehicle.id, vehicle);
+    return map;
+  }, [vehicleTypesQuery.data]);
   const trip = tripsQuery.data?.find(
     (item) =>
       item.country === params.country &&
@@ -65,6 +76,10 @@ function SearchPage() {
   });
 
   const allOptions = optionsQuery.data ?? [];
+
+  const cheapestPrice = allOptions.length
+    ? Math.min(...allOptions.map((option) => option.pricePerSeat))
+    : null;
 
   const priceCeiling = allOptions.length
     ? Math.ceil(Math.max(...allOptions.map((option) => option.pricePerSeat)))
@@ -108,6 +123,13 @@ function SearchPage() {
     setMaxPrice(null);
   }
 
+  // "نقل خاص" toggle on the hero jumps here — never hides the shared results.
+  useEffect(() => {
+    if (params.focus !== "private" || isLoading) return;
+    const target = document.getElementById("private-picks");
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [params.focus, isLoading]);
+
   const filterPanelProps = {
     trip,
     country: params.country,
@@ -139,6 +161,7 @@ function SearchPage() {
             destination={params.destination}
             date={params.date}
             seats={params.seats}
+            id="private-picks"
           />
         ) : null}
 
@@ -238,6 +261,15 @@ function SearchPage() {
                       seats={params.seats}
                       travelDate={params.date}
                       packageId={params.packageId}
+                      flight={params.flight}
+                      vehicleType={
+                        option.vehicleTypeId ? vehicleTypesById.get(option.vehicleTypeId) ?? null : null
+                      }
+                      isBestPrice={
+                        visibleOptions.length > 1 &&
+                        cheapestPrice !== null &&
+                        option.pricePerSeat === cheapestPrice
+                      }
                     />
                   ))
                 ) : (

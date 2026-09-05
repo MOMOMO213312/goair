@@ -32,7 +32,7 @@ export function RideTypesSection() {
   if (!vehicleTypes || vehicleTypes.length === 0) return null;
 
   return (
-    <section className="py-14 sm:py-16">
+    <section id="services" className="scroll-mt-20 py-14 sm:py-16">
       <div className="mx-auto max-w-6xl px-4">
         <SectionHeader title="اختار حسب حجم مجموعتك" description="السعر بيظهر بعد اختيار خط رحلتك — نفس مستوى الراحة والاستقبال لأي حجم." />
 

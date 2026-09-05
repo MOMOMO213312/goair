@@ -11,7 +11,9 @@ import { BusinessPromoBanner } from "@/components/goair/business-promo-banner";
 import { CountryExploreCard } from "@/components/goair/country-explore-card";
 import { DestinationCard } from "@/components/goair/destination-card";
 import { EmptyState } from "@/components/goair/empty-state";
+import { DealsTeaser } from "@/components/goair/deals-teaser";
 import { HeroTrustStrip } from "@/components/goair/hero-trust-strip";
+import { HowItWorks } from "@/components/goair/how-it-works";
 import { RideTypesSection } from "@/components/goair/ride-types-section";
 import { RouteCard } from "@/components/goair/route-card";
 import { SectionHeader } from "@/components/goair/section-header";
@@ -135,7 +137,7 @@ function Home() {
               مصر ولبنان — متاح الآن
             </p>
             <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.15] text-primary-foreground sm:text-5xl">
-              شبكة واحدة تعمل من أجل راحتك
+              رحلتك تبدأ من هنا
             </h1>
             <p className="mt-4 text-base leading-relaxed text-primary-foreground/90 sm:text-lg">
               حلول سفر متكاملة مصممة لكل رحلة
@@ -151,17 +153,11 @@ function Home() {
       {/* Trust strip — directly under the hero, per Final Vision */}
       <HeroTrustStrip />
 
-      {/* Choose your ride — real vehicle tiers from vehicle_types */}
-      <RideTypesSection />
-
-      {/* Operational highlights */}
-      <ServiceHighlights />
-
-      {/* Available routes */}
+      {/* Popular routes — first thing after the hero, per the updated homepage structure */}
       <section className="py-14 sm:py-16">
         <div className="mx-auto max-w-6xl px-4">
           <SectionHeader
-            title="استكشف شبكة خطوطنا من أجل راحتك"
+            title="أشهر الخطوط عندنا"
             description="خطوطنا تنشط في مصر ولبنان بأسعار ثابتة لكل مقعد من وإلى المطار"
           />
 
@@ -187,6 +183,18 @@ function Home() {
           )}
         </div>
       </section>
+
+      {/* Choose your ride — real vehicle tiers from vehicle_types */}
+      <RideTypesSection />
+
+      {/* Operational highlights */}
+      <ServiceHighlights />
+
+      {/* GOAIR Deals — teaser for the real packages/add-ons page */}
+      <DealsTeaser />
+
+      {/* How GoAir works — search → choose → book → meet */}
+      <HowItWorks />
 
       <AirportGrid airports={airports} />
 

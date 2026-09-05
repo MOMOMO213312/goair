@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 /** CTA banner routing agencies/airlines to the existing partner portal. */
 export function BusinessPromoBanner() {
   return (
-    <section className="py-14 sm:py-16">
+    <section id="business" className="scroll-mt-20 py-14 sm:py-16">
       <div className="mx-auto max-w-6xl px-4">
         <div className="relative isolate overflow-hidden rounded-2xl">
           <img

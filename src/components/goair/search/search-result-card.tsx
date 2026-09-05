@@ -1,11 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Clock, Info, MapPin, Users } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Briefcase, CalendarX2, Clock, Info, MapPin, UserRound, Users } from "lucide-react";
 
 import { DestinationPlaceholder } from "@/components/goair/destination-placeholder";
 import { FlightPath } from "@/components/flight-path";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import type { ScheduleOption, Trip } from "@/lib/goair";
+import type { ScheduleOption, Trip, VehicleType } from "@/lib/goair";
 import { formatTime, formatUsd, isGeneratedScheduleId } from "@/lib/goair";
 import { getTripCityLocation, getTripRouteImage } from "@/lib/trip-media";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,12 @@ type SearchResultCardProps = {
   travelDate: string;
   packageId?: string;
   className?: string;
+  /** Group-size tier for this departure — used only for capacity/luggage info, never shown as a vehicle name. */
+  vehicleType?: VehicleType | null;
+  /** True when this is the cheapest available departure for the search — shown as a small badge. */
+  isBestPrice?: boolean;
+  /** Carried over from the hero search — prefills the booking form, nothing more (no live tracking yet). */
+  flight?: string;
 };
 
 function RouteImage({
@@ -55,6 +61,9 @@ export function SearchResultCard({
   travelDate,
   packageId,
   className,
+  vehicleType,
+  isBestPrice,
+  flight,
 }: SearchResultCardProps) {
   const fallback = isFallbackSchedule(option.scheduleId);
   const total = option.pricePerSeat * seats;
@@ -106,6 +115,13 @@ export function SearchResultCard({
                 {trip.destination}
               </h3>
             </div>
+
+            {isBestPrice ? (
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-accent/15 px-2.5 py-1 text-[11px] font-bold text-accent">
+                <BadgeCheck className="size-3.5" aria-hidden />
+                أفضل سعر
+              </span>
+            ) : null}
           </div>
 
           {/* Route visual — horizontal on md+ */}
@@ -149,6 +165,20 @@ export function SearchResultCard({
               </div>
             </div>
 
+            {vehicleType?.maxLuggage != null ? (
+              <div className="flex items-center gap-2">
+                <span className="flex size-9 items-center justify-center rounded-lg bg-secondary text-primary">
+                  <Briefcase className="size-4" aria-hidden />
+                </span>
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground">الحقائب</p>
+                  <p className="font-display text-base font-extrabold text-primary">
+                    حتى {vehicleType.maxLuggage} حقيبة
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
             {trip.distance_km != null ? (
               <div className="flex items-center gap-2">
                 <span className="flex size-9 items-center justify-center rounded-lg bg-secondary text-primary">
@@ -162,6 +192,18 @@ export function SearchResultCard({
                 </div>
               </div>
             ) : null}
+          </div>
+
+          {/* Included perks — same claims already made site-wide (hero trust strip) */}
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <CalendarX2 className="size-3.5 text-accent" aria-hidden />
+              إلغاء مجاني حتى 24 ساعة
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <UserRound className="size-3.5 text-accent" aria-hidden />
+              استقبال بلافتة باسمك
+            </span>
           </div>
 
           <p className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
@@ -179,6 +221,7 @@ export function SearchResultCard({
               travelDate={travelDate}
               disabled={notEnough}
               packageId={packageId}
+              flight={flight}
             />
           </div>
         </div>
@@ -200,6 +243,7 @@ export function SearchResultCard({
               travelDate={travelDate}
               disabled={notEnough}
               packageId={packageId}
+              flight={flight}
               className="mt-4 w-full"
             />
           </div>
@@ -241,6 +285,7 @@ function BookButton({
   travelDate,
   disabled,
   packageId,
+  flight,
   className,
 }: {
   trip: Trip;
@@ -249,6 +294,7 @@ function BookButton({
   travelDate: string;
   disabled: boolean;
   packageId?: string;
+  flight?: string;
   className?: string;
 }) {
   if (disabled) {
@@ -277,7 +323,9 @@ function BookButton({
           seats,
           time: option.departureTime,
           price: option.pricePerSeat,
+          bookingType: "shared",
           ...(packageId ? { packageId } : {}),
+          ...(flight ? { flight } : {}),
         }}
       >
         احجز الآن

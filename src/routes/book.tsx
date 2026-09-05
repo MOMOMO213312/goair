@@ -32,6 +32,8 @@ type BookSearch = {
   bookingType: "shared" | "private";
   /** Required when bookingType === 'private' — which vehicle tier was picked. */
   vehicleTypeId?: string;
+  /** Prefilled from the hero search, if entered — no live tracking, just carried through. */
+  flight?: string;
 };
 
 export const Route = createFileRoute("/book")({
@@ -46,6 +48,7 @@ export const Route = createFileRoute("/book")({
     packageId: typeof search["packageId"] === "string" ? search["packageId"] : undefined,
     bookingType: search["bookingType"] === "private" ? "private" : "shared",
     vehicleTypeId: typeof search["vehicleTypeId"] === "string" ? search["vehicleTypeId"] : undefined,
+    flight: typeof search["flight"] === "string" && search["flight"] ? search["flight"] : undefined,
   }),
   head: () => ({
     meta: [
@@ -66,7 +69,7 @@ function BookPage() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [flight, setFlight] = useState("");
+  const [flight, setFlight] = useState(search.flight ?? "");
   const [luggage, setLuggage] = useState(1);
   const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);

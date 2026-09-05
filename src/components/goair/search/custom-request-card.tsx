@@ -16,6 +16,8 @@ export type SearchParams = {
   date: string;
   seats: number;
   packageId?: string;
+  flight?: string;
+  focus?: "private";
 };
 
 export function CustomRequestCard({ params }: { params: SearchParams }) {

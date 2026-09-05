@@ -23,6 +23,7 @@ import { Route as PartnerRouteImport } from './routes/partner'
 import { Route as PaymentRouteImport } from './routes/payment'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as SubscribeRouteImport } from './routes/subscribe'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAnnouncementsRouteImport } from './routes/admin.announcements'
@@ -111,6 +112,11 @@ const PrivacyRoute = PrivacyRouteImport.update({
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubscribeRoute = SubscribeRouteImport.update({
+  id: '/subscribe',
+  path: '/subscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TermsRoute = TermsRouteImport.update({
@@ -224,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/payment': typeof PaymentRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
+  '/subscribe': typeof SubscribeRoute
   '/terms': typeof TermsRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/fleet': typeof AdminFleetRoute
@@ -255,6 +262,7 @@ export interface FileRoutesByTo {
   '/payment': typeof PaymentRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
+  '/subscribe': typeof SubscribeRoute
   '/terms': typeof TermsRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/fleet': typeof AdminFleetRoute
@@ -291,6 +299,7 @@ export interface FileRoutesById {
   '/payment': typeof PaymentRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
+  '/subscribe': typeof SubscribeRoute
   '/terms': typeof TermsRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/fleet': typeof AdminFleetRoute
@@ -328,6 +337,7 @@ export interface FileRouteTypes {
     | '/payment'
     | '/privacy'
     | '/search'
+    | '/subscribe'
     | '/terms'
     | '/admin/announcements'
     | '/admin/fleet'
@@ -359,6 +369,7 @@ export interface FileRouteTypes {
     | '/payment'
     | '/privacy'
     | '/search'
+    | '/subscribe'
     | '/terms'
     | '/admin/announcements'
     | '/admin/fleet'
@@ -394,6 +405,7 @@ export interface FileRouteTypes {
     | '/payment'
     | '/privacy'
     | '/search'
+    | '/subscribe'
     | '/terms'
     | '/admin/announcements'
     | '/admin/fleet'
@@ -430,6 +442,7 @@ export interface RootRouteChildren {
   PaymentRoute: typeof PaymentRoute
   PrivacyRoute: typeof PrivacyRoute
   SearchRoute: typeof SearchRoute
+  SubscribeRoute: typeof SubscribeRoute
   TermsRoute: typeof TermsRoute
 }
 
@@ -531,6 +544,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/subscribe': {
+      id: '/subscribe'
+      path: '/subscribe'
+      fullPath: '/subscribe'
+      preLoaderRoute: typeof SubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/terms': {
@@ -756,6 +776,7 @@ const rootRouteChildren: RootRouteChildren = {
   PaymentRoute: PaymentRoute,
   PrivacyRoute: PrivacyRoute,
   SearchRoute: SearchRoute,
+  SubscribeRoute: SubscribeRoute,
   TermsRoute: TermsRoute,
 }
 export const routeTree = rootRouteImport
