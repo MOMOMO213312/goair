@@ -1,14 +1,16 @@
 import { Link } from "@tanstack/react-router";
-import { Menu, Plane } from "lucide-react";
+import { Menu, Plane, Ticket } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
 const links = [
   { to: "/", hash: undefined, label: "الرئيسية" },
-  { to: "/my-bookings", hash: undefined, label: "حجوزاتي" },
-  { to: "/", hash: "stations", label: "محطاتنا" },
-  { to: "/packages", hash: undefined, label: "الباقات" },
+  { to: "/", hash: "find-your-ride", label: "احجز رحلة" },
+  { to: "/", hash: "services", label: "الخدمات" },
+  { to: "/packages", hash: undefined, label: "العروض" },
+  { to: "/my-bookings", hash: undefined, label: "رحلاتي" },
+  { to: "/", hash: "business", label: "للشركات" },
 ] as const;
 
 export function SiteHeader() {
@@ -42,8 +44,16 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Button asChild size="sm" className="hidden bg-accent text-accent-foreground hover:bg-accent/90 sm:inline-flex">
-            <Link to="/">احجز رحلتك</Link>
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            className="hidden gap-1.5 sm:inline-flex"
+          >
+            <Link to="/my-bookings">
+              <Ticket className="size-4" aria-hidden />
+              تتبع حجزي
+            </Link>
           </Button>
           <Button
             variant="ghost"
@@ -71,6 +81,14 @@ export function SiteHeader() {
               {link.label}
             </Link>
           ))}
+          <Link
+            to="/my-bookings"
+            onClick={() => setOpen(false)}
+            className="mt-1 flex items-center gap-1.5 rounded-md px-3 py-3 text-sm font-bold text-primary"
+          >
+            <Ticket className="size-4" aria-hidden />
+            تتبع حجزي
+          </Link>
         </nav>
       ) : null}
     </header>

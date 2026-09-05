@@ -25,6 +25,8 @@ type SearchResultCardProps = {
   vehicleType?: VehicleType | null;
   /** True when this is the cheapest available departure for the search — shown as a small badge. */
   isBestPrice?: boolean;
+  /** Carried over from the hero search — prefills the booking form, nothing more (no live tracking yet). */
+  flight?: string;
 };
 
 function RouteImage({
@@ -61,6 +63,7 @@ export function SearchResultCard({
   className,
   vehicleType,
   isBestPrice,
+  flight,
 }: SearchResultCardProps) {
   const fallback = isFallbackSchedule(option.scheduleId);
   const total = option.pricePerSeat * seats;
@@ -218,6 +221,7 @@ export function SearchResultCard({
               travelDate={travelDate}
               disabled={notEnough}
               packageId={packageId}
+              flight={flight}
             />
           </div>
         </div>
@@ -239,6 +243,7 @@ export function SearchResultCard({
               travelDate={travelDate}
               disabled={notEnough}
               packageId={packageId}
+              flight={flight}
               className="mt-4 w-full"
             />
           </div>
@@ -280,6 +285,7 @@ function BookButton({
   travelDate,
   disabled,
   packageId,
+  flight,
   className,
 }: {
   trip: Trip;
@@ -288,6 +294,7 @@ function BookButton({
   travelDate: string;
   disabled: boolean;
   packageId?: string;
+  flight?: string;
   className?: string;
 }) {
   if (disabled) {
@@ -316,7 +323,9 @@ function BookButton({
           seats,
           time: option.departureTime,
           price: option.pricePerSeat,
+          bookingType: "shared",
           ...(packageId ? { packageId } : {}),
+          ...(flight ? { flight } : {}),
         }}
       >
         احجز الآن

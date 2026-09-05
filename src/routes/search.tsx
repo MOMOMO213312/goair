@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   CustomRequestCard,
@@ -27,6 +27,8 @@ export const Route = createFileRoute("/search")({
     date: String(search["date"] ?? new Date().toISOString().slice(0, 10)),
     seats: Math.max(1, Number(search["seats"]) || 1),
     packageId: typeof search["packageId"] === "string" ? search["packageId"] : undefined,
+    flight: typeof search["flight"] === "string" && search["flight"] ? search["flight"] : undefined,
+    focus: search["focus"] === "private" ? "private" : undefined,
   }),
   head: () => ({
     meta: [
@@ -121,6 +123,13 @@ function SearchPage() {
     setMaxPrice(null);
   }
 
+  // "نقل خاص" toggle on the hero jumps here — never hides the shared results.
+  useEffect(() => {
+    if (params.focus !== "private" || isLoading) return;
+    const target = document.getElementById("private-picks");
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [params.focus, isLoading]);
+
   const filterPanelProps = {
     trip,
     country: params.country,
@@ -152,6 +161,7 @@ function SearchPage() {
             destination={params.destination}
             date={params.date}
             seats={params.seats}
+            id="private-picks"
           />
         ) : null}
 
@@ -251,6 +261,7 @@ function SearchPage() {
                       seats={params.seats}
                       travelDate={params.date}
                       packageId={params.packageId}
+                      flight={params.flight}
                       vehicleType={
                         option.vehicleTypeId ? vehicleTypesById.get(option.vehicleTypeId) ?? null : null
                       }

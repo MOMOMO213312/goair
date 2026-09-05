@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { CalendarDays, Globe2, MapPin, Plane, Search, Users } from "lucide-react";
+import { CalendarDays, Globe2, Plane, PlaneTakeoff, Search, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -50,6 +50,11 @@ export function SearchWidget({
   const [destination, setDestination] = useState(initial?.destination ?? "");
   const [date, setDate] = useState(initial?.date ?? today());
   const [seats, setSeats] = useState(initial?.seats ?? 1);
+  const [flight, setFlight] = useState("");
+  /** Cosmetic only — shared and private options always show together on the
+   * results page (never hidden), matching the existing private-booking design.
+   * "خاص" just jumps the results page straight down to that section. */
+  const [rideMode, setRideMode] = useState<"shared" | "private">("shared");
 
   const visibleTrips = useMemo(
     () => trips.filter((trip) => countries.includes(trip.country)),
@@ -124,6 +129,8 @@ export function SearchWidget({
         destination,
         date,
         seats,
+        ...(flight.trim() ? { flight: flight.trim() } : {}),
+        ...(rideMode === "private" ? { focus: "private" } : {}),
         ...(packageId ? { packageId } : {}),
       },
     });
@@ -147,6 +154,30 @@ export function SearchWidget({
         <Search className="size-4 text-accent" />
         ابحث عن رحلة المطار
       </p>
+
+      {/* Shared / Private toggle — cosmetic; both always appear in the results */}
+      <div className="mb-4 inline-flex rounded-lg border border-border bg-secondary/60 p-1">
+        <button
+          type="button"
+          onClick={() => setRideMode("shared")}
+          className={cn(
+            "rounded-md px-4 py-1.5 text-sm font-bold transition-colors",
+            rideMode === "shared" ? "bg-card text-primary shadow-sm" : "text-muted-foreground",
+          )}
+        >
+          نقل مشترك
+        </button>
+        <button
+          type="button"
+          onClick={() => setRideMode("private")}
+          className={cn(
+            "rounded-md px-4 py-1.5 text-sm font-bold transition-colors",
+            rideMode === "private" ? "bg-card text-primary shadow-sm" : "text-muted-foreground",
+          )}
+        >
+          نقل خاص
+        </button>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <div className="space-y-2">
@@ -225,6 +256,21 @@ export function SearchWidget({
             max={50}
             value={seats}
             onChange={(event) => setSeats(Math.max(1, Number(event.target.value) || 1))}
+            className="h-11"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="goair-flight" className="flex items-center gap-1.5">
+            <PlaneTakeoff className="size-3.5 text-muted-foreground" />
+            رقم الرحلة <span className="font-normal text-muted-foreground">(اختياري)</span>
+          </Label>
+          <Input
+            id="goair-flight"
+            type="text"
+            placeholder="مثال: MS777"
+            value={flight}
+            onChange={(event) => setFlight(event.target.value)}
             className="h-11"
           />
         </div>

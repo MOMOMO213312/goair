@@ -19,6 +19,7 @@ type PrivateBookingSectionProps = {
   date: string;
   seats: number;
   className?: string;
+  id?: string;
 };
 
 /**
@@ -28,7 +29,7 @@ type PrivateBookingSectionProps = {
  * product. Prices are flat totals per vehicle, auto-priced from the
  * market's average route pricing (see `estimate_private_price` in the DB).
  */
-export function PrivateBookingSection({ trip, destination, date, seats, className }: PrivateBookingSectionProps) {
+export function PrivateBookingSection({ trip, destination, date, seats, className, id }: PrivateBookingSectionProps) {
   const { data: options, isLoading } = useQuery({
     queryKey: ["goair", "private-options", trip.id],
     queryFn: () => fetchPrivateTripOptions(trip.id),
@@ -38,7 +39,7 @@ export function PrivateBookingSection({ trip, destination, date, seats, classNam
   if (!options || options.length === 0) return null;
 
   return (
-    <section className={cn("mt-8", className)}>
+    <section id={id} className={cn("scroll-mt-20 mt-8", className)}>
       <div className="flex items-center gap-2">
         <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
           <Lock className="size-4" aria-hidden />
