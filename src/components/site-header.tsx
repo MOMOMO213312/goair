@@ -10,7 +10,6 @@ const links = [
   { to: "/", hash: "services", label: "الخدمات" },
   { to: "/packages", hash: undefined, label: "العروض" },
   { to: "/my-bookings", hash: undefined, label: "رحلاتي" },
-  { to: "/", hash: "business", label: "للشركات" },
 ] as const;
 
 export function SiteHeader() {
