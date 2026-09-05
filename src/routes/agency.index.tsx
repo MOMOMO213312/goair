@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+
+import { useAgencyToken } from "@/lib/agency-session";
 import { Check, Copy, MapPinned, ShieldCheck, TrendingUp, Users2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -37,7 +39,7 @@ export const Route = createFileRoute("/agency/")({
 });
 
 function AgencyIndexPage() {
-  const { token } = Route.useSearch();
+  const token = useAgencyToken();
   if (token) return <AgencyOverview token={token} />;
   return <AgencyPitch />;
 }

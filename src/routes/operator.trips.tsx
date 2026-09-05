@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useOperatorToken } from "@/lib/operator-session";
 import { OperatorAuthError, OperatorLoading, OperatorSection } from "@/components/operator/operator-shell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatOperatorMoney, getOperatorTrips, isOperatorAuthError } from "@/lib/operator";
@@ -10,7 +11,7 @@ export const Route = createFileRoute("/operator/trips")({
 });
 
 function TripsPage() {
-  const { token } = Route.useSearch();
+  const token = useOperatorToken();
   const q = useQuery({ queryKey: ["operator-trips", token], queryFn: () => getOperatorTrips(token), retry: false, enabled: Boolean(token) });
   if (!token) return null;
   if (q.isPending) return <OperatorLoading />;

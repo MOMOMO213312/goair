@@ -1,35 +1,47 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 
+import { AgencyLoginForm } from "@/components/agency/agency-login-form";
 import {
   AgencyAuthError,
   AgencyDashboardShell,
   AgencyLoading,
 } from "@/components/agency/agency-shell";
 import { getAgencyDashboard } from "@/lib/agency";
+import { AgencySessionProvider, useAgencySession, useAgencyToken } from "@/lib/agency-session";
 
 export const Route = createFileRoute("/agency")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    token: typeof search["token"] === "string" && search["token"] ? String(search["token"]) : "",
-  }),
-  component: AgencyLayout,
+  component: () => (
+    <AgencySessionProvider>
+      <AgencyLayout />
+    </AgencySessionProvider>
+  ),
 });
 
 function AgencyLayout() {
-  const { token } = Route.useSearch();
+  const { state, signOut } = useAgencySession();
+  const token = useAgencyToken();
   const query = useQuery({
     queryKey: ["agency-dashboard", token],
     queryFn: () => getAgencyDashboard(token),
     retry: false,
-    enabled: Boolean(token),
+    enabled: state === "authorized",
   });
 
-  if (!token) {
+  if (state === "loading") {
     return (
-      <section className="bg-mist/30">
-        <Outlet />
-      </section>
+      <div className="mx-auto max-w-md px-4 py-24 text-center text-sm text-muted-foreground">
+        جاري التحقق...
+      </div>
     );
+  }
+
+  if (state === "signed-out") {
+    return <AgencyLoginForm />;
+  }
+
+  if (state === "not-agency") {
+    return <AgencyLoginForm notAgency />;
   }
 
   if (query.isPending) {
@@ -42,7 +54,15 @@ function AgencyLayout() {
   if (query.isError || !query.data) return <AgencyAuthError />;
 
   return (
-    <AgencyDashboardShell token={token} data={query.data}>
+    <AgencyDashboardShell data={query.data}>
+      <div className="mb-4 flex justify-end">
+        <button
+          onClick={() => signOut()}
+          className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground hover:bg-muted"
+        >
+          خروج
+        </button>
+      </div>
       <Outlet />
     </AgencyDashboardShell>
   );

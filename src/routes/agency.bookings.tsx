@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useAgencyToken } from "@/lib/agency-session";
 import { useState } from "react";
 
 import {
@@ -42,7 +43,7 @@ export const Route = createFileRoute("/agency/bookings")({
 });
 
 function BookingsPage() {
-  const { token } = Route.useSearch();
+  const token = useAgencyToken();
   const [range, setRange] = useState({ from: isoDaysAgo(30), to: todayIso() });
   const [applied, setApplied] = useState({ from: isoDaysAgo(30), to: todayIso() });
 

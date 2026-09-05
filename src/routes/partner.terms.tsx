@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { usePartnerToken } from "@/lib/partner-session";
 
 import {
   PartnerAuthError,
@@ -31,7 +32,7 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 function TermsPage() {
-  const { token } = Route.useSearch();
+  const token = usePartnerToken();
   const query = useQuery({
     queryKey: ["partner-dashboard", token],
     queryFn: () => getPartnerDashboard(token),

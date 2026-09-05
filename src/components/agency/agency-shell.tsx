@@ -14,7 +14,7 @@ const NAV = [
   { to: "/agency/statements", label: "كشوف الحساب", icon: ScrollText },
 ] as const;
 
-export function AgencyNav({ token, variant = "tabs" }: { token: string; variant?: "tabs" | "sidebar" }) {
+export function AgencyNav({ variant = "tabs" }: { variant?: "tabs" | "sidebar" }) {
   if (variant === "sidebar") {
     return (
       <nav className="flex flex-col gap-1">
@@ -22,7 +22,6 @@ export function AgencyNav({ token, variant = "tabs" }: { token: string; variant?
           <Link
             key={item.to}
             to={item.to}
-            search={{ token }}
             activeOptions={{ exact: "exact" in item ? item.exact : false }}
             className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-bold text-muted-foreground transition-colors hover:bg-secondary hover:text-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
           >
@@ -40,7 +39,6 @@ export function AgencyNav({ token, variant = "tabs" }: { token: string; variant?
         <Link
           key={item.to}
           to={item.to}
-          search={{ token }}
           activeOptions={{ exact: "exact" in item ? item.exact : false }}
           className="shrink-0 rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground transition-colors hover:text-primary data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
         >
@@ -157,11 +155,9 @@ export function AgencyStatCard({
 }
 
 export function AgencyDashboardShell({
-  token,
   data,
   children,
 }: {
-  token: string;
   data: AgencyDashboard;
   children: React.ReactNode;
 }) {
@@ -172,11 +168,11 @@ export function AgencyDashboardShell({
         <div className="mt-6 lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8">
           <aside className="hidden lg:block">
             <div className="sticky top-20 rounded-xl border border-border/80 bg-card p-3 shadow-[var(--shadow-card)]">
-              <AgencyNav token={token} variant="sidebar" />
+              <AgencyNav variant="sidebar" />
             </div>
           </aside>
           <div className="min-w-0">
-            <AgencyNav token={token} variant="tabs" />
+            <AgencyNav variant="tabs" />
             <div className="mt-6">{children}</div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useAgencyToken } from "@/lib/agency-session";
 
 import {
   AgencyAuthError,
@@ -36,7 +37,7 @@ export const Route = createFileRoute("/agency/statements")({
 });
 
 function StatementsPage() {
-  const { token } = Route.useSearch();
+  const token = useAgencyToken();
   const query = useQuery({
     queryKey: ["agency-statements", token],
     queryFn: () => getAgencyStatements(token),

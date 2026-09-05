@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { usePartnerToken } from "@/lib/partner-session";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/partner/capacity")({
 });
 
 function CapacityPage() {
-  const { token } = Route.useSearch();
+  const token = usePartnerToken();
   const [form, setForm] = useState({
     start: todayIso(),
     end: todayIso(),

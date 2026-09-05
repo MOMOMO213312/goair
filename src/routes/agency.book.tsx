@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useAgencyToken } from "@/lib/agency-session";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/agency/book")({
 });
 
 function AgencyQuickBookingPage() {
-  const { token } = Route.useSearch();
+  const token = useAgencyToken();
 
   const agencyQuery = useQuery({
     queryKey: ["agency-dashboard", token],

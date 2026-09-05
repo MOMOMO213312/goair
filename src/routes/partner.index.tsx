@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { usePartnerToken } from "@/lib/partner-session";
 import { useQuery } from "@tanstack/react-query";
 import { Building2, Check, Copy, Loader2, PlaneTakeoff, TrendingUp, Users } from "lucide-react";
 import { useState } from "react";
@@ -41,7 +42,7 @@ export const Route = createFileRoute("/partner/")({
 });
 
 function PartnerIndexPage() {
-  const { token } = Route.useSearch();
+  const token = usePartnerToken();
   if (token) return <PartnerOverview token={token} />;
   return <PartnerPitch />;
 }

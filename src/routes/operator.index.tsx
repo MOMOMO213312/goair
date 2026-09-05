@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useOperatorToken } from "@/lib/operator-session";
 import { OperatorAuthError, OperatorLoading, OperatorStatCard } from "@/components/operator/operator-shell";
 import { formatOperatorMoney, getOperatorDashboard, isOperatorAuthError, PAYOUT_MODEL_LABELS } from "@/lib/operator";
 
@@ -9,7 +10,7 @@ export const Route = createFileRoute("/operator/")({
 });
 
 function OperatorOverview() {
-  const { token } = Route.useSearch();
+  const token = useOperatorToken();
   const q = useQuery({ queryKey: ["operator-dashboard", token], queryFn: () => getOperatorDashboard(token), retry: false, enabled: Boolean(token) });
   if (!token) return null;
   if (q.isPending) return <OperatorLoading />;

@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { useOperatorToken } from "@/lib/operator-session";
 import { useState } from "react";
 import { toast } from "sonner";
 import { OperatorAuthError, OperatorLoading, OperatorSection } from "@/components/operator/operator-shell";
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/operator/fleet")({
 });
 
 function FleetPage() {
-  const { token } = Route.useSearch();
+  const token = useOperatorToken();
   const qc = useQueryClient();
   const fleetQuery = useQuery({ queryKey: ["operator-fleet", token], queryFn: () => getOperatorFleet(token), retry: false, enabled: Boolean(token) });
   const vehicleTypesQuery = useQuery({ queryKey: ["goair", "vehicle-types"], queryFn: fetchVehicleTypes });
