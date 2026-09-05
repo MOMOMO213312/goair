@@ -184,3 +184,9 @@
     @apply transition-shadow duration-200 hover:shadow-[var(--shadow-float)];
   }
 }
+
+@keyframes draw-route {
+  to {
+    stroke-dashoffset: 0;
+  }
+}

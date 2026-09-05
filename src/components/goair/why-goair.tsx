@@ -1,8 +1,5 @@
 import { CheckCircle2, Headphones, MapPin, Wallet } from "lucide-react";
 
-import { SectionHeader } from "@/components/goair/section-header";
-import { Card } from "@/components/ui/card";
-
 const benefits = [
   {
     icon: Wallet,
@@ -29,23 +26,25 @@ const benefits = [
 export function WhyGoAir() {
   return (
     <section className="bg-mist py-14 sm:py-16">
-      <div className="mx-auto max-w-6xl px-4">
-        <SectionHeader
-          title="لماذا GoAir؟"
-          description="منصة نقل مطاري مصممة لتكون واضحة وسريعة وموثوقة."
-        />
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
+        <div>
+          <h2 className="font-display text-3xl font-extrabold leading-tight text-primary sm:text-4xl">
+            ليه GoAir؟
+          </h2>
+          <p className="mt-4 max-w-sm text-base leading-relaxed text-muted-foreground">
+            منصة نقل مطاري مصممة تكون واضحة وسريعة وموثوقة — من أول لحظة بحث لحد ما تشوف اللافتة بإسمك.
+          </p>
+        </div>
+
+        <div className="divide-y divide-border/70">
           {benefits.map((item) => (
-            <Card
-              key={item.title}
-              className="border-border/80 bg-background p-5 shadow-[var(--shadow-card)]"
-            >
-              <span className="flex size-10 items-center justify-center rounded-lg bg-accent/15 text-accent">
-                <item.icon className="size-5" />
-              </span>
-              <h3 className="mt-4 font-display text-base font-bold text-primary">{item.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.text}</p>
-            </Card>
+            <div key={item.title} className="flex items-start gap-4 py-5 first:pt-0 last:pb-0">
+              <item.icon className="mt-0.5 size-6 shrink-0 text-accent" aria-hidden />
+              <div>
+                <h3 className="font-display text-base font-bold text-primary">{item.title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.text}</p>
+              </div>
+            </div>
           ))}
         </div>
       </div>

@@ -127,31 +127,37 @@ function Home() {
           height={1088}
           className="absolute inset-0 -z-10 size-full object-cover"
         />
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-primary/95 via-primary/75 to-transparent" />
-        <FlightPath className="pointer-events-none absolute inset-x-0 top-8 -z-10 h-28 w-full text-accent/35 sm:top-12 sm:h-32" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-t from-primary via-primary/70 to-primary/30 sm:bg-gradient-to-l" />
+        <FlightPath className="pointer-events-none absolute inset-x-0 top-10 -z-10 h-24 w-full text-accent/40 sm:top-16 sm:h-32 [stroke-dasharray:1200] [stroke-dashoffset:1200] motion-safe:animate-[draw-route_1.8s_ease-out_forwards]" />
 
-        <div className="mx-auto max-w-6xl px-4 pb-14 pt-14 sm:pb-20 sm:pt-20">
-          <div className="mr-auto max-w-2xl">
+        <div className="mx-auto max-w-6xl px-4 pb-28 pt-14 sm:pb-32 sm:pt-20">
+          <div className="max-w-2xl">
             <p className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1 text-xs font-bold text-primary-foreground">
               <Sparkles className="size-3.5 text-accent" />
               مصر ولبنان — متاح الآن
             </p>
-            <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.15] text-primary-foreground sm:text-5xl">
+            <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.1] text-primary-foreground sm:text-6xl">
               رحلتك تبدأ من هنا
             </h1>
-            <p className="mt-4 text-base leading-relaxed text-primary-foreground/90 sm:text-lg">
+            <p className="mt-4 max-w-md text-base leading-relaxed text-primary-foreground/90 sm:text-lg">
               حلول سفر متكاملة مصممة لكل رحلة
             </p>
+          </div>
+        </div>
 
-            <div id="find-your-ride" className="mt-8 scroll-mt-24">
-              <SearchWidget trips={trips} countries={countries} packageId={packageId} />
-            </div>
+        {/* Floating search dock — breaks out of the hero into the section below,
+            so it reads as the site's main instrument, not a boxed sidebar form. */}
+        <div className="relative z-10 mx-auto -mt-20 max-w-6xl px-4 sm:-mt-16">
+          <div id="find-your-ride" className="scroll-mt-24">
+            <SearchWidget trips={trips} countries={countries} packageId={packageId} className="max-w-none" />
           </div>
         </div>
       </section>
 
       {/* Trust strip — directly under the hero, per Final Vision */}
-      <HeroTrustStrip />
+      <div className="pt-10 sm:pt-8">
+        <HeroTrustStrip />
+      </div>
 
       {/* Popular routes — first thing after the hero, per the updated homepage structure */}
       <section className="py-14 sm:py-16">
