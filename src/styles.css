@@ -5,19 +5,20 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-display: "Cairo", system-ui, sans-serif;
-  --font-sans: "Tajawal", "Cairo", system-ui, sans-serif;
-  --color-navy: oklch(0.36 0.055 245);
-  --color-navy-deep: oklch(0.27 0.05 248);
-  --color-gold: oklch(0.62 0.13 58);
-  --color-gold-soft: oklch(0.76 0.09 66);
-  --color-mist: oklch(0.95 0.016 240);
-  --shadow-card: 0 8px 24px -12px oklch(0.36 0.055 245 / 0.28);
-  --shadow-float: 0 28px 60px -24px oklch(0.27 0.05 248 / 0.42);
+  --font-display: "Changa", system-ui, sans-serif;
+  --font-sans: "IBM Plex Sans Arabic", "Changa", system-ui, sans-serif;
+  --color-violet: oklch(0.52 0.277 280.4);
+  --color-violet-deep: oklch(0.39 0.209 280.6);
+  --color-lime: oklch(0.93 0.216 125.2);
+  --color-pink: oklch(0.67 0.228 11.9);
+  --color-ink: oklch(0.17 0.01 285.3);
+  --color-mist: oklch(0.98 0.005 297.7);
+  --shadow-card: 0 8px 24px -12px oklch(0.52 0.277 280.4 / 0.28);
+  --shadow-float: 0 28px 60px -24px oklch(0.39 0.209 280.6 / 0.42);
 }
 
 @utility flight-underline {
-  background-image: linear-gradient(90deg, var(--color-gold) 60%, transparent 0);
+  background-image: linear-gradient(90deg, var(--color-lime) 60%, transparent 0);
   background-size: 10px 2px;
   background-repeat: repeat-x;
   background-position: bottom;
@@ -85,25 +86,25 @@
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
-  --mist: #eaf1f8;
-  --foreground: oklch(0.3 0.05 246);
+  --mist: #f7f6fa;
+  --foreground: oklch(0.17 0.01 285.3);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.3 0.05 246);
+  --card-foreground: oklch(0.17 0.01 285.3);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.3 0.05 246);
-  --primary: oklch(0.36 0.055 245);
+  --popover-foreground: oklch(0.17 0.01 285.3);
+  --primary: oklch(0.52 0.277 280.4);
   --primary-foreground: oklch(0.99 0.004 240);
-  --secondary: oklch(0.95 0.016 240);
-  --secondary-foreground: oklch(0.36 0.055 245);
-  --muted: oklch(0.96 0.01 240);
-  --muted-foreground: oklch(0.55 0.015 250);
-  --accent: oklch(0.62 0.13 58);
-  --accent-foreground: oklch(0.99 0.004 240);
+  --secondary: oklch(0.98 0.005 297.7);
+  --secondary-foreground: oklch(0.52 0.277 280.4);
+  --muted: oklch(0.97 0.006 297.7);
+  --muted-foreground: oklch(0.5 0.02 285);
+  --accent: oklch(0.93 0.216 125.2);
+  --accent-foreground: oklch(0.17 0.01 285.3);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.91 0.014 245);
-  --input: oklch(0.91 0.014 245);
-  --ring: oklch(0.62 0.13 58);
+  --border: oklch(0.91 0.012 285);
+  --input: oklch(0.91 0.012 285);
+  --ring: oklch(0.93 0.216 125.2);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
