@@ -146,7 +146,7 @@ export function SearchWidget({
     <form
       onSubmit={onSubmit}
       className={cn(
-        "rounded-2xl border border-primary-foreground/10 bg-card p-4 shadow-[var(--shadow-float)] sm:p-6",
+        "rounded-2xl border border-white/30 bg-card/85 p-4 shadow-[var(--shadow-float)] backdrop-blur-xl sm:p-6",
         className,
       )}
     >
