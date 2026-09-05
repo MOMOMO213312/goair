@@ -578,3 +578,151 @@ export function formatTime(time: string) {
   const display = hour % 12 === 0 ? 12 : hour % 12;
   return `${display}:${minute.padStart(2, "0")} ${suffix}`;
 }
+/* ---------------------------------------------------------------------- */
+/* Subscriptions (recurring membership plans — separate from `packages`, */
+/* which are one-time per-booking add-ons)                                */
+/* ---------------------------------------------------------------------- */
+
+export type SubscriptionPlan = {
+  id: string;
+  country: string;
+  tier: string;
+  duration: "semi_annual" | "annual" | string;
+  name: string;
+  tagline: string | null;
+  priceUsd: number;
+  discountPercent: number;
+  freeRideCredits: number;
+  extraLuggagePieces: number;
+  prioritySupport: boolean;
+  guaranteedSeat: boolean;
+  iconName: string;
+  features: string[];
+  isHighlighted: boolean;
+};
+
+export async function fetchSubscriptionPlans(country?: string): Promise<SubscriptionPlan[]> {
+  let query = supabase.from("subscription_plans").select("*").eq("is_active", true);
+  if (country) query = query.eq("country", country);
+  const { data, error } = await query.order("sort_order", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => ({
+    id: String(pick(row, ["id"])),
+    country: String(pick(row, ["country"]) ?? ""),
+    tier: String(pick(row, ["tier"]) ?? ""),
+    duration: String(pick(row, ["duration"]) ?? ""),
+    name: String(pick(row, ["name"]) ?? ""),
+    tagline: pick<string>(row, ["tagline"]),
+    priceUsd: Number(pick(row, ["price_usd"]) ?? 0),
+    discountPercent: Number(pick(row, ["discount_percent"]) ?? 0),
+    freeRideCredits: Number(pick(row, ["free_ride_credits"]) ?? 0),
+    extraLuggagePieces: Number(pick(row, ["extra_luggage_pieces"]) ?? 0),
+    prioritySupport: pick<boolean>(row, ["priority_support"]) === true,
+    guaranteedSeat: pick<boolean>(row, ["guaranteed_seat"]) === true,
+    iconName: String(pick(row, ["icon_name"]) ?? "Sparkles"),
+    features: (pick<string[]>(row, ["features"]) ?? []) as string[],
+    isHighlighted: pick<boolean>(row, ["is_highlighted"]) === true,
+  }));
+}
+
+export async function fetchSubscriptionPlanById(id: string): Promise<SubscriptionPlan | null> {
+  const { data, error } = await supabase.from("subscription_plans").select("*").eq("id", id).limit(1);
+  if (error) throw new Error(error.message);
+  const row = (data ?? [])[0];
+  if (!row) return null;
+  return {
+    id: String(pick(row, ["id"])),
+    country: String(pick(row, ["country"]) ?? ""),
+    tier: String(pick(row, ["tier"]) ?? ""),
+    duration: String(pick(row, ["duration"]) ?? ""),
+    name: String(pick(row, ["name"]) ?? ""),
+    tagline: pick<string>(row, ["tagline"]),
+    priceUsd: Number(pick(row, ["price_usd"]) ?? 0),
+    discountPercent: Number(pick(row, ["discount_percent"]) ?? 0),
+    freeRideCredits: Number(pick(row, ["free_ride_credits"]) ?? 0),
+    extraLuggagePieces: Number(pick(row, ["extra_luggage_pieces"]) ?? 0),
+    prioritySupport: pick<boolean>(row, ["priority_support"]) === true,
+    guaranteedSeat: pick<boolean>(row, ["guaranteed_seat"]) === true,
+    iconName: String(pick(row, ["icon_name"]) ?? "Sparkles"),
+    features: (pick<string[]>(row, ["features"]) ?? []) as string[],
+    isHighlighted: pick<boolean>(row, ["is_highlighted"]) === true,
+  };
+}
+
+export async function createSubscriptionSafe(input: {
+  planId: string;
+  fullName: string;
+  phoneNumber: string;
+}): Promise<{ subscriptionId: string; subscriptionCode: string; expectedTotalUsd: number }> {
+  const { data, error } = await supabase.rpc("create_subscription_safe", {
+    p_plan_id: input.planId,
+    p_full_name: input.fullName,
+    p_phone_number: input.phoneNumber,
+  });
+  if (error) throw new Error(error.message);
+  const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
+  const subscriptionCode = row ? pick<string>(row, ["subscription_code"]) : null;
+  const subscriptionId = row ? pick<string>(row, ["id"]) : null;
+  if (!subscriptionCode || !subscriptionId) {
+    throw new Error("تم إنشاء الاشتراك لكن لم يرجع كود التتبع — كلمنا فورًا على الدعم.");
+  }
+  return {
+    subscriptionId,
+    subscriptionCode,
+    expectedTotalUsd: Number(pick(row, ["expected_total_usd"]) ?? 0),
+  };
+}
+
+export type SubscriptionRecord = {
+  subscription_code: string;
+  full_name: string;
+  status: string;
+  starts_at: string | null;
+  ends_at: string | null;
+  expected_total_usd: number;
+  ride_credits_remaining: number;
+  rides_discounted_count: number;
+  plan_name: string;
+  plan_tier: string;
+  plan_duration: string;
+  plan_country: string;
+  discount_percent: number;
+};
+
+export async function getSubscriptionByCode(code: string): Promise<SubscriptionRecord | null> {
+  const { data, error } = await supabase.rpc("get_subscription_by_code", {
+    p_subscription_code: code.trim().toLowerCase(),
+  });
+  if (error) throw new Error(error.message);
+  const row = Array.isArray(data) ? data[0] : data;
+  return (row as SubscriptionRecord) ?? null;
+}
+
+export async function cancelSubscriptionByCode(code: string, reason: string) {
+  const { data, error } = await supabase.rpc("cancel_subscription_by_code", {
+    p_subscription_code: code.trim().toLowerCase(),
+    p_reason: reason,
+  });
+  if (error) throw new Error(error.message);
+  if (data === false) throw new Error("لم نتمكن من إلغاء الاشتراك — تأكد من الكود أو كلم الدعم.");
+  return true;
+}
+
+/** subscription_id here plays the same role `booking_id` plays for `submitPayment`. */
+export async function submitSubscriptionPayment(params: {
+  subscriptionId: string;
+  method: string;
+  amountUsd: number;
+  referenceNumber: string | null;
+  proofUrl: string | null;
+}) {
+  const { error } = await supabase.from("subscription_payments").insert({
+    subscription_id: params.subscriptionId,
+    method: params.method,
+    amount_usd: params.amountUsd,
+    reference_number: params.referenceNumber,
+    proof_url: params.proofUrl,
+  });
+  if (error) throw new Error(error.message);
+  return true;
+}

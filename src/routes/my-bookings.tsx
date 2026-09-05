@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Car, Loader2, MapPin, Phone, Search, UserRound, XCircle } from "lucide-react";
+import { Car, Gift, Loader2, MapPin, Phone, Search, UserRound, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -9,10 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   cancelBookingByTicket,
+  cancelSubscriptionByCode,
   formatUsd,
   friendlyErrorMessage,
   getBookingByTicket,
+  getSubscriptionByCode,
   type BookingRecord,
+  type SubscriptionRecord,
 } from "@/lib/goair";
 import { cn } from "@/lib/utils";
 
@@ -36,10 +39,52 @@ export const Route = createFileRoute("/my-bookings")({
 
 function MyBookingsPage() {
   const initial = Route.useSearch();
+  const [mode, setMode] = useState<"booking" | "subscription">("booking");
+
   const [code, setCode] = useState(initial.ticket);
   const [booking, setBooking] = useState<BookingRecord | null>(null);
   const [busy, setBusy] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+
+  const [subCode, setSubCode] = useState("");
+  const [subscription, setSubscription] = useState<SubscriptionRecord | null>(null);
+  const [subBusy, setSubBusy] = useState(false);
+  const [subCancelling, setSubCancelling] = useState(false);
+
+  async function lookupSubscription(event: React.FormEvent) {
+    event.preventDefault();
+    if (subCode.trim().length < 4) {
+      toast.error("اكتب كود الاشتراك.");
+      return;
+    }
+    setSubBusy(true);
+    try {
+      const result = await getSubscriptionByCode(subCode);
+      if (!result) {
+        toast.error("مفيش اشتراك بالكود ده.");
+        setSubscription(null);
+      } else {
+        setSubscription(result);
+      }
+    } catch (error) {
+      toast.error(friendlyErrorMessage(error, "حصل خطأ في البحث."));
+    } finally {
+      setSubBusy(false);
+    }
+  }
+
+  async function cancelSubscription() {
+    setSubCancelling(true);
+    try {
+      await cancelSubscriptionByCode(subCode, "إلغاء من العميل");
+      toast.success("تم إلغاء الاشتراك.");
+      setSubscription(await getSubscriptionByCode(subCode));
+    } catch (error) {
+      toast.error(friendlyErrorMessage(error, "لم نتمكن من الإلغاء."));
+    } finally {
+      setSubCancelling(false);
+    }
+  }
 
   async function lookup(event: React.FormEvent) {
     event.preventDefault();
@@ -94,9 +139,34 @@ function MyBookingsPage() {
     <div className="mx-auto max-w-xl px-4 py-12">
       <h1 className="font-display text-2xl font-extrabold text-primary">حجزي</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        اكتب كود التذكرة لعرض تفاصيل الحجز أو إلغائه.
+        اكتب كود التذكرة لعرض تفاصيل الحجز أو إلغائه، أو كود الاشتراك لعرض عضويتك.
       </p>
 
+      <div className="mt-5 inline-flex rounded-lg border border-border bg-secondary/60 p-1">
+        <button
+          type="button"
+          onClick={() => setMode("booking")}
+          className={cn(
+            "rounded-md px-4 py-1.5 text-sm font-bold transition-colors",
+            mode === "booking" ? "bg-card text-primary shadow-sm" : "text-muted-foreground",
+          )}
+        >
+          حجز رحلة
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("subscription")}
+          className={cn(
+            "rounded-md px-4 py-1.5 text-sm font-bold transition-colors",
+            mode === "subscription" ? "bg-card text-primary shadow-sm" : "text-muted-foreground",
+          )}
+        >
+          اشتراك
+        </button>
+      </div>
+
+      {mode === "booking" ? (
+      <>
       <form onSubmit={lookup} className="mt-6 flex items-end gap-3">
         <div className="flex-1 space-y-2">
           <Label htmlFor="ticket">كود التذكرة</Label>
@@ -143,6 +213,63 @@ function MyBookingsPage() {
           )}
         </Card>
       ) : null}
+      </>
+      ) : (
+      <>
+      <form onSubmit={lookupSubscription} className="mt-6 flex items-end gap-3">
+        <div className="flex-1 space-y-2">
+          <Label htmlFor="sub-code">كود الاشتراك</Label>
+          <Input
+            id="sub-code"
+            value={subCode}
+            onChange={(event) => setSubCode(event.target.value)}
+            placeholder="مثال: 4f2a91c8b3d0"
+          />
+        </div>
+        <Button type="submit" disabled={subBusy} className="h-10">
+          {subBusy ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
+          بحث
+        </Button>
+      </form>
+
+      {subscription ? (
+        <Card className="mt-8 rounded-xl p-6 shadow-[var(--shadow-card)]">
+          <div className="mb-4 flex items-center gap-2">
+            <span className="flex size-9 items-center justify-center rounded-lg bg-accent/15 text-accent">
+              <Gift className="size-4" aria-hidden />
+            </span>
+            <div>
+              <p className="font-display text-base font-extrabold text-primary">{subscription.plan_name}</p>
+              <p className="text-xs text-muted-foreground">{subscription.plan_country}</p>
+            </div>
+          </div>
+          <dl className="space-y-2.5 text-sm">
+            <Row label="الاسم" value={subscription.full_name} />
+            <Row label="يبدأ" value={subscription.starts_at ?? "—"} />
+            <Row label="ينتهي" value={subscription.ends_at ?? "—"} />
+            <Row label="رحلات مجانية متبقية" value={String(subscription.ride_credits_remaining)} />
+            <Row label="رحلات استخدمت الخصم" value={String(subscription.rides_discounted_count)} />
+            <Row label="نسبة الخصم" value={`${subscription.discount_percent}%`} />
+            <Row label="الحالة" value={subscription.status} />
+          </dl>
+
+          {subscription.status.includes("cancel") ? (
+            <p className="mt-5 text-sm font-bold text-destructive">هذا الاشتراك ملغي.</p>
+          ) : (
+            <Button
+              variant="outline"
+              disabled={subCancelling}
+              onClick={cancelSubscription}
+              className="mt-6 w-full border-destructive/40 text-destructive hover:bg-destructive/10"
+            >
+              {subCancelling ? <Loader2 className="size-4 animate-spin" /> : <XCircle className="size-4" />}
+              إلغاء الاشتراك
+            </Button>
+          )}
+        </Card>
+      ) : null}
+      </>
+      )}
     </div>
   );
 }
