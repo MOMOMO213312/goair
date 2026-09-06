@@ -118,10 +118,12 @@ function Home() {
       </section>
 
       {/* Search dock — sits right under the hero photo instead of overlapping it,
-          so the van/branding at the bottom of the image stays fully visible. */}
-      <div className="relative z-10 mx-auto -mt-6 max-w-6xl px-4 sm:-mt-8">
+          so the van/branding at the bottom of the image stays fully visible.
+          Narrower and centered (not full hero width) so it reads as a focused
+          search box, not a wall that covers the photo. */}
+      <div className="relative z-10 mx-auto -mt-6 max-w-3xl px-4 sm:-mt-8">
         <div id="find-your-ride" className="scroll-mt-24">
-          <SearchWidget trips={trips} countries={countries} packageId={packageId} className="max-w-none" />
+          <SearchWidget trips={trips} countries={countries} packageId={packageId} />
         </div>
       </div>
 

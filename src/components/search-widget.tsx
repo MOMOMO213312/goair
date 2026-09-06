@@ -51,6 +51,7 @@ export function SearchWidget({
   const [date, setDate] = useState(initial?.date ?? today());
   const [seats, setSeats] = useState(initial?.seats ?? 1);
   const [flight, setFlight] = useState("");
+  const [showFlightField, setShowFlightField] = useState(false);
   /** Cosmetic only — shared and private options always show together on the
    * results page (never hidden), matching the existing private-booking design.
    * "خاص" just jumps the results page straight down to that section. */
@@ -146,17 +147,17 @@ export function SearchWidget({
     <form
       onSubmit={onSubmit}
       className={cn(
-        "rounded-2xl border border-white/30 bg-card/85 p-4 shadow-[var(--shadow-float)] backdrop-blur-xl sm:p-6",
+        "rounded-2xl border border-white/30 bg-card/85 p-4 shadow-[var(--shadow-float)] backdrop-blur-xl sm:p-5",
         className,
       )}
     >
-      <p className="mb-4 flex items-center gap-2 font-display text-sm font-bold text-primary">
+      <p className="mb-3 flex items-center gap-2 font-display text-sm font-bold text-primary">
         <Search className="size-4 text-accent" />
         ابحث عن رحلة المطار
       </p>
 
       {/* Shared / Private toggle — cosmetic; both always appear in the results */}
-      <div className="mb-4 inline-flex rounded-lg border border-border bg-secondary/60 p-1">
+      <div className="mb-3 inline-flex rounded-lg border border-border bg-secondary/60 p-1">
         <button
           type="button"
           onClick={() => setRideMode("shared")}
@@ -179,7 +180,7 @@ export function SearchWidget({
         </button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div className="space-y-2">
           <Label className="flex items-center gap-1.5">
             <Globe2 className="size-3.5 text-muted-foreground" />
@@ -260,7 +261,22 @@ export function SearchWidget({
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="flex items-end">
+          <Button
+            type="submit"
+            size="lg"
+            className="h-11 w-full bg-accent text-base font-bold text-accent-foreground hover:bg-accent/90"
+          >
+            <Plane className="size-5 -rotate-45" />
+            ابحث عن رحلتك
+          </Button>
+        </div>
+      </div>
+
+      {/* Flight number — optional, so it stays a one-line link instead of a
+          permanent grid cell that pushes the whole widget taller. */}
+      {showFlightField ? (
+        <div className="mt-3 space-y-2">
           <Label htmlFor="goair-flight" className="flex items-center gap-1.5">
             <PlaneTakeoff className="size-3.5 text-muted-foreground" />
             رقم الرحلة <span className="font-normal text-muted-foreground">(اختياري)</span>
@@ -272,20 +288,19 @@ export function SearchWidget({
             value={flight}
             onChange={(event) => setFlight(event.target.value)}
             className="h-11"
+            autoFocus
           />
         </div>
-
-        <div className="flex items-end sm:col-span-2 lg:col-span-1">
-          <Button
-            type="submit"
-            size="lg"
-            className="h-12 w-full bg-accent text-base font-bold text-accent-foreground hover:bg-accent/90"
-          >
-            <Plane className="size-5 -rotate-45" />
-            ابحث عن رحلتك
-          </Button>
-        </div>
-      </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setShowFlightField(true)}
+          className="mt-3 flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-accent"
+        >
+          <PlaneTakeoff className="size-3.5" />
+          + إضافة رقم الرحلة (اختياري)
+        </button>
+      )}
     </form>
 
     {quickRoutes.length > 0 ? (
