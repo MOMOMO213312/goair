@@ -373,7 +373,7 @@ export type CreateBookingInput = {
    * omitted, same as before.
    */
   referralCodeOverride?: string | null;
-  /** Selected add-on package (from /packages) — adds its price per seat. */
+  /** Selected add-on package (from /explore) — adds its price per seat. */
   packageId?: string | null;
 };
 
