@@ -2,22 +2,32 @@ import type { LucideIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
+  Accessibility,
   Armchair,
   Award,
   Baby,
   CalendarClock,
+  Car,
   Check,
   Clock,
   Compass,
   Crown,
   Dumbbell,
   Gem,
+  Gift,
+  Hotel,
+  KeyRound,
   Luggage,
+  MapPinned,
   PackageOpen,
+  ParkingCircle,
   ShieldCheck,
+  ShoppingBag,
   Smartphone,
   Sparkles,
   UserRound,
+  Users,
+  Weight,
   Wifi,
   Zap,
 } from "lucide-react";
@@ -33,6 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { EXPLORE_TAB_VALUES, type ExploreTab } from "@/lib/explore-tabs";
 import {
   fetchActivePackages,
   fetchAddonServices,
@@ -45,6 +56,11 @@ import {
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/explore")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: EXPLORE_TAB_VALUES.includes(search["tab"] as ExploreTab)
+      ? (search["tab"] as ExploreTab)
+      : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "استكشف — GoAir" },
@@ -59,59 +75,54 @@ export const Route = createFileRoute("/explore")({
   component: ExplorePage,
 });
 
-type ExploreTab = "addons" | "packages" | "subscriptions";
-
-const TAB_LABEL: Record<ExploreTab, string> = {
-  addons: "الخدمات الإضافية",
-  packages: "الباقات",
-  subscriptions: "الاشتراكات",
-};
-
-const TAB_ORDER: ExploreTab[] = ["addons", "packages", "subscriptions"];
-
 function ExplorePage() {
-  const [tab, setTab] = useState<ExploreTab>("addons");
+  const { tab } = Route.useSearch();
+  const activeTab: ExploreTab = tab ?? "addons";
 
   return (
     <div>
-      <ExploreHero tab={tab} onTabChange={setTab} />
-      {tab === "addons" ? <AddonServicesBlock /> : null}
-      {tab === "packages" ? <PackagesBlock /> : null}
-      {tab === "subscriptions" ? <SubscriptionsBlock /> : null}
+      <ExploreHero tab={activeTab} />
+      {activeTab === "addons" ? <AddonServicesBlock /> : null}
+      {activeTab === "packages" ? <PackagesBlock /> : null}
+      {activeTab === "subscriptions" ? <SubscriptionsBlock /> : null}
     </div>
   );
 }
 
-function ExploreHero({ tab, onTabChange }: { tab: ExploreTab; onTabChange: (tab: ExploreTab) => void }) {
+const TAB_HERO_COPY: Record<ExploreTab, { eyebrow: string; title: string; description: string }> = {
+  addons: {
+    eyebrow: "كل خدمة وكل عرض، في مكان واحد",
+    title: "الخدمات الإضافية",
+    description: "لمسات راحة تقدر تضيفها فوق رحلتك — من قبل ما تسافر لحد ما توصل الوجهة.",
+  },
+  packages: {
+    eyebrow: "كل خدمة وكل عرض، في مكان واحد",
+    title: "باقات الرحلة",
+    description: "باقات جاهزة بتضم أكتر من خدمة مع بعض، بسعر أوفر من اختيارها لوحدها.",
+  },
+  subscriptions: {
+    eyebrow: "كل خدمة وكل عرض، في مكان واحد",
+    title: "الاشتراكات",
+    description: "عضوية بخصم دائم على كل رحلاتك — اشترك مرة واستفاد كل رحلة.",
+  },
+};
+
+function ExploreHero({ tab }: { tab: ExploreTab }) {
+  const copy = TAB_HERO_COPY[tab];
   return (
     <section className="relative isolate overflow-hidden bg-gradient-to-b from-primary to-violet-deep py-14 sm:py-20">
       <FlightPath className="pointer-events-none absolute inset-x-0 top-6 h-16 w-full text-accent/25 sm:top-10 sm:h-24 [stroke-dasharray:1200] [stroke-dashoffset:1200] motion-safe:animate-[draw-route_1.8s_ease-out_forwards]" />
       <div className="goair-container relative">
         <p className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1 text-xs font-bold text-primary-foreground">
           <Compass className="size-3.5 text-accent" aria-hidden />
-          كل خدمة وكل عرض، في مكان واحد
+          {copy.eyebrow}
         </p>
         <h1 className="mt-5 max-w-xl font-display text-3xl font-extrabold leading-[1.15] text-primary-foreground sm:text-5xl">
-          استكشف GoAir
+          {copy.title}
         </h1>
         <p className="mt-4 max-w-lg text-sm leading-relaxed text-primary-foreground/85 sm:text-base">
-          من راحة إضافية لحظة النزول، لباقة كاملة، لعضوية بخصم دائم — اختار اللي يناسب رحلتك.
+          {copy.description}
         </p>
-
-        <div className="mt-8 w-full max-w-xs">
-          <Select value={tab} onValueChange={(value) => onTabChange(value as ExploreTab)}>
-            <SelectTrigger className="h-12 border-primary-foreground/20 bg-primary-foreground/10 text-base font-bold text-primary-foreground [&>svg]:text-primary-foreground">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TAB_ORDER.map((value) => (
-                <SelectItem key={value} value={value}>
-                  {TAB_LABEL[value]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
       </div>
     </section>
   );
@@ -132,6 +143,16 @@ const ADDON_ICONS: Record<string, LucideIcon> = {
   Wifi,
   Smartphone,
   Sparkles,
+  Car,
+  ParkingCircle,
+  KeyRound,
+  Users,
+  Accessibility,
+  ShoppingBag,
+  Hotel,
+  MapPinned,
+  Weight,
+  Gift,
 };
 
 const ADDON_CATEGORY_LABEL: Record<AddonServiceCategory, string> = {
