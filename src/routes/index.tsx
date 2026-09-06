@@ -8,7 +8,6 @@ import { AirportGrid } from "@/components/goair/airport-card";
 import { AnnouncementTicker } from "@/components/goair/announcement-ticker";
 import { BrandTrustStrip } from "@/components/goair/brand-trust-strip";
 import { BusinessPromoBanner } from "@/components/goair/business-promo-banner";
-import { CountryExploreCard } from "@/components/goair/country-explore-card";
 import { DestinationCard } from "@/components/goair/destination-card";
 import { EmptyState } from "@/components/goair/empty-state";
 import { DealsTeaser } from "@/components/goair/deals-teaser";
@@ -18,7 +17,6 @@ import { RideTypesSection } from "@/components/goair/ride-types-section";
 import { RouteCard } from "@/components/goair/route-card";
 import { SectionHeader } from "@/components/goair/section-header";
 import { ServiceHighlights } from "@/components/goair/service-highlights";
-import { WhyGoAir } from "@/components/goair/why-goair";
 import { FlightPath } from "@/components/flight-path";
 import { SearchWidget } from "@/components/search-widget";
 import {
@@ -30,7 +28,6 @@ import {
 import { fetchTrips, fetchVisibleCountries } from "@/lib/goair";
 import {
   getAirportSummaries,
-  getCountrySummaries,
   getDestinationSummaries,
   getFeaturedRoutes,
   filterPublicTrips,
@@ -85,7 +82,7 @@ function Home() {
   );
 
   const featuredRoutes = useMemo(
-    () => getFeaturedRoutes(trips, countries, 8),
+    () => getFeaturedRoutes(trips, countries, 4),
     [trips, countries],
   );
 
@@ -94,25 +91,10 @@ function Home() {
     [publicTrips, countries],
   );
 
-  const countrySummaries = useMemo(
-    () => getCountrySummaries(publicTrips, countries),
-    [publicTrips, countries],
-  );
-
   const destinations = useMemo(
     () => getDestinationSummaries(trips, countries),
     [trips, countries],
   );
-
-  const sampleByCountry = useMemo(() => {
-    const map: Record<string, { destination: string; airport: string }> = {};
-    for (const trip of publicTrips) {
-      if (!map[trip.country]) {
-        map[trip.country] = { destination: trip.destination, airport: trip.airport_code };
-      }
-    }
-    return map;
-  }, [publicTrips]);
 
   return (
     <>
@@ -172,7 +154,7 @@ function Home() {
         <HeroTrustStrip />
       </div>
 
-      {/* Popular routes — first thing after the hero, per the updated homepage structure */}
+      {/* Popular routes — first thing after the hero, capped at 4 so the section stays scannable */}
       <section className="py-14 sm:py-16">
         <div className="mx-auto max-w-6xl px-4">
           <SectionHeader
@@ -187,7 +169,7 @@ function Home() {
                   <RouteCard key={trip.id} trip={trip} compact />
                 ))}
               </div>
-              <div className="mt-8 hidden gap-5 md:grid md:grid-cols-2 xl:grid-cols-4">
+              <div className="mt-8 hidden gap-5 md:grid md:grid-cols-2 lg:grid-cols-4">
                 {featuredRoutes.map((trip) => (
                   <RouteCard key={trip.id} trip={trip} />
                 ))}
@@ -203,6 +185,9 @@ function Home() {
         </div>
       </section>
 
+      {/* How GoAir works — right under the routes, per the updated homepage structure */}
+      <HowItWorks />
+
       {/* Choose your ride — real vehicle tiers from vehicle_types */}
       <RideTypesSection />
 
@@ -212,30 +197,7 @@ function Home() {
       {/* GOAIR Deals — teaser for the real packages/add-ons page */}
       <DealsTeaser />
 
-      {/* How GoAir works — search → choose → book → meet */}
-      <HowItWorks />
-
       <AirportGrid airports={airports} />
-
-      {/* Explore by country */}
-      <section className="py-14 sm:py-16">
-        <div className="mx-auto max-w-6xl px-4">
-          <SectionHeader
-            title="استكشف حسب الدولة"
-            description="مصر ولبنان — عدد الخطوط محسوب من الرحلات النشطة في المنصة."
-          />
-          <div className="mt-8 grid gap-5 lg:grid-cols-2">
-            {countrySummaries.map((summary) => (
-              <CountryExploreCard
-                key={summary.country}
-                summary={summary}
-                sampleDestination={sampleByCountry[summary.country]?.destination ?? ""}
-                sampleAirport={sampleByCountry[summary.country]?.airport ?? ""}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Destinations grid */}
       <section className="bg-mist/60 py-14 sm:py-16">
@@ -254,8 +216,6 @@ function Home() {
           </div>
         </div>
       </section>
-
-      <WhyGoAir />
 
       {/* FAQ */}
       <section className="mx-auto max-w-3xl px-4 py-14 sm:py-16">
