@@ -7,9 +7,9 @@
 @theme {
   --font-display: "Changa", system-ui, sans-serif;
   --font-sans: "IBM Plex Sans Arabic", "Changa", system-ui, sans-serif;
-  --color-violet: oklch(0.52 0.277 280.4);
-  --color-violet-deep: oklch(0.39 0.209 280.6);
-  --color-lime: oklch(0.93 0.216 125.2);
+  --color-violet: oklch(0.2896 0.0638 253.6);
+  --color-violet-deep: oklch(0.1991 0.0408 256.8);
+  --color-lime: oklch(0.875 0.1791 92.7);
   --color-pink: oklch(0.67 0.228 11.9);
   --color-ink: oklch(0.17 0.01 285.3);
   --color-mist: oklch(0.98 0.005 297.7);
@@ -86,25 +86,25 @@
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
-  --mist: #f7f6fa;
+  --mist: #eaf1f8;
   --foreground: oklch(0.17 0.01 285.3);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.17 0.01 285.3);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.17 0.01 285.3);
-  --primary: oklch(0.52 0.277 280.4);
+  --primary: oklch(0.2896 0.0638 253.6);
   --primary-foreground: oklch(0.99 0.004 240);
-  --secondary: oklch(0.98 0.005 297.7);
-  --secondary-foreground: oklch(0.52 0.277 280.4);
-  --muted: oklch(0.97 0.006 297.7);
-  --muted-foreground: oklch(0.5 0.02 285);
-  --accent: oklch(0.93 0.216 125.2);
+  --secondary: oklch(0.9701 0.0093 242.8);
+  --secondary-foreground: oklch(0.2896 0.0638 253.6);
+  --muted: oklch(0.96 0.008 250);
+  --muted-foreground: oklch(0.5 0.02 260);
+  --accent: oklch(0.7184 0.2115 144.5);
   --accent-foreground: oklch(0.17 0.01 285.3);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.91 0.012 285);
-  --input: oklch(0.91 0.012 285);
-  --ring: oklch(0.93 0.216 125.2);
+  --border: oklch(0.9 0.012 253.6);
+  --input: oklch(0.9 0.012 253.6);
+  --ring: oklch(0.5901 0.171 144.8);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
