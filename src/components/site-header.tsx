@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 
 const links = [
   { to: "/", hash: undefined, label: "الرئيسية" },
-  { to: "/", hash: "find-your-ride", label: "احجز رحلة" },
   { to: "/explore", hash: undefined, label: "استكشف" },
   { to: "/my-bookings", hash: undefined, label: "رحلاتي" },
 ] as const;
