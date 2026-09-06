@@ -63,6 +63,36 @@ export type PackageTier = {
   isHighlighted: boolean;
 };
 
+export type AddonServiceCategory = "before_trip" | "luggage" | "airport" | "destination";
+
+export type AddonService = {
+  id: string;
+  category: AddonServiceCategory;
+  name: string;
+  description: string | null;
+  priceUsd: number;
+  iconName: string;
+  isHighlighted: boolean;
+};
+
+export async function fetchAddonServices(): Promise<AddonService[]> {
+  const { data, error } = await supabase
+    .from("addon_services")
+    .select("*")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => ({
+    id: String(pick(row, ["id"])),
+    category: String(pick(row, ["category"])) as AddonServiceCategory,
+    name: String(pick(row, ["name_ar"]) ?? ""),
+    description: pick<string>(row, ["description_ar"]),
+    priceUsd: Number(pick(row, ["price_usd"]) ?? 0),
+    iconName: String(pick(row, ["icon_name"]) ?? "Sparkles"),
+    isHighlighted: pick<boolean>(row, ["is_highlighted"]) === true,
+  }));
+}
+
 export async function fetchActivePackages(): Promise<PackageTier[]> {
   const { data, error } = await supabase
     .from("packages")

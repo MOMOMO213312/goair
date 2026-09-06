@@ -2,19 +2,24 @@ import type { LucideIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
+  Armchair,
   Award,
-  Briefcase,
-  Bus,
-  Car,
-  Caravan,
+  Baby,
+  CalendarClock,
   Check,
   Clock,
   Compass,
   Crown,
+  Dumbbell,
   Gem,
   Luggage,
+  PackageOpen,
+  ShieldCheck,
+  Smartphone,
   Sparkles,
-  Users,
+  UserRound,
+  Wifi,
+  Zap,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -30,10 +35,10 @@ import {
 } from "@/components/ui/select";
 import {
   fetchActivePackages,
+  fetchAddonServices,
   fetchSubscriptionPlans,
-  fetchVehicleTypeMinPrices,
-  fetchVehicleTypes,
-  formatUsd,
+  type AddonService,
+  type AddonServiceCategory,
   type PackageTier,
   type SubscriptionPlan,
 } from "@/lib/goair";
@@ -45,26 +50,39 @@ export const Route = createFileRoute("/explore")({
       { title: "استكشف — GoAir" },
       {
         name: "description",
-        content: "أحجام الرحلات، الباقات، والاشتراكات — كل حاجة GoAir بتقدمها في صفحة واحدة.",
+        content: "خدمات إضافية، باقات، واشتراكات — كل حاجة GoAir بتقدمها لرحلتك، في صفحة واحدة.",
       },
       { property: "og:title", content: "استكشف — GoAir" },
-      { property: "og:description", content: "اختار حجم رحلتك، وضيف باقة، أو اشترك بخصم دائم." },
+      { property: "og:description", content: "ضيف الراحة اللي محتاجها لرحلتك، أو اشترك بخصم دائم." },
     ],
   }),
   component: ExplorePage,
 });
 
+type ExploreTab = "addons" | "packages" | "subscriptions";
+
+const TAB_LABEL: Record<ExploreTab, string> = {
+  addons: "الخدمات الإضافية",
+  packages: "الباقات",
+  subscriptions: "الاشتراكات",
+};
+
+const TAB_ORDER: ExploreTab[] = ["addons", "packages", "subscriptions"];
+
 function ExplorePage() {
+  const [tab, setTab] = useState<ExploreTab>("addons");
+
   return (
     <div>
-      <ExploreHero />
-      <ServicesBlock />
-      <OffersBlock />
+      <ExploreHero tab={tab} onTabChange={setTab} />
+      {tab === "addons" ? <AddonServicesBlock /> : null}
+      {tab === "packages" ? <PackagesBlock /> : null}
+      {tab === "subscriptions" ? <SubscriptionsBlock /> : null}
     </div>
   );
 }
 
-function ExploreHero() {
+function ExploreHero({ tab, onTabChange }: { tab: ExploreTab; onTabChange: (tab: ExploreTab) => void }) {
   return (
     <section className="relative isolate overflow-hidden bg-gradient-to-b from-primary to-violet-deep py-14 sm:py-20">
       <FlightPath className="pointer-events-none absolute inset-x-0 top-6 h-16 w-full text-accent/25 sm:top-10 sm:h-24 [stroke-dasharray:1200] [stroke-dashoffset:1200] motion-safe:animate-[draw-route_1.8s_ease-out_forwards]" />
@@ -77,296 +95,277 @@ function ExploreHero() {
           استكشف GoAir
         </h1>
         <p className="mt-4 max-w-lg text-sm leading-relaxed text-primary-foreground/85 sm:text-base">
-          من اختيار حجم رحلتك، لباقات الراحة الإضافية، لعضوية بخصم دائم — شوف كل حاجة بنقدمها قبل ما تحجز.
+          من راحة إضافية لحظة النزول، لباقة كاملة، لعضوية بخصم دائم — اختار اللي يناسب رحلتك.
         </p>
-      </div>
-    </section>
-  );
-}
 
-/* ---------------------------------- خدماتنا ---------------------------------- */
-
-const BLURB_BY_TIER: Record<string, string> = {
-  small: "الأنسب للعائلات والمجموعات الصغيرة.",
-  medium: "مساحة أكبر لمجموعات السياحة والشركات المتوسطة.",
-  large: "أفضل خيار اقتصادي للمجموعات الكبيرة ورحلات الشركات.",
-};
-
-const ICON_BY_TIER: Record<string, typeof Car> = {
-  small: Car,
-  medium: Caravan,
-  large: Bus,
-};
-
-function tierFor(capacity: number): keyof typeof BLURB_BY_TIER {
-  if (capacity <= 8) return "small";
-  if (capacity <= 14) return "medium";
-  return "large";
-}
-
-/**
- * Group-size tiers, read live from `vehicle_types` capacity values — but
- * deliberately shown to the customer as trip/group-size tiers, never as
- * vehicle names or fleet photos. GoAir sells a transfer, not a specific
- * vehicle; which vehicle actually runs a given departure is an internal
- * dispatch detail that can change without changing what the customer booked.
- *
- * Cards sit along a single dashed route line — the same motif as the site's
- * flight-path graphics — so the three group sizes read as stops along one
- * trip rather than three interchangeable pricing tiles.
- */
-function ServicesBlock() {
-  const { data: vehicleTypes } = useQuery({
-    queryKey: ["goair", "vehicle-types"],
-    queryFn: fetchVehicleTypes,
-  });
-  const { data: minPrices } = useQuery({
-    queryKey: ["goair", "vehicle-type-min-prices"],
-    queryFn: fetchVehicleTypeMinPrices,
-  });
-
-  if (!vehicleTypes || vehicleTypes.length === 0) return null;
-
-  const cheapestId = minPrices
-    ? Object.entries(minPrices).sort((a, b) => a[1] - b[1])[0]?.[0]
-    : undefined;
-
-  return (
-    <section id="services" className="goair-section scroll-mt-20">
-      <div className="goair-container">
-        <SectionHeader
-          title="اختار حسب حجم مجموعتك"
-          description="السعر بيظهر بعد اختيار خط رحلتك — نفس مستوى الراحة والاستقبال لأي حجم."
-        />
-
-        <div className="relative mt-10">
-          <div
-            aria-hidden
-            className="absolute inset-x-6 top-11 hidden border-t-2 border-dashed border-border sm:block"
-          />
-          <div className="grid gap-5 sm:grid-cols-3">
-            {vehicleTypes.map((vehicle) => {
-              const tier = tierFor(vehicle.capacity);
-              const TierIcon = ICON_BY_TIER[tier] ?? Car;
-              const dotCount = Math.min(vehicle.capacity, 6);
-              const isLarge = tier === "large";
-              const minPrice = minPrices?.[vehicle.id];
-              const isCheapest = vehicle.id === cheapestId;
-
-              return (
-                <a
-                  key={vehicle.id}
-                  href="#find-your-ride"
-                  className={cn(
-                    "group relative flex flex-col rounded-2xl p-6 transition-transform duration-300 hover:-translate-y-1",
-                    isLarge
-                      ? "bg-primary text-primary-foreground shadow-[var(--shadow-float)] sm:scale-[1.04]"
-                      : "border border-border bg-background text-primary shadow-sm",
-                  )}
-                >
-                  {isCheapest ? (
-                    <span
-                      className={cn(
-                        "absolute -top-3 right-6 z-10 inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-bold",
-                        isLarge ? "bg-accent text-accent-foreground" : "bg-primary text-primary-foreground",
-                      )}
-                    >
-                      الأوفر اقتصاديًا
-                    </span>
-                  ) : null}
-
-                  <span
-                    className={cn(
-                      "relative z-10 flex size-11 items-center justify-center rounded-full ring-4",
-                      isLarge ? "bg-accent text-accent-foreground ring-primary" : "bg-secondary text-primary ring-background",
-                    )}
-                  >
-                    <TierIcon className="size-5" aria-hidden />
-                  </span>
-
-                  <h3 className="mt-5 font-display text-lg font-extrabold">
-                    لغاية {vehicle.capacity} راكب
-                  </h3>
-                  <p
-                    className={cn(
-                      "mt-1.5 text-sm leading-relaxed",
-                      isLarge ? "text-primary-foreground/80" : "text-muted-foreground",
-                    )}
-                  >
-                    {BLURB_BY_TIER[tier]}
-                  </p>
-
-                  {minPrice != null ? (
-                    <p className="mt-4 flex items-baseline gap-1">
-                      <span className={cn("text-xs font-bold", isLarge ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                        من
-                      </span>
-                      <span className="font-display text-2xl font-extrabold">{formatUsd(minPrice)}</span>
-                      <span className={cn("text-xs", isLarge ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                        للمقعد
-                      </span>
-                    </p>
-                  ) : null}
-
-                  <div className="mt-3 flex items-center gap-1.5">
-                    {Array.from({ length: dotCount }).map((_, i) => (
-                      <Users key={i} className="size-3.5 text-accent" aria-hidden />
-                    ))}
-                    {vehicle.capacity > dotCount ? (
-                      <span className="text-xs font-bold text-accent">+{vehicle.capacity - dotCount}</span>
-                    ) : null}
-                  </div>
-
-                  {vehicle.maxLuggage != null ? (
-                    <span
-                      className={cn(
-                        "mt-3 flex items-center gap-1.5 text-xs font-bold",
-                        isLarge ? "text-primary-foreground/70" : "text-muted-foreground",
-                      )}
-                    >
-                      <Briefcase className="size-4 text-accent" aria-hidden />
-                      حتى {vehicle.maxLuggage} حقيبة
-                    </span>
-                  ) : null}
-
-                  <span
-                    className={cn(
-                      "mt-5 inline-flex w-fit items-center justify-center rounded-lg px-4 py-2 text-sm font-bold transition-colors",
-                      isLarge
-                        ? "bg-accent text-accent-foreground group-hover:bg-accent/90"
-                        : "border border-border text-primary group-hover:bg-secondary",
-                    )}
-                  >
-                    ابحث عن رحلتك
-                  </span>
-                </a>
-              );
-            })}
-          </div>
+        <div className="mt-8 w-full max-w-xs">
+          <Select value={tab} onValueChange={(value) => onTabChange(value as ExploreTab)}>
+            <SelectTrigger className="h-12 border-primary-foreground/20 bg-primary-foreground/10 text-base font-bold text-primary-foreground [&>svg]:text-primary-foreground">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TAB_ORDER.map((value) => (
+                <SelectItem key={value} value={value}>
+                  {TAB_LABEL[value]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </section>
   );
 }
 
-/* ----------------------------------- عروضنا ----------------------------------- */
+/* ------------------------------ الخدمات الإضافية ------------------------------ */
 
-const ICONS: Record<string, LucideIcon> = { Sparkles, Clock, Users, Crown, Award, Gem };
+const ADDON_ICONS: Record<string, LucideIcon> = {
+  Zap,
+  ShieldCheck,
+  CalendarClock,
+  Luggage,
+  Baby,
+  Dumbbell,
+  UserRound,
+  Armchair,
+  PackageOpen,
+  Wifi,
+  Smartphone,
+  Sparkles,
+};
+
+const ADDON_CATEGORY_LABEL: Record<AddonServiceCategory, string> = {
+  before_trip: "قبل الرحلة",
+  luggage: "الأمتعة",
+  airport: "في المطار",
+  destination: "خدمات الوجهة",
+};
+
+const ADDON_CATEGORY_ORDER: AddonServiceCategory[] = ["before_trip", "luggage", "airport", "destination"];
+
+function AddonServicesBlock() {
+  const { data: addons, isPending } = useQuery({ queryKey: ["goair", "addon-services"], queryFn: fetchAddonServices });
+
+  return (
+    <section className="goair-section">
+      <div className="goair-container">
+        <SectionHeader
+          title="خدمات إضافية لرحلتك"
+          description="لمسات راحة تقدر تضيفها فوق رحلتك — من قبل ما تسافر لحد ما توصل الوجهة."
+        />
+
+        {isPending ? (
+          <p className="mt-10 text-center text-sm text-muted-foreground">جاري تحميل الخدمات...</p>
+        ) : !addons || addons.length === 0 ? (
+          <p className="mt-10 text-center text-sm text-muted-foreground">مفيش خدمات إضافية متاحة دلوقتي.</p>
+        ) : (
+          <div className="mt-10 space-y-12">
+            {ADDON_CATEGORY_ORDER.map((category) => {
+              const items = addons.filter((a) => a.category === category);
+              if (items.length === 0) return null;
+              return (
+                <div key={category}>
+                  <h3 className="font-display text-base font-extrabold text-accent">
+                    {ADDON_CATEGORY_LABEL[category]}
+                  </h3>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    {items.map((addon) => (
+                      <AddonCard key={addon.id} addon={addon} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="mt-12 flex items-center justify-center gap-2 rounded-xl border border-border bg-mist/60 px-4 py-3 text-center text-sm text-muted-foreground">
+          <Sparkles className="size-4 shrink-0 text-accent" />
+          هتقدر تضيف أي خدمة من دول وأنت بتأكد حجزك — قريبًا في خطوة الحجز.
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function AddonCard({ addon }: { addon: AddonService }) {
+  const Icon = ADDON_ICONS[addon.iconName] ?? Sparkles;
+  return (
+    <div
+      className={cn(
+        "group relative flex items-start gap-4 overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]",
+        addon.isHighlighted ? "border-accent bg-primary text-primary-foreground shadow-lg" : "border-border bg-card text-card-foreground",
+      )}
+    >
+      {addon.isHighlighted ? (
+        <span className="absolute -left-9 top-3 w-28 -rotate-45 bg-accent py-0.5 text-center text-[10px] font-bold text-accent-foreground">
+          الأكثر طلبًا
+        </span>
+      ) : null}
+
+      <span
+        className={cn(
+          "flex size-12 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110",
+          addon.isHighlighted ? "bg-primary-foreground/15 text-accent" : "bg-accent/15 text-accent",
+        )}
+      >
+        <Icon className="size-6" aria-hidden />
+      </span>
+
+      <div className="min-w-0">
+        <h4 className="font-display text-sm font-extrabold">{addon.name}</h4>
+        {addon.description ? (
+          <p className={cn("mt-1 text-xs leading-relaxed", addon.isHighlighted ? "text-primary-foreground/80" : "text-muted-foreground")}>
+            {addon.description}
+          </p>
+        ) : null}
+        <p className="mt-2 font-display text-base font-extrabold">
+          +${addon.priceUsd}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ----------------------------------- الباقات ----------------------------------- */
+
+const ICONS: Record<string, LucideIcon> = { Sparkles, Clock, UserRound, Crown, Award, Gem };
+
+function PackagesBlock() {
+  const { data: packages, isPending } = useQuery({ queryKey: ["goair", "packages"], queryFn: fetchActivePackages });
+
+  return (
+    <section className="goair-section">
+      <div className="goair-container">
+        <SectionHeader title="باقات الرحلة" description="باقات إضافية فوق سعر المقعد الأساسي، بتتضاف تلقائيًا لحجزك." />
+
+        {isPending ? (
+          <p className="mt-10 text-center text-sm text-muted-foreground">جاري تحميل الباقات...</p>
+        ) : !packages || packages.length === 0 ? (
+          <p className="mt-10 text-center text-sm text-muted-foreground">مفيش باقات متاحة دلوقتي.</p>
+        ) : (
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {packages.map((pkg) => (
+              <PackageCard key={pkg.id} pkg={pkg} />
+            ))}
+          </div>
+        )}
+
+        <div className="mt-10 flex items-center justify-center gap-2 rounded-xl border border-border bg-mist/60 px-4 py-3 text-center text-sm text-muted-foreground">
+          <Luggage className="size-4 shrink-0" />
+          الباقات دي إضافية فوق سعر المقعد الأساسي، وبتتضاف لإجمالي حجزك تلقائيًا.
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PackageCard({ pkg }: { pkg: PackageTier }) {
+  const Icon = ICONS[pkg.iconName] ?? Sparkles;
+  return (
+    <div
+      className={cn(
+        "flex flex-col rounded-2xl border p-6 shadow-sm",
+        pkg.isHighlighted
+          ? "border-accent bg-primary text-primary-foreground shadow-lg ring-2 ring-accent"
+          : "border-border bg-card text-card-foreground",
+      )}
+    >
+      {pkg.isHighlighted ? (
+        <span className="mb-3 inline-flex w-fit items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-foreground">
+          الأكثر طلبًا
+        </span>
+      ) : null}
+
+      <span className={cn("flex size-11 items-center justify-center rounded-xl", pkg.isHighlighted ? "bg-primary-foreground/15" : "bg-secondary")}>
+        <Icon className={cn("size-5", pkg.isHighlighted ? "text-accent" : "text-primary")} />
+      </span>
+
+      <h3 className="mt-4 font-display text-lg font-extrabold">{pkg.name}</h3>
+      {pkg.tagline ? (
+        <p className={cn("mt-1 text-sm", pkg.isHighlighted ? "text-primary-foreground/80" : "text-muted-foreground")}>{pkg.tagline}</p>
+      ) : null}
+
+      <p className="mt-5 flex items-baseline gap-1">
+        <span className="font-display text-3xl font-extrabold">${pkg.priceUsd}</span>
+        <span className={cn("text-sm", pkg.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>لكل مسافر</span>
+      </p>
+
+      <ul className="mt-6 flex-1 space-y-3 text-sm">
+        {pkg.features.map((feature) => (
+          <li key={feature} className="flex items-start gap-2">
+            <Check className={cn("mt-0.5 size-4 shrink-0", pkg.isHighlighted ? "text-accent" : "text-primary")} />
+            <span className={pkg.isHighlighted ? "text-primary-foreground/90" : "text-foreground/90"}>{feature}</span>
+          </li>
+        ))}
+      </ul>
+
+      {/* Carries the chosen package all the way through search → book,
+          where its price is added to the real total via create_booking_safe. */}
+      <Button
+        asChild
+        className={cn("mt-6 w-full font-bold", pkg.isHighlighted ? "bg-accent text-accent-foreground hover:bg-accent/90" : "bg-primary text-primary-foreground hover:bg-primary/90")}
+      >
+        <Link to="/" search={{ packageId: pkg.id }} hash="find-your-ride">
+          اختار الباقة دي وابحث عن رحلتك
+        </Link>
+      </Button>
+      <p className={cn("mt-2 text-center text-xs", pkg.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>
+        الخطوة الجاية: اختار رحلتك، والباقة هتتضاف تلقائيًا
+      </p>
+    </div>
+  );
+}
+
+/* ---------------------------------- الاشتراكات ---------------------------------- */
+
 const SUB_COUNTRIES = ["مصر", "لبنان"];
 const DURATION_LABEL: Record<string, string> = { semi_annual: "6 شهور", annual: "سنوي" };
 
-function OffersBlock() {
-  const [tab, setTab] = useState<"packages" | "subscriptions">("packages");
+function SubscriptionsBlock() {
   const [subCountry, setSubCountry] = useState<string>(SUB_COUNTRIES[0] ?? "مصر");
-
-  const { data: packages, isPending } = useQuery({ queryKey: ["goair", "packages"], queryFn: fetchActivePackages });
-  const { data: plans, isPending: plansPending } = useQuery({
+  const { data: plans, isPending } = useQuery({
     queryKey: ["goair", "subscription-plans", subCountry],
     queryFn: () => fetchSubscriptionPlans(subCountry),
   });
 
   return (
-    <section className="goair-section border-t border-border bg-mist/60">
+    <section className="goair-section">
       <div className="goair-container">
-        <SectionHeader
-          title="عروض GoAir"
-          description="باقات إضافية لرحلة واحدة، أو اشتراك عضوية بخصم على كل رحلاتك."
-        />
-
-        <div className="mt-8 inline-flex w-fit rounded-lg border border-border bg-background p-1">
-          <button
-            type="button"
-            onClick={() => setTab("packages")}
-            className={cn(
-              "rounded-md px-5 py-2 text-sm font-bold transition-colors",
-              tab === "packages" ? "bg-card text-primary shadow-sm" : "text-muted-foreground",
-            )}
-          >
-            باقات الرحلة
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("subscriptions")}
-            className={cn(
-              "rounded-md px-5 py-2 text-sm font-bold transition-colors",
-              tab === "subscriptions" ? "bg-card text-primary shadow-sm" : "text-muted-foreground",
-            )}
-          >
-            الاشتراكات
-          </button>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <SectionHeader title="الاشتراكات" description="عضوية بخصم دائم على كل رحلاتك." />
+          <Select value={subCountry} onValueChange={setSubCountry}>
+            <SelectTrigger className="h-10 w-48">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {SUB_COUNTRIES.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        {tab === "packages" ? (
-          <>
-            {isPending ? (
-              <p className="mt-10 text-center text-sm text-muted-foreground">جاري تحميل الباقات...</p>
-            ) : !packages || packages.length === 0 ? (
-              <p className="mt-10 text-center text-sm text-muted-foreground">مفيش باقات متاحة دلوقتي.</p>
-            ) : (
-              <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                {packages.map((pkg) => (
-                  <PackageCard key={pkg.id} pkg={pkg} />
-                ))}
-              </div>
-            )}
-
-            <div className="mt-10 flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-center text-sm text-muted-foreground">
-              <Luggage className="size-4 shrink-0" />
-              الباقات دي إضافية فوق سعر المقعد الأساسي، وبتتضاف لإجمالي حجزك تلقائيًا.
-            </div>
-          </>
+        {isPending ? (
+          <p className="mt-10 text-center text-sm text-muted-foreground">جاري تحميل الاشتراكات...</p>
+        ) : !plans || plans.length === 0 ? (
+          <p className="mt-10 text-center text-sm text-muted-foreground">مفيش اشتراكات متاحة في الدولة دي دلوقتي.</p>
         ) : (
-          <>
-            <div className="mt-8 flex justify-center sm:justify-start">
-              <Select value={subCountry} onValueChange={setSubCountry}>
-                <SelectTrigger className="h-10 w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SUB_COUNTRIES.map((c) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {plansPending ? (
-              <p className="mt-10 text-center text-sm text-muted-foreground">جاري تحميل الاشتراكات...</p>
-            ) : !plans || plans.length === 0 ? (
-              <p className="mt-10 text-center text-sm text-muted-foreground">مفيش اشتراكات متاحة في الدولة دي دلوقتي.</p>
-            ) : (
-              <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {plans.map((plan) => (
-                  <SubscriptionPlanCard key={plan.id} plan={plan} />
-                ))}
-              </div>
-            )}
-
-            <div className="mt-10 flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-center text-sm text-muted-foreground">
-              <Award className="size-4 shrink-0" />
-              الاشتراك عضوية منفصلة عن الحجز — بعد الاشتراك هتاخد كود تتبع من صفحة "حجزي" (تبويب اشتراك).
-            </div>
-          </>
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {plans.map((plan) => (
+              <SubscriptionPlanCard key={plan.id} plan={plan} />
+            ))}
+          </div>
         )}
+
+        <div className="mt-10 flex items-center justify-center gap-2 rounded-xl border border-border bg-mist/60 px-4 py-3 text-center text-sm text-muted-foreground">
+          <Award className="size-4 shrink-0" />
+          الاشتراك عضوية منفصلة عن الحجز — بعد الاشتراك هتاخد كود تتبع من صفحة "حجزي" (تبويب اشتراك).
+        </div>
       </div>
     </section>
-  );
-}
-
-/** Dashed tear-line under the icon badge — a boarding-pass stub motif, not a generic card divider. */
-function TicketRule({ tinted }: { tinted: boolean }) {
-  return (
-    <div
-      className={cn(
-        "mt-4 h-px w-full bg-[length:8px_1px] bg-repeat-x",
-        tinted
-          ? "opacity-40 [background-image:linear-gradient(90deg,currentColor_50%,transparent_0)]"
-          : "text-border [background-image:linear-gradient(90deg,currentColor_50%,transparent_0)]",
-      )}
-      aria-hidden
-    />
   );
 }
 
@@ -390,7 +389,6 @@ function SubscriptionPlanCard({ plan }: { plan: SubscriptionPlan }) {
       <span className={cn("flex size-11 items-center justify-center rounded-xl", plan.isHighlighted ? "bg-primary-foreground/15" : "bg-secondary")}>
         <Icon className={cn("size-5", plan.isHighlighted ? "text-accent" : "text-primary")} />
       </span>
-      <TicketRule tinted={plan.isHighlighted} />
 
       <h3 className="mt-4 font-display text-lg font-extrabold">{plan.name}</h3>
       {plan.tagline ? (
@@ -447,64 +445,6 @@ function SubscriptionPlanCard({ plan }: { plan: SubscriptionPlan }) {
           اشترك الآن
         </Link>
       </Button>
-    </div>
-  );
-}
-
-function PackageCard({ pkg }: { pkg: PackageTier }) {
-  const Icon = ICONS[pkg.iconName] ?? Sparkles;
-  return (
-    <div
-      className={cn(
-        "flex flex-col rounded-2xl border p-6 shadow-sm",
-        pkg.isHighlighted
-          ? "border-accent bg-primary text-primary-foreground shadow-lg ring-2 ring-accent"
-          : "border-border bg-card text-card-foreground",
-      )}
-    >
-      {pkg.isHighlighted ? (
-        <span className="mb-3 inline-flex w-fit items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-foreground">
-          الأكثر طلبًا
-        </span>
-      ) : null}
-
-      <span className={cn("flex size-11 items-center justify-center rounded-xl", pkg.isHighlighted ? "bg-primary-foreground/15" : "bg-secondary")}>
-        <Icon className={cn("size-5", pkg.isHighlighted ? "text-accent" : "text-primary")} />
-      </span>
-      <TicketRule tinted={pkg.isHighlighted} />
-
-      <h3 className="mt-4 font-display text-lg font-extrabold">{pkg.name}</h3>
-      {pkg.tagline ? (
-        <p className={cn("mt-1 text-sm", pkg.isHighlighted ? "text-primary-foreground/80" : "text-muted-foreground")}>{pkg.tagline}</p>
-      ) : null}
-
-      <p className="mt-5 flex items-baseline gap-1">
-        <span className="font-display text-3xl font-extrabold">${pkg.priceUsd}</span>
-        <span className={cn("text-sm", pkg.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>لكل مسافر</span>
-      </p>
-
-      <ul className="mt-6 flex-1 space-y-3 text-sm">
-        {pkg.features.map((feature) => (
-          <li key={feature} className="flex items-start gap-2">
-            <Check className={cn("mt-0.5 size-4 shrink-0", pkg.isHighlighted ? "text-accent" : "text-primary")} />
-            <span className={pkg.isHighlighted ? "text-primary-foreground/90" : "text-foreground/90"}>{feature}</span>
-          </li>
-        ))}
-      </ul>
-
-      {/* Carries the chosen package all the way through search → book,
-          where its price is added to the real total via create_booking_safe. */}
-      <Button
-        asChild
-        className={cn("mt-6 w-full font-bold", pkg.isHighlighted ? "bg-accent text-accent-foreground hover:bg-accent/90" : "bg-primary text-primary-foreground hover:bg-primary/90")}
-      >
-        <Link to="/" search={{ packageId: pkg.id }} hash="find-your-ride">
-          اختار الباقة دي وابحث عن رحلتك
-        </Link>
-      </Button>
-      <p className={cn("mt-2 text-center text-xs", pkg.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>
-        الخطوة الجاية: اختار رحلتك، والباقة هتتضاف تلقائيًا
-      </p>
     </div>
   );
 }
