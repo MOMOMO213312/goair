@@ -103,6 +103,23 @@ export async function fetchVehicleTypes(): Promise<VehicleType[]> {
 }
 
 /**
+ * Lowest live per-seat price (across active routes) for each vehicle type —
+ * powers the "starting from $X" badge on the group-size cards, the same
+ * trust signal international transfer sites (Suntransfers etc.) lead with.
+ * Returns a map of vehicle_type_id -> lowest price so a missing/new vehicle
+ * type with no priced routes yet simply has no entry.
+ */
+export async function fetchVehicleTypeMinPrices(): Promise<Record<string, number>> {
+  const { data, error } = await supabase.rpc("get_vehicle_type_min_prices");
+  if (error) throw new Error(error.message);
+  const map: Record<string, number> = {};
+  for (const row of (data ?? []) as Array<{ vehicle_type_id: string; min_price_usd: number }>) {
+    map[row.vehicle_type_id] = Number(row.min_price_usd);
+  }
+  return map;
+}
+
+/**
  * Private/charter option for one trip — book the whole vehicle instead of
  * a shared seat. `priceUsd` here is the FLAT total for the vehicle, not a
  * per-seat rate (unlike shared trip_options). Auto-priced server-side from

@@ -142,6 +142,19 @@ function Home() {
             <p className="mt-4 max-w-md text-base leading-relaxed text-primary-foreground/90 sm:text-lg">
               حلول سفر متكاملة مصممة لكل رحلة
             </p>
+
+            <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4 border-t border-primary-foreground/15 pt-6">
+              {[
+                { value: `+${publicTrips.length}`, label: "خط رحلة نشط" },
+                { value: String(countries.length), label: countries.length === 1 ? "دولة متاحة الآن" : "دول متاحة الآن" },
+                { value: "24/7", label: "دعم متواصل" },
+              ].map((stat) => (
+                <div key={stat.label}>
+                  <p className="font-display text-2xl font-extrabold text-primary-foreground sm:text-3xl">{stat.value}</p>
+                  <p className="mt-0.5 text-xs text-primary-foreground/70">{stat.label}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

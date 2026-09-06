@@ -31,7 +31,9 @@ import {
 import {
   fetchActivePackages,
   fetchSubscriptionPlans,
+  fetchVehicleTypeMinPrices,
   fetchVehicleTypes,
+  formatUsd,
   type PackageTier,
   type SubscriptionPlan,
 } from "@/lib/goair";
@@ -118,8 +120,16 @@ function ServicesBlock() {
     queryKey: ["goair", "vehicle-types"],
     queryFn: fetchVehicleTypes,
   });
+  const { data: minPrices } = useQuery({
+    queryKey: ["goair", "vehicle-type-min-prices"],
+    queryFn: fetchVehicleTypeMinPrices,
+  });
 
   if (!vehicleTypes || vehicleTypes.length === 0) return null;
+
+  const cheapestId = minPrices
+    ? Object.entries(minPrices).sort((a, b) => a[1] - b[1])[0]?.[0]
+    : undefined;
 
   return (
     <section id="services" className="goair-section scroll-mt-20">
@@ -140,6 +150,8 @@ function ServicesBlock() {
               const TierIcon = ICON_BY_TIER[tier] ?? Car;
               const dotCount = Math.min(vehicle.capacity, 6);
               const isLarge = tier === "large";
+              const minPrice = minPrices?.[vehicle.id];
+              const isCheapest = vehicle.id === cheapestId;
 
               return (
                 <a
@@ -152,6 +164,17 @@ function ServicesBlock() {
                       : "border border-border bg-background text-primary shadow-sm",
                   )}
                 >
+                  {isCheapest ? (
+                    <span
+                      className={cn(
+                        "absolute -top-3 right-6 z-10 inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-bold",
+                        isLarge ? "bg-accent text-accent-foreground" : "bg-primary text-primary-foreground",
+                      )}
+                    >
+                      الأوفر اقتصاديًا
+                    </span>
+                  ) : null}
+
                   <span
                     className={cn(
                       "relative z-10 flex size-11 items-center justify-center rounded-full ring-4",
@@ -173,7 +196,19 @@ function ServicesBlock() {
                     {BLURB_BY_TIER[tier]}
                   </p>
 
-                  <div className="mt-4 flex items-center gap-1.5">
+                  {minPrice != null ? (
+                    <p className="mt-4 flex items-baseline gap-1">
+                      <span className={cn("text-xs font-bold", isLarge ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                        من
+                      </span>
+                      <span className="font-display text-2xl font-extrabold">{formatUsd(minPrice)}</span>
+                      <span className={cn("text-xs", isLarge ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                        للمقعد
+                      </span>
+                    </p>
+                  ) : null}
+
+                  <div className="mt-3 flex items-center gap-1.5">
                     {Array.from({ length: dotCount }).map((_, i) => (
                       <Users key={i} className="size-3.5 text-accent" aria-hidden />
                     ))}
