@@ -4,17 +4,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 
 import heroImage from "@/assets/hero-goair-van.png";
-import { AirportGrid } from "@/components/goair/airport-card";
 import { AnnouncementTicker } from "@/components/goair/announcement-ticker";
-import { BrandTrustStrip } from "@/components/goair/brand-trust-strip";
 import { BusinessPromoBanner } from "@/components/goair/business-promo-banner";
-import { DestinationCard } from "@/components/goair/destination-card";
-import { EmptyState } from "@/components/goair/empty-state";
 import { DealsTeaser } from "@/components/goair/deals-teaser";
+import { ExploreRoutesSection } from "@/components/goair/explore-routes-section";
 import { HeroTrustStrip } from "@/components/goair/hero-trust-strip";
 import { HowItWorks } from "@/components/goair/how-it-works";
 import { RideTypesSection } from "@/components/goair/ride-types-section";
-import { RouteCard } from "@/components/goair/route-card";
 import { SectionHeader } from "@/components/goair/section-header";
 import { ServiceHighlights } from "@/components/goair/service-highlights";
 import { FlightPath } from "@/components/flight-path";
@@ -26,12 +22,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { fetchTrips, fetchVisibleCountries } from "@/lib/goair";
-import {
-  getAirportSummaries,
-  getDestinationSummaries,
-  getFeaturedRoutes,
-  filterPublicTrips,
-} from "@/lib/trip-stats";
+import { filterPublicTrips } from "@/lib/trip-stats";
 
 const marketsQuery = queryOptions({
   queryKey: ["goair", "markets"],
@@ -78,21 +69,6 @@ function Home() {
 
   const publicTrips = useMemo(
     () => filterPublicTrips(trips, countries),
-    [trips, countries],
-  );
-
-  const featuredRoutes = useMemo(
-    () => getFeaturedRoutes(trips, countries, 4),
-    [trips, countries],
-  );
-
-  const airports = useMemo(
-    () => getAirportSummaries(publicTrips).filter((a) => countries.includes(a.country)),
-    [publicTrips, countries],
-  );
-
-  const destinations = useMemo(
-    () => getDestinationSummaries(trips, countries),
     [trips, countries],
   );
 
@@ -154,38 +130,11 @@ function Home() {
         <HeroTrustStrip />
       </div>
 
-      {/* Popular routes — first thing after the hero, capped at 4 so the section stays scannable */}
-      <section className="py-14 sm:py-16">
-        <div className="mx-auto max-w-6xl px-4">
-          <SectionHeader
-            title="أشهر الخطوط عندنا"
-            description="خطوطنا تنشط في مصر ولبنان بأسعار ثابتة لكل مقعد من وإلى المطار"
-          />
+      {/* Explore routes — one merged section (was: popular routes + by-airport grid +
+          destinations grid, three views of the same data). Filterable by airport. */}
+      <ExploreRoutesSection trips={trips} countries={countries} />
 
-          {featuredRoutes.length > 0 ? (
-            <>
-              <div className="mt-8 flex gap-4 overflow-x-auto pb-2 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden">
-                {featuredRoutes.map((trip) => (
-                  <RouteCard key={trip.id} trip={trip} compact />
-                ))}
-              </div>
-              <div className="mt-8 hidden gap-5 md:grid md:grid-cols-2 lg:grid-cols-4">
-                {featuredRoutes.map((trip) => (
-                  <RouteCard key={trip.id} trip={trip} />
-                ))}
-              </div>
-            </>
-          ) : (
-            <EmptyState
-              className="mt-8"
-              title="لا توجد خطوط معروضة حاليًا"
-              description="جرّب تحديث الصفحة أو تواصل معنا للاستفسار."
-            />
-          )}
-        </div>
-      </section>
-
-      {/* How GoAir works — right under the routes, per the updated homepage structure */}
+      {/* How GoAir works */}
       <HowItWorks />
 
       {/* Choose your ride — real vehicle tiers from vehicle_types */}
@@ -196,26 +145,6 @@ function Home() {
 
       {/* GOAIR Deals — teaser for the real packages/add-ons page */}
       <DealsTeaser />
-
-      <AirportGrid airports={airports} />
-
-      {/* Destinations grid */}
-      <section className="bg-mist/60 py-14 sm:py-16">
-        <div className="mx-auto max-w-6xl px-4">
-          <SectionHeader
-            title="وجهات مميزة"
-            description="كل الوجهات المتاحة من وإلى المطار — بسعر ثابت لكل مقعد."
-          />
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {destinations.map((item) => (
-              <DestinationCard
-                key={`${item.country}-${item.name}`}
-                destination={item}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* FAQ */}
       <section className="mx-auto max-w-3xl px-4 py-14 sm:py-16">
@@ -244,9 +173,6 @@ function Home() {
 
       {/* For travel agencies & airlines */}
       <BusinessPromoBanner />
-
-      {/* Closing brand trust */}
-      <BrandTrustStrip />
     </>
   );
 }

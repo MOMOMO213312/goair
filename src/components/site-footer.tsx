@@ -1,11 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { Plane } from "lucide-react";
+import { CreditCard, Plane, Users2, Wallet } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { subscribeNewsletter } from "@/lib/goair";
+
+const PAYMENT_METHODS = ["Visa", "Mastercard", "Apple Pay", "الدفع كاش"];
 
 export function SiteFooter() {
   const [email, setEmail] = useState("");
@@ -85,6 +87,29 @@ export function SiteFooter() {
               </Link>
             </li>
           </ul>
+        </div>
+      </div>
+      <div className="border-t border-primary-foreground/15 py-6">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4">
+          <div className="flex items-center gap-2 text-xs text-primary-foreground/70">
+            <Users2 className="size-4" aria-hidden />
+            <span>+10,000 راكب وثق برحلته معانا</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {PAYMENT_METHODS.map((method) => (
+              <span
+                key={method}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-primary-foreground/20 bg-primary-foreground/5 px-2.5 py-1 text-xs font-bold text-primary-foreground/80"
+              >
+                {method === "Apple Pay" ? (
+                  <Wallet className="size-3.5" aria-hidden />
+                ) : (
+                  <CreditCard className="size-3.5" aria-hidden />
+                )}
+                {method}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
       <div className="border-t border-primary-foreground/15 py-5 text-center text-xs text-primary-foreground/60">
