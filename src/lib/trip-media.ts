@@ -41,6 +41,36 @@ export const DESTINATION_IMAGES: Record<string, string> = {
   بيروت: destBeirut,
 };
 
+/**
+ * Real-photo pools used when a destination has no dedicated photo of its
+ * own. Several photos per country (not one repeated banner) so a grid of
+ * cards still looks varied and like a real travel site — a destination is
+ * assigned a photo deterministically by name hash, so it never flickers
+ * between renders.
+ */
+const EGYPT_PHOTO_POOL: string[] = [destHaram, destNasr, destZamalek, destOctober, destNewCairo, egyptImage];
+const LEBANON_PHOTO_POOL: string[] = [destJbeil, destSaida, destTripoli, destBeirut, lebanonImage];
+
+const COUNTRY_PHOTO_POOLS: Record<string, string[]> = {
+  مصر: EGYPT_PHOTO_POOL,
+  لبنان: LEBANON_PHOTO_POOL,
+};
+
+function hashString(value: string): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+function poolImageFor(destination: string, country?: string): string | null {
+  if (!country) return null;
+  const pool = COUNTRY_PHOTO_POOLS[country];
+  if (!pool || pool.length === 0) return null;
+  return pool[hashString(destination) % pool.length] ?? null;
+}
+
 /** Obvious naming variants → canonical destination keys (existing assets only). */
 const DESTINATION_ALIASES: Record<string, keyof typeof DESTINATION_IMAGES> = {
   "مدينه نصر": "مدينة نصر",
@@ -67,7 +97,7 @@ function normalizeLocationName(value: string): string {
   return value.trim().replace(/\s+/g, " ");
 }
 
-function resolveDestinationImage(location: string): string | null {
+function resolveDestinationImage(location: string, country?: string): string | null {
   const normalized = normalizeLocationName(location);
   if (!normalized) return null;
 
@@ -80,7 +110,7 @@ function resolveDestinationImage(location: string): string | null {
     return DESTINATION_IMAGES[aliasKey];
   }
 
-  return null;
+  return poolImageFor(normalized, country);
 }
 
 function isAirportLocation(
@@ -124,12 +154,13 @@ export type RouteImageSource = Pick<
 
 function resolveRouteImage(source: RouteImageSource): string | null {
   const city = getTripCityLocation(source);
-  // No country-photo fallback here on purpose: only 6 of 60 real destinations
-  // have a dedicated photo, so falling back to one of 2 country banners meant
-  // the same photo repeated across ~90% of trip cards site-wide. A route
-  // without its own photo shows the distinctive per-destination placeholder
-  // instead (see DestinationPlaceholder) — never a repeated stock photo.
-  return resolveDestinationImage(city);
+  // Only 6 of 60 real destinations have a dedicated photo. Rather than fall
+  // back to one repeated country banner (which looked identical across ~90%
+  // of trip cards) or a plain color placeholder, unmatched destinations get
+  // a deterministic pick from a small per-country pool of real travel
+  // photos — varied, and still a real photo instead of an empty-feeling
+  // gradient block.
+  return resolveDestinationImage(city, source.country);
 }
 
 /**
@@ -140,14 +171,14 @@ export function getTripRouteImage(trip: RouteImageSource): string | null {
 }
 
 /**
- * Destination card image: named destination → null (placeholder). Same
- * reasoning as resolveRouteImage — no repeated country-banner fallback.
+ * Destination card image: named destination → per-country photo pool
+ * fallback → null (placeholder), same as resolveRouteImage.
  */
 export function getDestinationCardImage(
   destinationName: string,
-  _country?: string,
+  country?: string,
 ): string | null {
-  return resolveDestinationImage(destinationName);
+  return resolveDestinationImage(destinationName, country);
 }
 
 /**
