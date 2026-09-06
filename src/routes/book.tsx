@@ -78,7 +78,7 @@ function BookPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
 
-  const [phase, setPhase] = useState<Phase>("extras");
+  const [phase, setPhase] = useState<Phase>(search.packageId ? "passengers" : "extras");
   const [packageId, setPackageId] = useState<string | null>(search.packageId ?? null);
   const [luggage, setLuggage] = useState(1);
   const [extrasNotes, setExtrasNotes] = useState("");
@@ -95,11 +95,17 @@ function BookPage() {
 
   const isPrivate = search.bookingType === "private";
   const packagePricePerSeat = selectedPackage?.priceUsd ?? 0;
-  // Private = flat vehicle price + package add-on per passenger.
-  // Shared = unchanged: (seat + package) × seats.
+  // A package's price already includes the transport — it's a complete
+  // product, not an add-on stacked on top of the trip's seat price. So when
+  // one is selected, it REPLACES the per-seat price rather than adding to
+  // it. (Future add-ons that genuinely stack on top of a chosen trip belong
+  // to the separate `addon_services` concept, not `packages`.)
+  const effectivePricePerSeat = packageId ? packagePricePerSeat : search.price;
   const total = isPrivate
-    ? search.price + packagePricePerSeat * search.seats
-    : (search.price + packagePricePerSeat) * search.seats;
+    ? packageId
+      ? packagePricePerSeat * search.seats
+      : search.price
+    : effectivePricePerSeat * search.seats;
 
   async function onConfirm() {
     if (fullName.trim().length < 3) {
@@ -230,7 +236,7 @@ function BookPage() {
                 flight={flight}
                 luggage={luggage}
                 notes={extrasNotes}
-                packageName={selectedPackage?.name}
+                {...(selectedPackage?.name ? { packageName: selectedPackage.name } : {})}
                 onEditExtras={() => setPhase("extras")}
                 onEditPassengers={() => setPhase("passengers")}
                 onConfirm={onConfirm}
@@ -242,10 +248,9 @@ function BookPage() {
             <div className="lg:hidden">
               <BookingPriceSummary
                 seats={search.seats}
-                pricePerSeat={search.price}
+                pricePerSeat={effectivePricePerSeat}
                 total={total}
-                packageName={selectedPackage?.name}
-                packagePricePerSeat={packagePricePerSeat}
+                {...(selectedPackage?.name ? { packageName: selectedPackage.name } : {})}
                 isPrivate={isPrivate}
               />
             </div>
@@ -263,10 +268,9 @@ function BookPage() {
               />
               <BookingPriceSummary
                 seats={search.seats}
-                pricePerSeat={search.price}
+                pricePerSeat={effectivePricePerSeat}
                 total={total}
-                packageName={selectedPackage?.name}
-                packagePricePerSeat={packagePricePerSeat}
+                {...(selectedPackage?.name ? { packageName: selectedPackage.name } : {})}
                 isPrivate={isPrivate}
               />
               <BookingTrustPanel />
