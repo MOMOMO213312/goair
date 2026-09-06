@@ -6,6 +6,8 @@ import {
   CustomRequestCard,
   type SearchParams,
 } from "@/components/goair/search/custom-request-card";
+import { BookingStepper } from "@/components/goair/booking/booking-stepper";
+import { BookingTrustPanel } from "@/components/goair/booking/booking-trust-panel";
 import { SearchEmptyState } from "@/components/goair/search/search-empty-state";
 import { SearchFiltersPanel } from "@/components/goair/search/search-filters-panel";
 import { SearchFiltersSheet } from "@/components/goair/search/search-filters-sheet";
@@ -151,6 +153,8 @@ function SearchPage() {
   return (
     <div className="bg-mist/30 pb-16 pt-8 sm:pt-10">
       <div className="mx-auto max-w-6xl px-4">
+        <BookingStepper current={1} className="mb-6" />
+
         {/* Search summary */}
         <SearchSummary
           trip={trip}
@@ -249,10 +253,13 @@ function SearchPage() {
 
             {/* Two-column layout */}
             <div className="mt-6 lg:grid lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-8 xl:grid-cols-[260px_minmax(0,1fr)]">
-              {/* Desktop filters */}
+              {/* Desktop filters + trust panel */}
               <div className="hidden lg:block">
-                <div className="sticky top-20 rounded-xl border border-border/80 bg-card p-5 shadow-[var(--shadow-card)]">
-                  <SearchFiltersPanel {...filterPanelProps} />
+                <div className="sticky top-20 space-y-5">
+                  <div className="rounded-xl border border-border/80 bg-card p-5 shadow-[var(--shadow-card)]">
+                    <SearchFiltersPanel {...filterPanelProps} />
+                  </div>
+                  <BookingTrustPanel />
                 </div>
               </div>
 
@@ -302,6 +309,8 @@ function SearchPage() {
                 )}
               </div>
             </div>
+
+            <BookingTrustPanel className="mt-6 lg:hidden" />
           </div>
         ) : null}
 

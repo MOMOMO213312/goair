@@ -4,6 +4,8 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { BookingStepper } from "@/components/goair/booking/booking-stepper";
+import { BookingTrustPanel } from "@/components/goair/booking/booking-trust-panel";
 import { PaymentBackLink } from "@/components/goair/payment/payment-back-link";
 import { PaymentBookingSummary } from "@/components/goair/payment/payment-booking-summary";
 import { PaymentHeader } from "@/components/goair/payment/payment-header";
@@ -11,7 +13,6 @@ import { PaymentMethodsForm } from "@/components/goair/payment/payment-methods-f
 import { PaymentMobileCta } from "@/components/goair/payment/payment-mobile-cta";
 import { PaymentNotFound } from "@/components/goair/payment/payment-not-found";
 import { PaymentPageSkeleton } from "@/components/goair/payment/payment-page-skeleton";
-import { PaymentProgress } from "@/components/goair/payment/payment-progress";
 import { Card } from "@/components/ui/card";
 import {
   fetchPaymentMethods,
@@ -156,9 +157,7 @@ function PaymentPage() {
           <PaymentHeader />
         </div>
 
-        <div className="mt-6">
-          <PaymentProgress />
-        </div>
+        <BookingStepper current={5} className="mt-6" />
 
         {/* Mobile: summary first */}
         <div className="mt-6 lg:hidden">
@@ -193,6 +192,8 @@ function PaymentPage() {
                   {formatUsd(total)}
                 </p>
               </Card>
+
+              <BookingTrustPanel />
 
               <button
                 type="submit"

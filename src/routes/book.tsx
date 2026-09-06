@@ -4,11 +4,14 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { BookingBackLink } from "@/components/goair/booking/booking-back-link";
+import { BookingConfirmStep } from "@/components/goair/booking/booking-confirm-step";
+import { BookingExtrasStep } from "@/components/goair/booking/booking-extras-step";
 import { BookingHeader } from "@/components/goair/booking/booking-header";
-import { BookingMobileCta } from "@/components/goair/booking/booking-mobile-cta";
-import { BookingPassengerForm } from "@/components/goair/booking/booking-passenger-form";
+import { BookingPassengersStep } from "@/components/goair/booking/booking-passengers-step";
 import { BookingPriceSummary } from "@/components/goair/booking/booking-price-summary";
+import { BookingStepper, type BookingStepId } from "@/components/goair/booking/booking-stepper";
 import { BookingTripSummary } from "@/components/goair/booking/booking-trip-summary";
+import { BookingTrustPanel } from "@/components/goair/booking/booking-trust-panel";
 import {
   createBookingSafe,
   createPrivateBookingSafe,
@@ -16,8 +19,6 @@ import {
   fetchTrips,
   friendlyErrorMessage,
 } from "@/lib/goair";
-
-const FORM_ID = "goair-booking-form";
 
 type BookSearch = {
   tripId: string;
@@ -34,6 +35,15 @@ type BookSearch = {
   vehicleTypeId?: string;
   /** Prefilled from the hero search, if entered — no live tracking, just carried through. */
   flight?: string;
+};
+
+/** Wizard phase — mirrors booking steps 2 (Extras), 3 (Passengers+Transfers) and 4 (Confirmation). */
+type Phase = "extras" | "passengers" | "confirm";
+
+const PHASE_TO_STEP: Record<Phase, BookingStepId> = {
+  extras: 2,
+  passengers: 3,
+  confirm: 4,
 };
 
 export const Route = createFileRoute("/book")({
@@ -58,7 +68,7 @@ export const Route = createFileRoute("/book")({
         content: "أدخل بيانات المسافرين لإتمام حجز مقعدك في النقل المشترك من المطار.",
       },
       { property: "og:title", content: "إتمام الحجز — GoAir" },
-      { property: "og:description", content: "خطوة واحدة تفصلك عن تأكيد مقعدك." },
+      { property: "og:description", content: "خطوات واضحة تفصلك عن تأكيد مقعدك." },
     ],
   }),
   component: BookPage,
@@ -67,18 +77,21 @@ export const Route = createFileRoute("/book")({
 function BookPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
+
+  const [phase, setPhase] = useState<Phase>("extras");
+  const [packageId, setPackageId] = useState<string | null>(search.packageId ?? null);
+  const [luggage, setLuggage] = useState(1);
+  const [extrasNotes, setExtrasNotes] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [flight, setFlight] = useState(search.flight ?? "");
-  const [luggage, setLuggage] = useState(1);
-  const [notes, setNotes] = useState("");
   const [busy, setBusy] = useState(false);
 
   const tripsQuery = useQuery({ queryKey: ["goair", "trips"], queryFn: fetchTrips });
   const trip = tripsQuery.data?.find((item) => item.id === search.tripId);
 
   const packagesQuery = useQuery({ queryKey: ["goair", "packages"], queryFn: fetchActivePackages });
-  const selectedPackage = packagesQuery.data?.find((p) => p.id === search.packageId);
+  const selectedPackage = packagesQuery.data?.find((p) => p.id === packageId);
 
   const isPrivate = search.bookingType === "private";
   const packagePricePerSeat = selectedPackage?.priceUsd ?? 0;
@@ -88,14 +101,15 @@ function BookPage() {
     ? search.price + packagePricePerSeat * search.seats
     : (search.price + packagePricePerSeat) * search.seats;
 
-  async function onSubmit(event: React.FormEvent) {
-    event.preventDefault();
+  async function onConfirm() {
     if (fullName.trim().length < 3) {
       toast.error("اكتب الاسم بالكامل.");
+      setPhase("passengers");
       return;
     }
     if (phone.trim().length < 7) {
       toast.error("اكتب رقم موبايل صحيح.");
+      setPhase("passengers");
       return;
     }
     if (isPrivate && !search.vehicleTypeId) {
@@ -116,7 +130,7 @@ function BookPage() {
             phoneNumber: phone.trim(),
             flightNumber: flight.trim() || null,
             luggageCount: luggage,
-            packageId: search.packageId || null,
+            packageId: packageId || null,
           })
         : await createBookingSafe({
             tripId: search.tripId,
@@ -130,7 +144,7 @@ function BookPage() {
             phoneNumber: phone.trim(),
             flightNumber: flight.trim() || null,
             luggageCount: luggage,
-            packageId: search.packageId || null,
+            packageId: packageId || null,
           });
       toast.success(isPrivate ? "تم تثبيت الحجز الخاص — باقي الدفع." : "تم تثبيت مقعدك — باقي الدفع.");
       navigate({ to: "/payment", search: { ticket: ticketCode } });
@@ -143,14 +157,29 @@ function BookPage() {
     }
   }
 
+  function onPassengersSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (fullName.trim().length < 3) {
+      toast.error("اكتب الاسم بالكامل.");
+      return;
+    }
+    if (phone.trim().length < 7) {
+      toast.error("اكتب رقم موبايل صحيح.");
+      return;
+    }
+    setPhase("confirm");
+  }
+
   return (
-    <div className="bg-mist/30 pb-28 pt-8 md:pb-16 md:pt-10">
+    <div className="bg-mist/30 pb-16 pt-8 md:pb-16 md:pt-10">
       <div className="mx-auto max-w-6xl px-4">
         <BookingBackLink trip={trip} date={search.date} seats={search.seats} />
 
         <div className="mt-4">
           <BookingHeader />
         </div>
+
+        <BookingStepper current={PHASE_TO_STEP[phase]} className="mt-6" />
 
         {/* Mobile: trip summary first */}
         <div className="mt-6 lg:hidden">
@@ -164,24 +193,50 @@ function BookPage() {
         </div>
 
         <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1fr)_340px]">
-          {/* Main: passenger form */}
+          {/* Main: current step */}
           <div className="min-w-0 space-y-6">
-            <BookingPassengerForm
-              formId={FORM_ID}
-              seats={search.seats}
-              fullName={fullName}
-              phone={phone}
-              flight={flight}
-              luggage={luggage}
-              notes={notes}
-              busy={busy}
-              onFullNameChange={setFullName}
-              onPhoneChange={setPhone}
-              onFlightChange={setFlight}
-              onLuggageChange={setLuggage}
-              onNotesChange={setNotes}
-              onSubmit={onSubmit}
-            />
+            {phase === "extras" ? (
+              <BookingExtrasStep
+                packages={packagesQuery.data ?? []}
+                packagesLoading={packagesQuery.isLoading}
+                selectedPackageId={packageId}
+                onSelectPackage={setPackageId}
+                luggage={luggage}
+                onLuggageChange={setLuggage}
+                notes={extrasNotes}
+                onNotesChange={setExtrasNotes}
+                onContinue={() => setPhase("passengers")}
+              />
+            ) : null}
+
+            {phase === "passengers" ? (
+              <BookingPassengersStep
+                seats={search.seats}
+                fullName={fullName}
+                phone={phone}
+                flight={flight}
+                onFullNameChange={setFullName}
+                onPhoneChange={setPhone}
+                onFlightChange={setFlight}
+                onBack={() => setPhase("extras")}
+                onContinue={onPassengersSubmit}
+              />
+            ) : null}
+
+            {phase === "confirm" ? (
+              <BookingConfirmStep
+                fullName={fullName}
+                phone={phone}
+                flight={flight}
+                luggage={luggage}
+                notes={extrasNotes}
+                packageName={selectedPackage?.name}
+                onEditExtras={() => setPhase("extras")}
+                onEditPassengers={() => setPhase("passengers")}
+                onConfirm={onConfirm}
+                busy={busy}
+              />
+            ) : null}
 
             {/* Mobile price summary */}
             <div className="lg:hidden">
@@ -196,7 +251,7 @@ function BookPage() {
             </div>
           </div>
 
-          {/* Sidebar: trip + price (desktop) */}
+          {/* Sidebar: trip + price + trust (desktop) */}
           <aside className="hidden space-y-5 lg:block">
             <div className="sticky top-20 space-y-5">
               <BookingTripSummary
@@ -214,20 +269,11 @@ function BookPage() {
                 packagePricePerSeat={packagePricePerSeat}
                 isPrivate={isPrivate}
               />
-              <button
-                type="submit"
-                form={FORM_ID}
-                disabled={busy}
-                className="flex h-12 w-full items-center justify-center rounded-md bg-accent text-base font-bold text-accent-foreground transition-colors hover:bg-accent/90 disabled:pointer-events-none disabled:opacity-50"
-              >
-                {busy ? "جاري تجهيز الحجز..." : "متابعة الحجز"}
-              </button>
+              <BookingTrustPanel />
             </div>
           </aside>
         </div>
       </div>
-
-      <BookingMobileCta formId={FORM_ID} total={total} busy={busy} />
     </div>
   );
 }
