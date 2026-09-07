@@ -65,7 +65,10 @@ async function searchThumbnail(query: string, lang: "ar" | "en"): Promise<string
  * destination never triggers a repeat network call across the many cards it
  * can appear on.
  */
-export async function getWikiPlacePhoto(placeName: string, country: string): Promise<string | null> {
+export async function getWikiPlacePhoto(
+  placeName: string,
+  country: string,
+): Promise<string | null> {
   const name = placeName.trim();
   if (!name) return null;
 
@@ -79,6 +82,27 @@ export async function getWikiPlacePhoto(placeName: string, country: string): Pro
     (await searchThumbnail(name, "ar")) ??
     (await searchThumbnail(query, "en")) ??
     (await searchThumbnail(name, "en"));
+
+  writeCache(key, result);
+  return result;
+}
+
+/**
+ * Real photo for a general topic (not a specific place), sourced the same
+ * free, key-less way as `getWikiPlacePhoto`. English first (broader,
+ * better-illustrated coverage for generic subjects like "airport arrivals
+ * hall"), then Arabic as a fallback. Used for illustrative section photos
+ * (e.g. "before you land") where GoAir doesn't yet have its own shoot.
+ */
+export async function getWikiTopicPhoto(topic: string): Promise<string | null> {
+  const name = topic.trim();
+  if (!name) return null;
+
+  const key = `topic::${name}`;
+  const cached = readCache(key);
+  if (cached !== undefined) return cached;
+
+  const result = (await searchThumbnail(name, "en")) ?? (await searchThumbnail(name, "ar"));
 
   writeCache(key, result);
   return result;

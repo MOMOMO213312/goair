@@ -5,7 +5,9 @@ import { Sparkles } from "lucide-react";
 
 import heroImage from "@/assets/hero-goair-van.png";
 import { AnnouncementTicker } from "@/components/goair/announcement-ticker";
+import { BeforeYouLand } from "@/components/goair/before-you-land";
 import { BusinessPromoBanner } from "@/components/goair/business-promo-banner";
+import { CoverageCountriesSection } from "@/components/goair/coverage-countries-section";
 import { DealsTeaser } from "@/components/goair/deals-teaser";
 import { ExploreRoutesSection } from "@/components/goair/explore-routes-section";
 import { HeroTrustStrip } from "@/components/goair/hero-trust-strip";
@@ -67,10 +69,7 @@ function Home() {
   const { trips, countries } = data;
   const { packageId } = Route.useSearch();
 
-  const publicTrips = useMemo(
-    () => filterPublicTrips(trips, countries),
-    [trips, countries],
-  );
+  const publicTrips = useMemo(() => filterPublicTrips(trips, countries), [trips, countries]);
 
   return (
     <>
@@ -106,11 +105,16 @@ function Home() {
             <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4 border-t border-primary-foreground/15 pt-6">
               {[
                 { value: `+${publicTrips.length}`, label: "خط رحلة نشط" },
-                { value: String(countries.length), label: countries.length === 1 ? "دولة متاحة الآن" : "دول متاحة الآن" },
+                {
+                  value: String(countries.length),
+                  label: countries.length === 1 ? "دولة متاحة الآن" : "دول متاحة الآن",
+                },
                 { value: "24/7", label: "دعم متواصل" },
               ].map((stat) => (
                 <div key={stat.label}>
-                  <p className="font-display text-2xl font-extrabold text-primary-foreground sm:text-3xl">{stat.value}</p>
+                  <p className="font-display text-2xl font-extrabold text-primary-foreground sm:text-3xl">
+                    {stat.value}
+                  </p>
                   <p className="mt-0.5 text-xs text-primary-foreground/70">{stat.label}</p>
                 </div>
               ))}
@@ -140,6 +144,9 @@ function Home() {
 
       {/* How GoAir works */}
       <HowItWorks />
+
+      {/* Before you land — walks through the arrival experience with real photos */}
+      <BeforeYouLand />
 
       {/* Choose your ride — real vehicle tiers from vehicle_types */}
       <RideTypesSection />
@@ -174,6 +181,9 @@ function Home() {
           </AccordionItem>
         </Accordion>
       </section>
+
+      {/* Countries GoAir covers today — real footprint, not a borrowed big number */}
+      <CoverageCountriesSection trips={trips} countries={countries} />
 
       {/* For travel agencies & airlines */}
       <BusinessPromoBanner />

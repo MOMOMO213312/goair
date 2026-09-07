@@ -1,5 +1,6 @@
 import { CalendarSearch, MousePointerClick, Ticket, UserRound } from "lucide-react";
 
+import stepsImage from "@/assets/hero-airport.jpg";
 import { SectionHeader } from "@/components/goair/section-header";
 
 const STEPS = [
@@ -30,25 +31,39 @@ export function HowItWorks() {
   return (
     <section className="bg-mist/60 py-14 sm:py-16">
       <div className="mx-auto max-w-6xl px-4">
-        <SectionHeader title="إزاي تحجز مع GoAir" description="من البحث للاستقبال في 4 خطوات بسيطة." />
+        <SectionHeader
+          title="إزاي تحجز مع GoAir"
+          description="من البحث للاستقبال في 4 خطوات بسيطة."
+        />
 
-        <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {STEPS.map((step, index) => (
-            <div key={step.title} className="relative flex flex-col items-start">
-              {index < STEPS.length - 1 ? (
-                <span
-                  className="absolute top-6 start-full hidden h-px w-8 -translate-y-1/2 bg-accent/40 lg:block"
-                  aria-hidden
-                />
-              ) : null}
-              <span className="relative z-10 flex size-12 items-center justify-center rounded-full border-2 border-accent bg-background text-accent">
-                <step.icon className="size-5" aria-hidden />
-              </span>
-              <p className="mt-4 text-xs font-bold text-accent">الخطوة {index + 1}</p>
-              <h3 className="mt-1 font-display text-lg font-extrabold text-primary">{step.title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{step.text}</p>
-            </div>
-          ))}
+        <div className="mt-10 grid gap-10 lg:grid-cols-[1.1fr_1.4fr] lg:items-center lg:gap-14">
+          <img
+            src={stepsImage}
+            alt="مدرج مطار"
+            loading="lazy"
+            className="hidden aspect-[4/3] w-full rounded-2xl object-cover lg:block"
+          />
+
+          <div className="grid gap-8 sm:grid-cols-2">
+            {STEPS.map((step, index) => (
+              <div key={step.title} className="relative flex flex-col items-start">
+                {index < STEPS.length - 1 ? (
+                  <span
+                    className="absolute top-6 start-full hidden h-px w-8 -translate-y-1/2 bg-accent/40 lg:block"
+                    aria-hidden
+                  />
+                ) : null}
+                <span className="relative z-10 flex size-12 items-center justify-center rounded-full border-2 border-accent bg-background text-accent">
+                  <step.icon className="size-5" aria-hidden />
+                </span>
+                <p className="mt-4 text-xs font-bold text-accent">الخطوة {index + 1}</p>
+                <h3 className="mt-1 font-display text-lg font-extrabold text-primary">
+                  {step.title}
+                </h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{step.text}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
