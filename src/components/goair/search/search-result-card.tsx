@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, BadgeCheck, Briefcase, CalendarX2, Clock, Info, MapPin, UserRound, Users, Zap } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Briefcase, CalendarX2, Clock, Info, MapPin, UserRound, Zap } from "lucide-react";
 
 import { DestinationPlaceholder } from "@/components/goair/destination-placeholder";
 import { FlightPath } from "@/components/flight-path";
@@ -16,17 +16,18 @@ export function isFallbackSchedule(scheduleId: string) {
 
 type SearchResultCardProps = {
   trip: Trip;
-  option: ScheduleOption;
+  /** Every departure time available for this one route — rendered as rows in a single card. */
+  options: ScheduleOption[];
   seats: number;
   travelDate: string;
   packageId?: string;
   className?: string;
-  /** Group-size tier for this departure — used only for capacity/luggage info, never shown as a vehicle name. */
-  vehicleType?: VehicleType | null;
-  /** True when this is the cheapest available departure for the search — shown as a small badge. */
-  isBestPrice?: boolean;
-  /** True when this is the earliest available departure for the search — shown as a small badge. */
-  isFastest?: boolean;
+  /** Group-size tier per departure — used only for capacity/luggage info, never shown as a vehicle name. */
+  vehicleTypesById?: Map<string, VehicleType>;
+  /** Price of the cheapest departure across the whole search — shown as a badge on the matching row. */
+  cheapestPrice?: number | null;
+  /** Time of the earliest departure across the whole search — shown as a badge on the matching row. */
+  earliestTime?: string | null;
   /** Carried over from the hero search — prefills the booking form, nothing more (no live tracking yet). */
   flight?: string;
 };
@@ -58,28 +59,24 @@ function RouteImage({
 
 export function SearchResultCard({
   trip,
-  option,
+  options,
   seats,
   travelDate,
   packageId,
   className,
-  vehicleType,
-  isBestPrice,
-  isFastest,
+  vehicleTypesById,
+  cheapestPrice = null,
+  earliestTime = null,
   flight,
 }: SearchResultCardProps) {
-  const fallback = isFallbackSchedule(option.scheduleId);
-  const total = option.pricePerSeat * seats;
   const cityLabel = getTripCityLocation(trip);
   const image = getTripRouteImage(trip);
-  const notEnough =
-    !fallback && option.remainingSeats !== null && option.remainingSeats < seats;
-
-  const seatMessage = fallback
-    ? "يُؤكَّد توفر المقعد عند إتمام الحجز"
-    : option.remainingSeats === null
-      ? "يُؤكَّد توفر المقعد عند إتمام الحجز"
-      : `${option.remainingSeats} مقعد متبقي`;
+  const hasFallback = options.some((option) => isFallbackSchedule(option.scheduleId));
+  const maxLuggage = options.reduce<number | null>((max, option) => {
+    const vehicle = option.vehicleTypeId ? vehicleTypesById?.get(option.vehicleTypeId) : null;
+    if (vehicle?.maxLuggage == null) return max;
+    return max === null ? vehicle.maxLuggage : Math.max(max, vehicle.maxLuggage);
+  }, null);
 
   return (
     <Card
@@ -89,16 +86,17 @@ export function SearchResultCard({
       )}
     >
       {/* Mobile: compact top image */}
-      <RouteImage
-        image={image}
-        cityLabel={cityLabel}
-        className="h-20 w-full md:hidden"
-      />
+      <RouteImage image={image} cityLabel={cityLabel} className="h-20 w-full md:hidden" />
 
       <div className="flex flex-col md:flex-row">
+        {/* Side: image desktop */}
+        <div className="hidden border-l border-border md:block md:w-56 lg:w-64">
+          <RouteImage image={image} cityLabel={cityLabel} className="h-full w-full" />
+        </div>
+
         {/* Main content */}
         <div className="flex min-w-0 flex-1 flex-col p-5 sm:p-6">
-          {/* Route header */}
+          {/* Route header — shown once for every departure below */}
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -106,7 +104,7 @@ export function SearchResultCard({
                   {trip.airport_code}
                 </span>
                 <span>{trip.country}</span>
-                {fallback ? (
+                {hasFallback ? (
                   <span className="rounded-md border border-border bg-background px-2 py-0.5 text-[10px] font-medium">
                     مواعيد مرجعية
                   </span>
@@ -118,23 +116,6 @@ export function SearchResultCard({
                 {trip.destination}
               </h3>
             </div>
-
-            {isBestPrice || isFastest ? (
-              <div className="flex shrink-0 flex-wrap items-center gap-2">
-                {isBestPrice ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2.5 py-1 text-[11px] font-bold text-accent">
-                    <BadgeCheck className="size-3.5" aria-hidden />
-                    أفضل سعر
-                  </span>
-                ) : null}
-                {isFastest ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-bold text-primary">
-                    <Zap className="size-3.5" aria-hidden />
-                    الأسرع
-                  </span>
-                ) : null}
-              </div>
-            ) : null}
           </div>
 
           {/* Route visual — horizontal on md+ */}
@@ -154,11 +135,11 @@ export function SearchResultCard({
             </div>
           </div>
 
-          {/* Details row */}
+          {/* Details row — shown once */}
           <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
             <div className="flex items-center gap-2">
               <span className="flex size-9 items-center justify-center rounded-lg bg-secondary text-primary">
-                <Users className="size-4" aria-hidden />
+                <UserRound className="size-4" aria-hidden />
               </span>
               <div>
                 <p className="text-[10px] font-bold text-muted-foreground">نوع الرحلة</p>
@@ -166,19 +147,7 @@ export function SearchResultCard({
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="flex size-9 items-center justify-center rounded-lg bg-accent/15 text-accent">
-                <Clock className="size-4" aria-hidden />
-              </span>
-              <div>
-                <p className="text-[10px] font-bold text-muted-foreground">موعد المغادرة</p>
-                <p className="font-display text-base font-extrabold text-primary">
-                  {formatTime(option.departureTime) || option.departureTime.slice(0, 5)}
-                </p>
-              </div>
-            </div>
-
-            {vehicleType?.maxLuggage != null ? (
+            {maxLuggage != null ? (
               <div className="flex items-center gap-2">
                 <span className="flex size-9 items-center justify-center rounded-lg bg-secondary text-primary">
                   <Briefcase className="size-4" aria-hidden />
@@ -186,7 +155,7 @@ export function SearchResultCard({
                 <div>
                   <p className="text-[10px] font-bold text-muted-foreground">الحقائب</p>
                   <p className="font-display text-base font-extrabold text-primary">
-                    حتى {vehicleType.maxLuggage} حقيبة
+                    حتى {maxLuggage} حقيبة
                   </p>
                 </div>
               </div>
@@ -207,7 +176,7 @@ export function SearchResultCard({
             ) : null}
           </div>
 
-          {/* Included perks — same claims already made site-wide (hero trust strip) */}
+          {/* Included perks — shown once */}
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <CalendarX2 className="size-3.5 text-accent" aria-hidden />
@@ -219,50 +188,106 @@ export function SearchResultCard({
             </span>
           </div>
 
-          <p className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
-            <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-            {seatMessage}
-          </p>
-
-          {/* Price + CTA — mobile inline */}
-          <div className="mt-5 flex flex-col gap-4 border-t border-border pt-5 sm:flex-row sm:items-end sm:justify-between md:hidden">
-            <PriceBlock pricePerSeat={option.pricePerSeat} total={total} seats={seats} />
-            <BookButton
-              trip={trip}
-              option={option}
-              seats={seats}
-              travelDate={travelDate}
-              disabled={notEnough}
-              packageId={packageId}
-              flight={flight}
-            />
-          </div>
-        </div>
-
-        {/* Side: image + price desktop */}
-        <div className="hidden flex-col border-r border-border md:flex md:w-56 lg:w-64">
-          <RouteImage
-            image={image}
-            cityLabel={cityLabel}
-            className="h-28 w-full lg:h-32"
-          />
-
-          <div className="flex flex-1 flex-col justify-between p-4">
-            <PriceBlock pricePerSeat={option.pricePerSeat} total={total} seats={seats} />
-            <BookButton
-              trip={trip}
-              option={option}
-              seats={seats}
-              travelDate={travelDate}
-              disabled={notEnough}
-              packageId={packageId}
-              flight={flight}
-              className="mt-4 w-full"
-            />
+          {/* One row per available departure time */}
+          <div className="mt-4 divide-y divide-border border-t border-border">
+            {options.map((option) => (
+              <ScheduleRow
+                key={option.scheduleId}
+                trip={trip}
+                option={option}
+                seats={seats}
+                travelDate={travelDate}
+                packageId={packageId}
+                flight={flight}
+                isBestPrice={options.length > 1 && cheapestPrice !== null && option.pricePerSeat === cheapestPrice}
+                isFastest={
+                  options.length > 1 &&
+                  earliestTime !== null &&
+                  option.departureTime === earliestTime &&
+                  option.pricePerSeat !== cheapestPrice
+                }
+              />
+            ))}
           </div>
         </div>
       </div>
     </Card>
+  );
+}
+
+function ScheduleRow({
+  trip,
+  option,
+  seats,
+  travelDate,
+  packageId,
+  flight,
+  isBestPrice,
+  isFastest,
+}: {
+  trip: Trip;
+  option: ScheduleOption;
+  seats: number;
+  travelDate: string;
+  packageId?: string;
+  flight?: string;
+  isBestPrice: boolean;
+  isFastest: boolean;
+}) {
+  const fallback = isFallbackSchedule(option.scheduleId);
+  const total = option.pricePerSeat * seats;
+  const notEnough = !fallback && option.remainingSeats !== null && option.remainingSeats < seats;
+
+  const seatMessage = fallback
+    ? "يُؤكَّد توفر المقعد عند إتمام الحجز"
+    : option.remainingSeats === null
+      ? "يُؤكَّد توفر المقعد عند إتمام الحجز"
+      : `${option.remainingSeats} مقعد متبقي`;
+
+  return (
+    <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent">
+          <Clock className="size-4" aria-hidden />
+        </span>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-display text-base font-extrabold text-primary">
+              {formatTime(option.departureTime) || option.departureTime.slice(0, 5)}
+            </p>
+            {isBestPrice ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold text-accent">
+                <BadgeCheck className="size-3" aria-hidden />
+                أفضل سعر
+              </span>
+            ) : null}
+            {isFastest ? (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                <Zap className="size-3" aria-hidden />
+                الأسرع
+              </span>
+            ) : null}
+          </div>
+          <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+            <Info className="size-3 shrink-0" aria-hidden />
+            {seatMessage}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-4 sm:justify-end">
+        <PriceBlock pricePerSeat={option.pricePerSeat} total={total} seats={seats} />
+        <BookButton
+          trip={trip}
+          option={option}
+          seats={seats}
+          travelDate={travelDate}
+          disabled={notEnough}
+          packageId={packageId}
+          flight={flight}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -276,17 +301,14 @@ function PriceBlock({
   seats: number;
 }) {
   return (
-    <div>
+    <div className="text-left sm:text-right">
       <p className="text-xs text-muted-foreground">
         {formatUsd(pricePerSeat)} للمقعد
         {seats > 1 ? ` · ${seats} مقاعد` : ""}
       </p>
-      <p className="font-display text-2xl font-extrabold text-accent sm:text-3xl">
+      <p className="font-display text-xl font-extrabold text-accent sm:text-2xl">
         {formatUsd(total)}
       </p>
-      {seats > 1 ? (
-        <p className="mt-0.5 text-xs text-muted-foreground">الإجمالي للحجز</p>
-      ) : null}
     </div>
   );
 }
@@ -312,7 +334,7 @@ function BookButton({
 }) {
   if (disabled) {
     return (
-      <Button disabled className={cn("font-bold", className)}>
+      <Button disabled className={cn("h-11 shrink-0 font-bold", className)}>
         لا توجد مقاعد كافية
       </Button>
     );
@@ -322,7 +344,7 @@ function BookButton({
     <Button
       asChild
       className={cn(
-        "h-11 bg-accent text-base font-bold text-accent-foreground hover:bg-accent/90",
+        "h-11 shrink-0 bg-accent text-base font-bold text-accent-foreground hover:bg-accent/90",
         className,
       )}
     >

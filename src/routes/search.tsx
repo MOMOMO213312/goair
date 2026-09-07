@@ -268,31 +268,17 @@ function SearchPage() {
               {/* Results list */}
               <div className="min-w-0 space-y-4">
                 {visibleOptions.length > 0 ? (
-                  visibleOptions.map((option) => (
-                    <SearchResultCard
-                      key={option.scheduleId}
-                      trip={trip}
-                      option={option}
-                      seats={params.seats}
-                      travelDate={params.date}
-                      packageId={params.packageId}
-                      flight={params.flight}
-                      vehicleType={
-                        option.vehicleTypeId ? vehicleTypesById.get(option.vehicleTypeId) ?? null : null
-                      }
-                      isBestPrice={
-                        visibleOptions.length > 1 &&
-                        cheapestPrice !== null &&
-                        option.pricePerSeat === cheapestPrice
-                      }
-                      isFastest={
-                        visibleOptions.length > 1 &&
-                        earliestTime !== null &&
-                        option.departureTime === earliestTime &&
-                        option.pricePerSeat !== cheapestPrice
-                      }
-                    />
-                  ))
+                  <SearchResultCard
+                    trip={trip}
+                    options={visibleOptions}
+                    seats={params.seats}
+                    travelDate={params.date}
+                    packageId={params.packageId}
+                    flight={params.flight}
+                    vehicleTypesById={vehicleTypesById}
+                    cheapestPrice={cheapestPrice}
+                    earliestTime={earliestTime}
+                  />
                 ) : (
                   <Card className="border-dashed p-8 text-center">
                     <SearchEmptyState
