@@ -133,6 +133,19 @@ export function getDestinationsForAirport(trips: Trip[], country: string, airpor
   ).sort((a, b) => a.localeCompare(b, "ar"));
 }
 
+/**
+ * Airports that serve a given destination — the mirror of
+ * getDestinationsForAirport, used by the "أنا مسافر" (departing) search
+ * flow where the customer picks their city before narrowing to an airport.
+ */
+export function getAirportsForDestination(trips: Trip[], country: string, destination: string) {
+  const map = new Map<string, string>();
+  trips
+    .filter((trip) => trip.country === country && trip.destination === destination)
+    .forEach((trip) => map.set(trip.airport_code, trip.airport_name));
+  return Array.from(map, ([code, name]) => ({ code, name }));
+}
+
 /** Featured routes: lowest price first, capped for homepage display. */
 export function getFeaturedRoutes(trips: Trip[], countries: string[], limit = 8): Trip[] {
   return filterPublicTrips(trips, countries)

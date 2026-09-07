@@ -31,6 +31,7 @@ export const Route = createFileRoute("/search")({
     packageId: typeof search["packageId"] === "string" ? search["packageId"] : undefined,
     flight: typeof search["flight"] === "string" && search["flight"] ? search["flight"] : undefined,
     focus: search["focus"] === "private" ? "private" : undefined,
+    direction: search["direction"] === "to_airport" ? "to_airport" : "from_airport",
   }),
   head: () => ({
     meta: [
@@ -163,6 +164,7 @@ function SearchPage() {
           country={params.country}
           date={params.date}
           seats={params.seats}
+          direction={params.direction}
         />
 
         {trip ? (

@@ -13,6 +13,9 @@ type SearchSummaryProps = {
   country: string;
   date: string;
   seats: number;
+  /** "to_airport" (أنا مسافر) shows the city first, then the airport —
+   * the reverse of "from_airport" (أنا واصل), which is the historical default. */
+  direction?: "to_airport" | "from_airport";
   className?: string;
 };
 
@@ -33,11 +36,17 @@ export function SearchSummary({
   country,
   date,
   seats,
+  direction = "from_airport",
   className,
 }: SearchSummaryProps) {
-  const originLabel = trip?.airport_name ?? trip?.origin ?? airportCode;
+  const airportLabel = trip?.airport_name ?? trip?.origin ?? airportCode;
   const destLabel = trip?.destination ?? destination;
   const code = trip?.airport_code ?? airportCode;
+  const isDeparting = direction === "to_airport";
+  const firstLabel = isDeparting ? destLabel : airportLabel;
+  const secondLabel = isDeparting ? airportLabel : destLabel;
+  const firstCode = isDeparting ? null : code;
+  const secondCode = isDeparting ? code : null;
 
   return (
     <Card
@@ -50,17 +59,22 @@ export function SearchSummary({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="font-display text-xl font-extrabold text-primary sm:text-2xl">
-              {originLabel}
+              {firstLabel}
             </span>
-            {code ? (
+            {firstCode ? (
               <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-bold text-primary">
-                {code}
+                {firstCode}
               </span>
             ) : null}
             <ArrowLeft className="size-5 shrink-0 text-accent" aria-hidden />
             <span className="font-display text-xl font-extrabold text-primary sm:text-2xl">
-              {destLabel}
+              {secondLabel}
             </span>
+            {secondCode ? (
+              <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-bold text-primary">
+                {secondCode}
+              </span>
+            ) : null}
           </div>
 
           <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
