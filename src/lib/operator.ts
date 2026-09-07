@@ -121,3 +121,38 @@ export async function operatorAddVehicle(token: string, vehicleTypeId: string, p
 export function formatOperatorMoney(amount: number) {
   return `$${amount.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 }
+
+export type OperatorPassenger = {
+  bookingId: string;
+  fullName: string;
+  phoneNumber: string;
+  passengerNames: string | null;
+  seatsCount: number;
+  flightNumber: string | null;
+  flightOrigin: string | null;
+  flightScheduledTime: string | null;
+  meetingPoint: string | null;
+  luggageCount: number;
+  status: string;
+};
+
+export async function getOperatorTripPassengers(token: string, assignmentId: string): Promise<OperatorPassenger[]> {
+  const { data, error } = await supabase.rpc("get_operator_trip_passengers", {
+    p_access_token: token,
+    p_assignment_id: assignmentId,
+  });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map((r) => ({
+    bookingId: String(r["booking_id"]),
+    fullName: String(r["full_name"] ?? "—"),
+    phoneNumber: String(r["phone_number"] ?? "—"),
+    passengerNames: (r["passenger_names"] as string | null) ?? null,
+    seatsCount: num(r["seats_count"]),
+    flightNumber: (r["flight_number"] as string | null) ?? null,
+    flightOrigin: (r["flight_origin"] as string | null) ?? null,
+    flightScheduledTime: (r["flight_scheduled_time"] as string | null) ?? null,
+    meetingPoint: (r["meeting_point"] as string | null) ?? null,
+    luggageCount: num(r["luggage_count"]),
+    status: String(r["status"] ?? "confirmed"),
+  }));
+}
