@@ -48,9 +48,7 @@ export function BookingExtrasStep({
   return (
     <Card className={cn("border-border/80 p-5 shadow-[var(--shadow-card)] sm:p-6", className)}>
       <h2 className="font-display text-lg font-extrabold text-primary">إضافات على رحلتك</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        اختياري — تقدر تكمل من غير أي إضافة.
-      </p>
+      <p className="mt-1 text-sm text-muted-foreground">اختياري — تقدر تكمل من غير أي إضافة.</p>
 
       {/* Package add-ons */}
       <div className="mt-6 space-y-3">
@@ -87,7 +85,9 @@ export function BookingExtrasStep({
                 onClick={() => onSelectPackage(pkg.id)}
                 className={cn(
                   "flex w-full items-start justify-between gap-3 rounded-xl border p-4 text-start transition-colors",
-                  isSelected ? "border-accent bg-accent/5" : "border-border/80 hover:border-accent/40",
+                  isSelected
+                    ? "border-accent bg-accent/5"
+                    : "border-border/80 hover:border-accent/40",
                 )}
               >
                 <div className="min-w-0">
@@ -108,7 +108,10 @@ export function BookingExtrasStep({
                   {pkg.features.length > 0 ? (
                     <ul className="mt-2 space-y-1">
                       {pkg.features.slice(0, 3).map((feature) => (
-                        <li key={feature} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
+                        <li
+                          key={feature}
+                          className="flex items-start gap-1.5 text-[11px] text-muted-foreground"
+                        >
                           <Check className="mt-0.5 size-3 shrink-0 text-accent" aria-hidden />
                           {feature}
                         </li>
@@ -153,7 +156,9 @@ export function BookingExtrasStep({
           >
             −
           </button>
-          <span className="w-6 text-center font-display font-extrabold text-primary">{luggage}</span>
+          <span className="w-6 text-center font-display font-extrabold text-primary">
+            {luggage}
+          </span>
           <button
             type="button"
             onClick={() => onLuggageChange(Math.min(20, luggage + 1))}
@@ -171,7 +176,7 @@ export function BookingExtrasStep({
         loading={addonsLoading}
         selectedIds={selectedAddonIds}
         onToggle={onToggleAddon}
-        direction={direction}
+        {...(direction ? { direction } : {})}
       />
 
       {/* Notes */}

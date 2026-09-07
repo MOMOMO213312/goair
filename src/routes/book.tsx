@@ -37,7 +37,7 @@ type BookSearch = {
   /** Prefilled from the hero search, if entered — no live tracking, just carried through. */
   flight?: string;
   /** Which leg this booking covers — drives the airport-services recommendation ordering. */
-  direction?: "to_airport" | "from_airport";
+  direction: "to_airport" | "from_airport";
 };
 
 /** Wizard phase — mirrors booking steps 2 (Extras), 3 (Passengers+Transfers) and 4 (Confirmation). */
@@ -60,7 +60,8 @@ export const Route = createFileRoute("/book")({
     price: Number(search["price"]) || 0,
     packageId: typeof search["packageId"] === "string" ? search["packageId"] : undefined,
     bookingType: search["bookingType"] === "private" ? "private" : "shared",
-    vehicleTypeId: typeof search["vehicleTypeId"] === "string" ? search["vehicleTypeId"] : undefined,
+    vehicleTypeId:
+      typeof search["vehicleTypeId"] === "string" ? search["vehicleTypeId"] : undefined,
     flight: typeof search["flight"] === "string" && search["flight"] ? search["flight"] : undefined,
     direction: search["direction"] === "from_airport" ? "from_airport" : "to_airport",
   }),
@@ -98,8 +99,13 @@ function BookPage() {
   const packagesQuery = useQuery({ queryKey: ["goair", "packages"], queryFn: fetchActivePackages });
   const selectedPackage = packagesQuery.data?.find((p) => p.id === packageId);
 
-  const addonsQuery = useQuery({ queryKey: ["goair", "addon-services"], queryFn: fetchAddonServices });
-  const selectedAddons = (addonsQuery.data ?? []).filter((addon) => selectedAddonIds.includes(addon.id));
+  const addonsQuery = useQuery({
+    queryKey: ["goair", "addon-services"],
+    queryFn: fetchAddonServices,
+  });
+  const selectedAddons = (addonsQuery.data ?? []).filter((addon) =>
+    selectedAddonIds.includes(addon.id),
+  );
   const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.priceUsd, 0);
 
   function toggleAddon(id: string) {
@@ -170,7 +176,9 @@ function BookPage() {
             packageId: packageId || null,
             addonServiceIds: selectedAddonIds,
           });
-      toast.success(isPrivate ? "تم تثبيت الحجز الخاص — باقي الدفع." : "تم تثبيت مقعدك — باقي الدفع.");
+      toast.success(
+        isPrivate ? "تم تثبيت الحجز الخاص — باقي الدفع." : "تم تثبيت مقعدك — باقي الدفع.",
+      );
       navigate({ to: "/payment", search: { ticket: ticketCode } });
     } catch (error) {
       toast.error(

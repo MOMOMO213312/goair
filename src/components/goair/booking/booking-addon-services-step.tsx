@@ -134,7 +134,9 @@ export function BookingAddonServicesStep({
                       aria-pressed={isSelected}
                       className={cn(
                         "flex w-[168px] shrink-0 flex-col gap-2 rounded-xl border p-3 text-start transition-colors sm:w-[176px]",
-                        isSelected ? "border-accent bg-accent/5" : "border-border/80 hover:border-accent/40",
+                        isSelected
+                          ? "border-accent bg-accent/5"
+                          : "border-border/80 hover:border-accent/40",
                       )}
                     >
                       <div className="flex items-center justify-between gap-2">

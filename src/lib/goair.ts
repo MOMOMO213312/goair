@@ -220,7 +220,8 @@ export async function createPrivateBookingSafe(input: CreatePrivateBookingInput)
   if (error) throw new Error(error.message);
   const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
   const ticketCode = row ? pick<string>(row, ["ticket_code"]) : null;
-  if (!ticketCode) throw new Error("تم إنشاء الحجز لكن لم يرجع كود التذكرة — كلمنا فورًا على الدعم.");
+  if (!ticketCode)
+    throw new Error("تم إنشاء الحجز لكن لم يرجع كود التذكرة — كلمنا فورًا على الدعم.");
   clearStoredReferralCode();
   return { ticketCode, raw: row };
 }
@@ -351,8 +352,9 @@ export async function fetchScheduleOptions(
     fetchMarketScheduleConfig(fallbackTrip.country),
   ]);
 
-  const scheduleRows = (schedules.error ? [] : ((schedules.data ?? []) as Record<string, unknown>[]))
-    .filter((row) => pick(row, ["is_active"]) !== false);
+  const scheduleRows = (
+    schedules.error ? [] : ((schedules.data ?? []) as Record<string, unknown>[])
+  ).filter((row) => pick(row, ["is_active"]) !== false);
   const optionRows = options.error ? [] : ((options.data ?? []) as Record<string, unknown>[]);
 
   const defaultOption = optionRows[0] ?? null;
@@ -398,9 +400,7 @@ export async function fetchScheduleOptions(
       isAvailable: true,
     }));
 
-  return [...explicit, ...generated].sort((a, b) =>
-    a.departureTime.localeCompare(b.departureTime),
-  );
+  return [...explicit, ...generated].sort((a, b) => a.departureTime.localeCompare(b.departureTime));
 }
 
 export type CreateBookingInput = {
@@ -481,9 +481,7 @@ export async function createBookingSafe(input: CreateBookingInput) {
   // back to the signature already live today.
   if (error && isMissingDepartureParam(error)) {
     if (generated) {
-      throw new Error(
-        "الموعد ده لسه مش متاح للحجز الفوري — كلمنا على الدعم ونأكدلك الحجز.",
-      );
+      throw new Error("الموعد ده لسه مش متاح للحجز الفوري — كلمنا على الدعم ونأكدلك الحجز.");
     }
     ({ data, error } = await supabase.rpc("create_booking_safe", {
       ...baseArgs,
@@ -494,7 +492,8 @@ export async function createBookingSafe(input: CreateBookingInput) {
   if (error) throw new Error(error.message);
   const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
   const ticketCode = row ? pick<string>(row, ["ticket_code", "p_ticket_code"]) : null;
-  if (!ticketCode) throw new Error("تم إنشاء الحجز لكن لم يرجع كود التذكرة — كلمنا فورًا على الدعم.");
+  if (!ticketCode)
+    throw new Error("تم إنشاء الحجز لكن لم يرجع كود التذكرة — كلمنا فورًا على الدعم.");
   clearStoredReferralCode();
   return { ticketCode, raw: row };
 }
@@ -521,7 +520,8 @@ export async function cancelBookingByTicket(ticketCode: string, reason: string) 
     p_reason: reason,
   });
   if (error) throw new Error(error.message);
-  if (data === false) throw new Error("لم نتمكن من إلغاء الحجز — تأكد من كود التذكرة أو كلم الدعم.");
+  if (data === false)
+    throw new Error("لم نتمكن من إلغاء الحجز — تأكد من كود التذكرة أو كلم الدعم.");
   return true;
 }
 
@@ -679,7 +679,11 @@ export async function fetchSubscriptionPlans(country?: string): Promise<Subscrip
 }
 
 export async function fetchSubscriptionPlanById(id: string): Promise<SubscriptionPlan | null> {
-  const { data, error } = await supabase.from("subscription_plans").select("*").eq("id", id).limit(1);
+  const { data, error } = await supabase
+    .from("subscription_plans")
+    .select("*")
+    .eq("id", id)
+    .limit(1);
   if (error) throw new Error(error.message);
   const row = (data ?? [])[0];
   if (!row) return null;

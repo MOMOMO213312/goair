@@ -26,6 +26,7 @@ type PrivateBookingSectionProps = {
   seats: number;
   className?: string;
   id?: string;
+  direction: "to_airport" | "from_airport";
 };
 
 /**
@@ -35,7 +36,15 @@ type PrivateBookingSectionProps = {
  * product. Prices are flat totals per vehicle, auto-priced from the
  * market's average route pricing (see `estimate_private_price` in the DB).
  */
-export function PrivateBookingSection({ trip, destination, date, seats, className, id }: PrivateBookingSectionProps) {
+export function PrivateBookingSection({
+  trip,
+  destination,
+  date,
+  seats,
+  className,
+  id,
+  direction,
+}: PrivateBookingSectionProps) {
   const { data: options, isLoading } = useQuery({
     queryKey: ["goair", "private-options", trip.id],
     queryFn: () => fetchPrivateTripOptions(trip.id),
@@ -47,9 +56,10 @@ export function PrivateBookingSection({ trip, destination, date, seats, classNam
   // Smallest vehicle that still fits the group the user actually searched for —
   // ties the "حجز خاص" cards to the real search instead of showing three static options.
   const fitting = options.filter((option) => option.capacity >= seats);
-  const recommendedId = (fitting.length > 0
-    ? fitting.reduce((best, option) => (option.capacity < best.capacity ? option : best))
-    : options.reduce((best, option) => (option.capacity > best.capacity ? option : best))
+  const recommendedId = (
+    fitting.length > 0
+      ? fitting.reduce((best, option) => (option.capacity < best.capacity ? option : best))
+      : options.reduce((best, option) => (option.capacity > best.capacity ? option : best))
   ).tripOptionId;
 
   return (
@@ -107,7 +117,9 @@ export function PrivateBookingSection({ trip, destination, date, seats, classNam
                     <Users key={i} className="size-3.5 text-accent" aria-hidden />
                   ))}
                   {option.capacity > dotCount ? (
-                    <span className="ms-1 text-xs font-bold text-accent">+{option.capacity - dotCount}</span>
+                    <span className="ms-1 text-xs font-bold text-accent">
+                      +{option.capacity - dotCount}
+                    </span>
                   ) : null}
                 </div>
                 {option.maxLuggage != null ? (
@@ -119,7 +131,9 @@ export function PrivateBookingSection({ trip, destination, date, seats, classNam
               </div>
 
               <div className="mt-4 flex items-baseline justify-between border-t border-border pt-4">
-                <span className="text-xs font-bold text-muted-foreground">السعر الكامل للعربية</span>
+                <span className="text-xs font-bold text-muted-foreground">
+                  السعر الكامل للعربية
+                </span>
                 <span className="font-display text-xl font-extrabold text-accent">
                   {formatUsd(option.priceUsd)}
                 </span>
@@ -137,6 +151,7 @@ export function PrivateBookingSection({ trip, destination, date, seats, classNam
                   price: option.priceUsd,
                   bookingType: "private",
                   vehicleTypeId: option.vehicleTypeId,
+                  direction,
                 }}
                 className={cn(
                   "mt-5 inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-bold transition-colors",

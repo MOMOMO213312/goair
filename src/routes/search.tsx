@@ -14,7 +14,11 @@ import { SearchFiltersSheet } from "@/components/goair/search/search-filters-she
 import { PrivateBookingSection } from "@/components/goair/search/private-booking-section";
 import { SearchResultCard } from "@/components/goair/search/search-result-card";
 import { SearchResultsSkeleton } from "@/components/goair/search/search-results-skeleton";
-import { SearchSortDesktop, SearchSortMobile, type SortKey } from "@/components/goair/search/search-sort";
+import {
+  SearchSortDesktop,
+  SearchSortMobile,
+  type SortKey,
+} from "@/components/goair/search/search-sort";
 import { SearchSummary } from "@/components/goair/search/search-summary";
 import { Card } from "@/components/ui/card";
 import { DestinationCard } from "@/components/goair/destination-card";
@@ -84,12 +88,6 @@ function SearchPage() {
     ? Math.min(...allOptions.map((option) => option.pricePerSeat))
     : null;
 
-  const earliestTime = allOptions.length
-    ? allOptions.reduce((earliest, option) =>
-        option.departureTime.localeCompare(earliest.departureTime) < 0 ? option : earliest,
-      ).departureTime
-    : null;
-
   const priceCeiling = allOptions.length
     ? Math.ceil(Math.max(...allOptions.map((option) => option.pricePerSeat)))
     : 0;
@@ -110,6 +108,54 @@ function SearchPage() {
     [allOptions, activeMax, sort],
   );
 
+  // One card per vehicle type — every hourly departure for that type lives
+  // inside the card's own time picker instead of its own separate card.
+  const groupedByVehicle = useMemo(() => {
+    const groups = new Map<
+      string,
+      {
+        key: string;
+        vehicleType: VehicleType | null;
+        options: typeof visibleOptions;
+        cheapestPrice: number;
+      }
+    >();
+    for (const option of visibleOptions) {
+      const key = option.vehicleTypeId ?? option.tripOptionId ?? "default";
+      const existing = groups.get(key);
+      if (existing) {
+        existing.options.push(option);
+        existing.cheapestPrice = Math.min(existing.cheapestPrice, option.pricePerSeat);
+      } else {
+        groups.set(key, {
+          key,
+          vehicleType: option.vehicleTypeId
+            ? (vehicleTypesById.get(option.vehicleTypeId) ?? null)
+            : null,
+          options: [option],
+          cheapestPrice: option.pricePerSeat,
+        });
+      }
+    }
+    const list = [...groups.values()];
+    if (sort === "earliest") {
+      list.sort((a, b) => {
+        const aEarliest = a.options.reduce(
+          (min, o) => (o.departureTime < min ? o.departureTime : min),
+          a.options[0]!.departureTime,
+        );
+        const bEarliest = b.options.reduce(
+          (min, o) => (o.departureTime < min ? o.departureTime : min),
+          b.options[0]!.departureTime,
+        );
+        return aEarliest.localeCompare(bEarliest);
+      });
+    } else {
+      list.sort((a, b) => a.cheapestPrice - b.cheapestPrice);
+    }
+    return list;
+  }, [visibleOptions, vehicleTypesById, sort]);
+
   // Airport chosen but no specific destination yet (e.g. from the homepage
   // "Explore by airport" card) — show every route from that airport instead
   // of guessing a single one.
@@ -124,8 +170,7 @@ function SearchPage() {
   );
 
   const isLoading = tripsQuery.isLoading || (Boolean(trip) && optionsQuery.isLoading);
-  const tripNotFound =
-    !needsDestinationChoice && !tripsQuery.isLoading && tripsQuery.data && !trip;
+  const tripNotFound = !needsDestinationChoice && !tripsQuery.isLoading && tripsQuery.data && !trip;
   const activeFilterCount = maxPrice !== null && priceCeiling > priceFloor ? 1 : 0;
 
   function resetFilters() {
@@ -173,6 +218,7 @@ function SearchPage() {
             destination={params.destination}
             date={params.date}
             seats={params.seats}
+            direction={params.direction ?? "to_airport"}
             id="private-picks"
           />
         ) : null}
@@ -184,7 +230,9 @@ function SearchPage() {
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {destinationChoices.length}{" "}
-              {destinationChoices.length === 1 ? "وجهة متاحة من هذا المطار" : "وجهات متاحة من هذا المطار"}
+              {destinationChoices.length === 1
+                ? "وجهة متاحة من هذا المطار"
+                : "وجهات متاحة من هذا المطار"}
             </p>
 
             {destinationChoices.length > 0 ? (
@@ -235,10 +283,8 @@ function SearchPage() {
                   الرحلات المتاحة
                 </h1>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {visibleOptions.length} {visibleOptions.length === 1 ? "رحلة متاحة" : "رحلات متاحة"}
-                  {visibleOptions.length !== allOptions.length
-                    ? ` من ${allOptions.length}`
-                    : ""}
+                  {groupedByVehicle.length}{" "}
+                  {groupedByVehicle.length === 1 ? "نوع عربية متاح" : "أنواع عربيات متاحة"}
                 </p>
               </div>
               <SearchSortDesktop value={sort} onChange={setSort} />
@@ -265,31 +311,24 @@ function SearchPage() {
                 </div>
               </div>
 
-              {/* Results list */}
+              {/* Results list — one card per vehicle type, times live inside the card */}
               <div className="min-w-0 space-y-4">
-                {visibleOptions.length > 0 ? (
-                  visibleOptions.map((option) => (
+                {groupedByVehicle.length > 0 ? (
+                  groupedByVehicle.map((group) => (
                     <SearchResultCard
-                      key={option.scheduleId}
+                      key={group.key}
                       trip={trip}
-                      option={option}
+                      options={group.options}
                       seats={params.seats}
                       travelDate={params.date}
                       packageId={params.packageId}
                       flight={params.flight}
-                      vehicleType={
-                        option.vehicleTypeId ? vehicleTypesById.get(option.vehicleTypeId) ?? null : null
-                      }
+                      vehicleType={group.vehicleType}
+                      direction={params.direction ?? "to_airport"}
                       isBestPrice={
-                        visibleOptions.length > 1 &&
+                        groupedByVehicle.length > 1 &&
                         cheapestPrice !== null &&
-                        option.pricePerSeat === cheapestPrice
-                      }
-                      isFastest={
-                        visibleOptions.length > 1 &&
-                        earliestTime !== null &&
-                        option.departureTime === earliestTime &&
-                        option.pricePerSeat !== cheapestPrice
+                        group.cheapestPrice === cheapestPrice
                       }
                     />
                   ))
