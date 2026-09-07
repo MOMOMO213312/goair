@@ -68,6 +68,18 @@ function AdminLayout() {
               >
                 الباقات
               </Link>
+              <Link
+                to="/admin/addon-services"
+                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
+              >
+                الخدمات الإضافية
+              </Link>
+              <Link
+                to="/admin/subscription-plans"
+                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
+              >
+                خطط الاشتراك
+              </Link>
             </nav>
             <button
               onClick={() => signOut()}

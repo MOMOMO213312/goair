@@ -368,3 +368,179 @@ export async function adminDeletePackage(token: string, id: string) {
   const { error } = await supabase.rpc("admin_delete_package", { p_access_token: token, p_id: id });
   if (error) rpcError(error);
 }
+
+export type AdminAddonService = {
+  id: string;
+  nameAr: string;
+  descriptionAr: string | null;
+  category: string;
+  priceUsd: number;
+  iconName: string;
+  isHighlighted: boolean;
+  isActive: boolean;
+  sortOrder: number;
+};
+
+function mapAdminAddonService(r: Record<string, unknown>): AdminAddonService {
+  return {
+    id: String(r["id"]),
+    nameAr: String(r["name_ar"] ?? ""),
+    descriptionAr: (r["description_ar"] as string | null) ?? null,
+    category: String(r["category"] ?? ""),
+    priceUsd: Number(r["price_usd"] ?? 0),
+    iconName: String(r["icon_name"] ?? "Sparkles"),
+    isHighlighted: r["is_highlighted"] === true,
+    isActive: r["is_active"] === true,
+    sortOrder: Number(r["sort_order"] ?? 0),
+  };
+}
+
+export async function adminListAddonServices(token: string): Promise<AdminAddonService[]> {
+  const { data, error } = await supabase.rpc("admin_list_addon_services", { p_access_token: token });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map(mapAdminAddonService);
+}
+
+export async function adminCreateAddonService(
+  token: string,
+  addon: { nameAr: string; descriptionAr: string; category: string; priceUsd: number; iconName: string; isHighlighted: boolean; sortOrder: number },
+) {
+  const { error } = await supabase.rpc("admin_create_addon_service", {
+    p_access_token: token,
+    p_name_ar: addon.nameAr,
+    p_description_ar: addon.descriptionAr,
+    p_category: addon.category,
+    p_price_usd: addon.priceUsd,
+    p_icon_name: addon.iconName,
+    p_is_highlighted: addon.isHighlighted,
+    p_sort_order: addon.sortOrder,
+  });
+  if (error) rpcError(error);
+}
+
+export async function adminUpdateAddonService(token: string, addon: AdminAddonService) {
+  const { error } = await supabase.rpc("admin_update_addon_service", {
+    p_access_token: token,
+    p_id: addon.id,
+    p_name_ar: addon.nameAr,
+    p_description_ar: addon.descriptionAr,
+    p_category: addon.category,
+    p_price_usd: addon.priceUsd,
+    p_icon_name: addon.iconName,
+    p_is_highlighted: addon.isHighlighted,
+    p_is_active: addon.isActive,
+    p_sort_order: addon.sortOrder,
+  });
+  if (error) rpcError(error);
+}
+
+export async function adminDeleteAddonService(token: string, id: string) {
+  const { error } = await supabase.rpc("admin_delete_addon_service", { p_access_token: token, p_id: id });
+  if (error) rpcError(error);
+}
+
+export type AdminSubscriptionPlan = {
+  id: string;
+  country: string;
+  tier: string;
+  duration: string;
+  name: string;
+  tagline: string | null;
+  priceUsd: number;
+  discountPercent: number;
+  freeRideCredits: number;
+  extraLuggagePieces: number;
+  prioritySupport: boolean;
+  guaranteedSeat: boolean;
+  iconName: string;
+  features: string[];
+  isHighlighted: boolean;
+  isActive: boolean;
+  sortOrder: number;
+};
+
+function mapAdminSubscriptionPlan(r: Record<string, unknown>): AdminSubscriptionPlan {
+  return {
+    id: String(r["id"]),
+    country: String(r["country"] ?? ""),
+    tier: String(r["tier"] ?? ""),
+    duration: String(r["duration"] ?? ""),
+    name: String(r["name"] ?? ""),
+    tagline: (r["tagline"] as string | null) ?? null,
+    priceUsd: Number(r["price_usd"] ?? 0),
+    discountPercent: Number(r["discount_percent"] ?? 0),
+    freeRideCredits: Number(r["free_ride_credits"] ?? 0),
+    extraLuggagePieces: Number(r["extra_luggage_pieces"] ?? 0),
+    prioritySupport: r["priority_support"] === true,
+    guaranteedSeat: r["guaranteed_seat"] === true,
+    iconName: String(r["icon_name"] ?? "Sparkles"),
+    features: (r["features"] as string[]) ?? [],
+    isHighlighted: r["is_highlighted"] === true,
+    isActive: r["is_active"] === true,
+    sortOrder: Number(r["sort_order"] ?? 0),
+  };
+}
+
+export async function adminListSubscriptionPlans(token: string): Promise<AdminSubscriptionPlan[]> {
+  const { data, error } = await supabase.rpc("admin_list_subscription_plans", { p_access_token: token });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map(mapAdminSubscriptionPlan);
+}
+
+export async function adminCreateSubscriptionPlan(
+  token: string,
+  plan: {
+    country: string; tier: string; duration: string; name: string; tagline: string; priceUsd: number;
+    discountPercent: number; freeRideCredits: number; extraLuggagePieces: number; prioritySupport: boolean;
+    guaranteedSeat: boolean; iconName: string; features: string[]; isHighlighted: boolean; sortOrder: number;
+  },
+) {
+  const { error } = await supabase.rpc("admin_create_subscription_plan", {
+    p_access_token: token,
+    p_country: plan.country,
+    p_tier: plan.tier,
+    p_duration: plan.duration,
+    p_name: plan.name,
+    p_tagline: plan.tagline,
+    p_price_usd: plan.priceUsd,
+    p_discount_percent: plan.discountPercent,
+    p_free_ride_credits: plan.freeRideCredits,
+    p_extra_luggage_pieces: plan.extraLuggagePieces,
+    p_priority_support: plan.prioritySupport,
+    p_guaranteed_seat: plan.guaranteedSeat,
+    p_icon_name: plan.iconName,
+    p_features: plan.features,
+    p_is_highlighted: plan.isHighlighted,
+    p_sort_order: plan.sortOrder,
+  });
+  if (error) rpcError(error);
+}
+
+export async function adminUpdateSubscriptionPlan(token: string, plan: AdminSubscriptionPlan) {
+  const { error } = await supabase.rpc("admin_update_subscription_plan", {
+    p_access_token: token,
+    p_id: plan.id,
+    p_country: plan.country,
+    p_tier: plan.tier,
+    p_duration: plan.duration,
+    p_name: plan.name,
+    p_tagline: plan.tagline,
+    p_price_usd: plan.priceUsd,
+    p_discount_percent: plan.discountPercent,
+    p_free_ride_credits: plan.freeRideCredits,
+    p_extra_luggage_pieces: plan.extraLuggagePieces,
+    p_priority_support: plan.prioritySupport,
+    p_guaranteed_seat: plan.guaranteedSeat,
+    p_icon_name: plan.iconName,
+    p_features: plan.features,
+    p_is_highlighted: plan.isHighlighted,
+    p_is_active: plan.isActive,
+    p_sort_order: plan.sortOrder,
+  });
+  if (error) rpcError(error);
+}
+
+export async function adminDeleteSubscriptionPlan(token: string, id: string) {
+  const { error } = await supabase.rpc("admin_delete_subscription_plan", { p_access_token: token, p_id: id });
+  if (error) rpcError(error);
+}

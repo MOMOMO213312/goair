@@ -26,10 +26,12 @@ import { Route as SearchRouteImport } from './routes/search'
 import { Route as SubscribeRouteImport } from './routes/subscribe'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as AdminAddonServicesRouteImport } from './routes/admin.addon-services'
 import { Route as AdminAnnouncementsRouteImport } from './routes/admin.announcements'
 import { Route as AdminFleetRouteImport } from './routes/admin.fleet'
 import { Route as AdminPackagesRouteImport } from './routes/admin.packages'
 import { Route as AdminRequestsRouteImport } from './routes/admin.requests'
+import { Route as AdminSubscriptionPlansRouteImport } from './routes/admin.subscription-plans'
 import { Route as AgencyIndexRouteImport } from './routes/agency.index'
 import { Route as AgencyBookRouteImport } from './routes/agency.book'
 import { Route as AgencyBookingsRouteImport } from './routes/agency.bookings'
@@ -129,6 +131,11 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAddonServicesRoute = AdminAddonServicesRouteImport.update({
+  id: '/addon-services',
+  path: '/addon-services',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminAnnouncementsRoute = AdminAnnouncementsRouteImport.update({
   id: '/announcements',
   path: '/announcements',
@@ -147,6 +154,11 @@ const AdminPackagesRoute = AdminPackagesRouteImport.update({
 const AdminRequestsRoute = AdminRequestsRouteImport.update({
   id: '/requests',
   path: '/requests',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSubscriptionPlansRoute = AdminSubscriptionPlansRouteImport.update({
+  id: '/subscription-plans',
+  path: '/subscription-plans',
   getParentRoute: () => AdminRoute,
 } as any)
 const AgencyIndexRoute = AgencyIndexRouteImport.update({
@@ -232,10 +244,12 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/subscribe': typeof SubscribeRoute
   '/terms': typeof TermsRoute
+  '/admin/addon-services': typeof AdminAddonServicesRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/fleet': typeof AdminFleetRoute
   '/admin/packages': typeof AdminPackagesRoute
   '/admin/requests': typeof AdminRequestsRoute
+  '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
   '/agency/book': typeof AgencyBookRoute
   '/agency/bookings': typeof AgencyBookingsRoute
   '/agency/statements': typeof AgencyStatementsRoute
@@ -264,10 +278,12 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/subscribe': typeof SubscribeRoute
   '/terms': typeof TermsRoute
+  '/admin/addon-services': typeof AdminAddonServicesRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/fleet': typeof AdminFleetRoute
   '/admin/packages': typeof AdminPackagesRoute
   '/admin/requests': typeof AdminRequestsRoute
+  '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
   '/agency/book': typeof AgencyBookRoute
   '/agency/bookings': typeof AgencyBookingsRoute
   '/agency/statements': typeof AgencyStatementsRoute
@@ -301,10 +317,12 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/subscribe': typeof SubscribeRoute
   '/terms': typeof TermsRoute
+  '/admin/addon-services': typeof AdminAddonServicesRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/fleet': typeof AdminFleetRoute
   '/admin/packages': typeof AdminPackagesRoute
   '/admin/requests': typeof AdminRequestsRoute
+  '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
   '/agency/book': typeof AgencyBookRoute
   '/agency/bookings': typeof AgencyBookingsRoute
   '/agency/statements': typeof AgencyStatementsRoute
@@ -339,10 +357,12 @@ export interface FileRouteTypes {
     | '/search'
     | '/subscribe'
     | '/terms'
+    | '/admin/addon-services'
     | '/admin/announcements'
     | '/admin/fleet'
     | '/admin/packages'
     | '/admin/requests'
+    | '/admin/subscription-plans'
     | '/agency/book'
     | '/agency/bookings'
     | '/agency/statements'
@@ -371,10 +391,12 @@ export interface FileRouteTypes {
     | '/search'
     | '/subscribe'
     | '/terms'
+    | '/admin/addon-services'
     | '/admin/announcements'
     | '/admin/fleet'
     | '/admin/packages'
     | '/admin/requests'
+    | '/admin/subscription-plans'
     | '/agency/book'
     | '/agency/bookings'
     | '/agency/statements'
@@ -407,10 +429,12 @@ export interface FileRouteTypes {
     | '/search'
     | '/subscribe'
     | '/terms'
+    | '/admin/addon-services'
     | '/admin/announcements'
     | '/admin/fleet'
     | '/admin/packages'
     | '/admin/requests'
+    | '/admin/subscription-plans'
     | '/agency/book'
     | '/agency/bookings'
     | '/agency/statements'
@@ -567,6 +591,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/addon-services': {
+      id: '/admin/addon-services'
+      path: '/addon-services'
+      fullPath: '/admin/addon-services'
+      preLoaderRoute: typeof AdminAddonServicesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/announcements': {
       id: '/admin/announcements'
       path: '/announcements'
@@ -593,6 +624,13 @@ declare module '@tanstack/react-router' {
       path: '/requests'
       fullPath: '/admin/requests'
       preLoaderRoute: typeof AdminRequestsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/subscription-plans': {
+      id: '/admin/subscription-plans'
+      path: '/subscription-plans'
+      fullPath: '/admin/subscription-plans'
+      preLoaderRoute: typeof AdminSubscriptionPlansRouteImport
       parentRoute: typeof AdminRoute
     }
     '/agency/': {
@@ -690,18 +728,22 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminAddonServicesRoute: typeof AdminAddonServicesRoute
   AdminAnnouncementsRoute: typeof AdminAnnouncementsRoute
   AdminFleetRoute: typeof AdminFleetRoute
   AdminPackagesRoute: typeof AdminPackagesRoute
   AdminRequestsRoute: typeof AdminRequestsRoute
+  AdminSubscriptionPlansRoute: typeof AdminSubscriptionPlansRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAddonServicesRoute: AdminAddonServicesRoute,
   AdminAnnouncementsRoute: AdminAnnouncementsRoute,
   AdminFleetRoute: AdminFleetRoute,
   AdminPackagesRoute: AdminPackagesRoute,
   AdminRequestsRoute: AdminRequestsRoute,
+  AdminSubscriptionPlansRoute: AdminSubscriptionPlansRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
