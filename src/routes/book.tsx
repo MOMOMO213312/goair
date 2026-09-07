@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { BookingAddonsStep } from "@/components/goair/booking/booking-addons-step";
 import { BookingBackLink } from "@/components/goair/booking/booking-back-link";
 import { BookingConfirmStep } from "@/components/goair/booking/booking-confirm-step";
 import { BookingExtrasStep } from "@/components/goair/booking/booking-extras-step";
@@ -16,6 +17,7 @@ import {
   createBookingSafe,
   createPrivateBookingSafe,
   fetchActivePackages,
+  fetchAddonServices,
   fetchTrips,
   friendlyErrorMessage,
 } from "@/lib/goair";
@@ -86,12 +88,23 @@ function BookPage() {
   const [phone, setPhone] = useState("");
   const [flight, setFlight] = useState(search.flight ?? "");
   const [busy, setBusy] = useState(false);
+  const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
 
   const tripsQuery = useQuery({ queryKey: ["goair", "trips"], queryFn: fetchTrips });
   const trip = tripsQuery.data?.find((item) => item.id === search.tripId);
 
   const packagesQuery = useQuery({ queryKey: ["goair", "packages"], queryFn: fetchActivePackages });
   const selectedPackage = packagesQuery.data?.find((p) => p.id === packageId);
+
+  const addonsQuery = useQuery({ queryKey: ["goair", "addon-services"], queryFn: fetchAddonServices });
+  const selectedAddons = (addonsQuery.data ?? []).filter((a) => selectedAddonIds.includes(a.id));
+  const addonsTotal = selectedAddons.reduce((sum, a) => sum + a.priceUsd, 0);
+
+  function toggleAddon(id: string) {
+    setSelectedAddonIds((current) =>
+      current.includes(id) ? current.filter((existing) => existing !== id) : [...current, id],
+    );
+  }
 
   const isPrivate = search.bookingType === "private";
   const packagePricePerSeat = selectedPackage?.priceUsd ?? 0;
@@ -101,11 +114,12 @@ function BookPage() {
   // it. (Future add-ons that genuinely stack on top of a chosen trip belong
   // to the separate `addon_services` concept, not `packages`.)
   const effectivePricePerSeat = packageId ? packagePricePerSeat : search.price;
-  const total = isPrivate
+  const rideOrPackageTotal = isPrivate
     ? packageId
       ? packagePricePerSeat * search.seats
       : search.price
     : effectivePricePerSeat * search.seats;
+  const total = rideOrPackageTotal + addonsTotal;
 
   async function onConfirm() {
     if (fullName.trim().length < 3) {
@@ -137,6 +151,7 @@ function BookPage() {
             flightNumber: flight.trim() || null,
             luggageCount: luggage,
             packageId: packageId || null,
+            addonIds: selectedAddonIds,
           })
         : await createBookingSafe({
             tripId: search.tripId,
@@ -151,6 +166,7 @@ function BookPage() {
             flightNumber: flight.trim() || null,
             luggageCount: luggage,
             packageId: packageId || null,
+            addonIds: selectedAddonIds,
           });
       toast.success(isPrivate ? "تم تثبيت الحجز الخاص — باقي الدفع." : "تم تثبيت مقعدك — باقي الدفع.");
       navigate({ to: "/payment", search: { ticket: ticketCode } });
@@ -202,17 +218,26 @@ function BookPage() {
           {/* Main: current step */}
           <div className="min-w-0 space-y-6">
             {phase === "extras" ? (
-              <BookingExtrasStep
-                packages={packagesQuery.data ?? []}
-                packagesLoading={packagesQuery.isLoading}
-                selectedPackageId={packageId}
-                onSelectPackage={setPackageId}
-                luggage={luggage}
-                onLuggageChange={setLuggage}
-                notes={extrasNotes}
-                onNotesChange={setExtrasNotes}
-                onContinue={() => setPhase("passengers")}
-              />
+              <>
+                <BookingExtrasStep
+                  packages={packagesQuery.data ?? []}
+                  packagesLoading={packagesQuery.isLoading}
+                  selectedPackageId={packageId}
+                  onSelectPackage={setPackageId}
+                  luggage={luggage}
+                  onLuggageChange={setLuggage}
+                  notes={extrasNotes}
+                  onNotesChange={setExtrasNotes}
+                  onContinue={() => setPhase("passengers")}
+                />
+                <BookingAddonsStep
+                  addons={addonsQuery.data ?? []}
+                  addonsLoading={addonsQuery.isLoading}
+                  selectedAddonIds={selectedAddonIds}
+                  onToggleAddon={toggleAddon}
+                  className="mt-6"
+                />
+              </>
             ) : null}
 
             {phase === "passengers" ? (
@@ -237,6 +262,7 @@ function BookPage() {
                 luggage={luggage}
                 notes={extrasNotes}
                 {...(selectedPackage?.name ? { packageName: selectedPackage.name } : {})}
+                addonNames={selectedAddons.map((a) => a.name)}
                 onEditExtras={() => setPhase("extras")}
                 onEditPassengers={() => setPhase("passengers")}
                 onConfirm={onConfirm}
@@ -252,6 +278,7 @@ function BookPage() {
                 total={total}
                 {...(selectedPackage?.name ? { packageName: selectedPackage.name } : {})}
                 isPrivate={isPrivate}
+                addonsTotal={addonsTotal}
               />
             </div>
           </div>
@@ -272,6 +299,7 @@ function BookPage() {
                 total={total}
                 {...(selectedPackage?.name ? { packageName: selectedPackage.name } : {})}
                 isPrivate={isPrivate}
+                addonsTotal={addonsTotal}
               />
               <BookingTrustPanel />
             </div>

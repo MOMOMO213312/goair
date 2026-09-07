@@ -12,6 +12,7 @@ type BookingConfirmStepProps = {
   luggage: number;
   notes: string;
   packageName?: string;
+  addonNames?: string[];
   onEditExtras: () => void;
   onEditPassengers: () => void;
   onConfirm: () => void;
@@ -27,6 +28,7 @@ export function BookingConfirmStep({
   luggage,
   notes,
   packageName,
+  addonNames,
   onEditExtras,
   onEditPassengers,
   onConfirm,
@@ -65,6 +67,12 @@ export function BookingConfirmStep({
             </dt>
             <dd className="font-bold text-primary">{luggage}</dd>
           </div>
+          {addonNames && addonNames.length > 0 ? (
+            <div className="flex items-start justify-between gap-3">
+              <dt className="text-muted-foreground">خدمات إضافية</dt>
+              <dd className="max-w-[70%] text-end font-bold text-primary">{addonNames.join("، ")}</dd>
+            </div>
+          ) : null}
           {notes ? (
             <div className="flex items-start justify-between gap-3">
               <dt className="text-muted-foreground">ملاحظات</dt>

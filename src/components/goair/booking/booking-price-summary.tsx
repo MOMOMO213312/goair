@@ -11,6 +11,8 @@ type BookingPriceSummaryProps = {
   packageName?: string;
   /** Private/charter booking — whole vehicle, flat price (not per seat). */
   isPrivate?: boolean;
+  /** Flat total for selected `addon_services` — not multiplied by seats. */
+  addonsTotal?: number;
 };
 
 export function BookingPriceSummary({
@@ -21,6 +23,7 @@ export function BookingPriceSummary({
   compact = false,
   packageName,
   isPrivate = false,
+  addonsTotal = 0,
 }: BookingPriceSummaryProps) {
   return (
     <Card
@@ -57,6 +60,12 @@ export function BookingPriceSummary({
           </dt>
           <dd className="font-bold text-primary">{formatUsd(pricePerSeat)}</dd>
         </div>
+        {addonsTotal > 0 ? (
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-muted-foreground">خدمات إضافية</dt>
+            <dd className="font-bold text-primary">{formatUsd(addonsTotal)}</dd>
+          </div>
+        ) : null}
       </dl>
 
       <div
