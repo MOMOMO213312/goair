@@ -171,6 +171,61 @@ export async function adminAssignTrip(
   if (error) rpcError(error);
 }
 
+export type AdminTripOptionRow = {
+  tripOptionId: string;
+  tripId: string;
+  country: string;
+  airportName: string;
+  origin: string;
+  destination: string;
+  tripIsActive: boolean;
+  vehicleTypeId: string;
+  vehicleCode: string;
+  vehicleLabelAr: string;
+  bookingType: string;
+  priceUsd: number;
+  optionIsActive: boolean;
+};
+
+function mapAdminTripOption(r: Record<string, unknown>): AdminTripOptionRow {
+  return {
+    tripOptionId: String(r["trip_option_id"]),
+    tripId: String(r["trip_id"]),
+    country: String(r["country"] ?? ""),
+    airportName: String(r["airport_name"] ?? ""),
+    origin: String(r["origin"] ?? ""),
+    destination: String(r["destination"] ?? ""),
+    tripIsActive: r["trip_is_active"] === true,
+    vehicleTypeId: String(r["vehicle_type_id"]),
+    vehicleCode: String(r["vehicle_code"] ?? ""),
+    vehicleLabelAr: String(r["vehicle_label_ar"] ?? ""),
+    bookingType: String(r["booking_type"] ?? ""),
+    priceUsd: Number(r["price_usd"] ?? 0),
+    optionIsActive: r["option_is_active"] === true,
+  };
+}
+
+export async function adminListTripOptions(token: string): Promise<AdminTripOptionRow[]> {
+  const { data, error } = await supabase.rpc("admin_list_trip_options", { p_access_token: token });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map(mapAdminTripOption);
+}
+
+export async function adminUpdateTripOptionPrice(
+  token: string,
+  tripOptionId: string,
+  priceUsd: number,
+  isActive?: boolean,
+) {
+  const { error } = await supabase.rpc("admin_update_trip_option_price", {
+    p_access_token: token,
+    p_trip_option_id: tripOptionId,
+    p_price_usd: priceUsd,
+    p_is_active: isActive ?? null,
+  });
+  if (error) rpcError(error);
+}
+
 export function formatAdminMoney(amount: number | null) {
   if (amount == null) return "—";
   return `$${amount.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
