@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { PackageTier } from "@/lib/goair";
+import type { AddonService, PackageTier } from "@/lib/goair";
 import { formatUsd } from "@/lib/goair";
 import { cn } from "@/lib/utils";
+
+import { BookingAddonServicesStep } from "./booking-addon-services-step";
 
 type BookingExtrasStepProps = {
   packages: PackageTier[];
@@ -19,6 +21,11 @@ type BookingExtrasStepProps = {
   onNotesChange: (value: string) => void;
   onContinue: () => void;
   className?: string;
+  addons: AddonService[];
+  addonsLoading: boolean;
+  selectedAddonIds: string[];
+  onToggleAddon: (id: string) => void;
+  direction?: "to_airport" | "from_airport";
 };
 
 export function BookingExtrasStep({
@@ -32,6 +39,11 @@ export function BookingExtrasStep({
   onNotesChange,
   onContinue,
   className,
+  addons,
+  addonsLoading,
+  selectedAddonIds,
+  onToggleAddon,
+  direction,
 }: BookingExtrasStepProps) {
   return (
     <Card className={cn("border-border/80 p-5 shadow-[var(--shadow-card)] sm:p-6", className)}>
@@ -152,6 +164,15 @@ export function BookingExtrasStep({
           </button>
         </div>
       </div>
+
+      {/* Airport services (Fast Track, Meet & Assist, Lounge, ...) */}
+      <BookingAddonServicesStep
+        addons={addons}
+        loading={addonsLoading}
+        selectedIds={selectedAddonIds}
+        onToggle={onToggleAddon}
+        direction={direction}
+      />
 
       {/* Notes */}
       <div className="mt-6 space-y-2">

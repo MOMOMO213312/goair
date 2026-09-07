@@ -16,6 +16,7 @@ import {
   createBookingSafe,
   createPrivateBookingSafe,
   fetchActivePackages,
+  fetchAddonServices,
   fetchTrips,
   friendlyErrorMessage,
 } from "@/lib/goair";
@@ -35,6 +36,8 @@ type BookSearch = {
   vehicleTypeId?: string;
   /** Prefilled from the hero search, if entered — no live tracking, just carried through. */
   flight?: string;
+  /** Which leg this booking covers — drives the airport-services recommendation ordering. */
+  direction?: "to_airport" | "from_airport";
 };
 
 /** Wizard phase — mirrors booking steps 2 (Extras), 3 (Passengers+Transfers) and 4 (Confirmation). */
@@ -59,6 +62,7 @@ export const Route = createFileRoute("/book")({
     bookingType: search["bookingType"] === "private" ? "private" : "shared",
     vehicleTypeId: typeof search["vehicleTypeId"] === "string" ? search["vehicleTypeId"] : undefined,
     flight: typeof search["flight"] === "string" && search["flight"] ? search["flight"] : undefined,
+    direction: search["direction"] === "from_airport" ? "from_airport" : "to_airport",
   }),
   head: () => ({
     meta: [
@@ -80,6 +84,7 @@ function BookPage() {
 
   const [phase, setPhase] = useState<Phase>(search.packageId ? "passengers" : "extras");
   const [packageId, setPackageId] = useState<string | null>(search.packageId ?? null);
+  const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
   const [luggage, setLuggage] = useState(1);
   const [extrasNotes, setExtrasNotes] = useState("");
   const [fullName, setFullName] = useState("");
@@ -93,6 +98,16 @@ function BookPage() {
   const packagesQuery = useQuery({ queryKey: ["goair", "packages"], queryFn: fetchActivePackages });
   const selectedPackage = packagesQuery.data?.find((p) => p.id === packageId);
 
+  const addonsQuery = useQuery({ queryKey: ["goair", "addon-services"], queryFn: fetchAddonServices });
+  const selectedAddons = (addonsQuery.data ?? []).filter((addon) => selectedAddonIds.includes(addon.id));
+  const addonsTotal = selectedAddons.reduce((sum, addon) => sum + addon.priceUsd, 0);
+
+  function toggleAddon(id: string) {
+    setSelectedAddonIds((current) =>
+      current.includes(id) ? current.filter((addonId) => addonId !== id) : [...current, id],
+    );
+  }
+
   const isPrivate = search.bookingType === "private";
   const packagePricePerSeat = selectedPackage?.priceUsd ?? 0;
   // A package's price already includes the transport — it's a complete
@@ -101,11 +116,12 @@ function BookPage() {
   // it. (Future add-ons that genuinely stack on top of a chosen trip belong
   // to the separate `addon_services` concept, not `packages`.)
   const effectivePricePerSeat = packageId ? packagePricePerSeat : search.price;
-  const total = isPrivate
-    ? packageId
-      ? packagePricePerSeat * search.seats
-      : search.price
-    : effectivePricePerSeat * search.seats;
+  const total =
+    (isPrivate
+      ? packageId
+        ? packagePricePerSeat * search.seats
+        : search.price
+      : effectivePricePerSeat * search.seats) + addonsTotal;
 
   async function onConfirm() {
     if (fullName.trim().length < 3) {
@@ -137,6 +153,7 @@ function BookPage() {
             flightNumber: flight.trim() || null,
             luggageCount: luggage,
             packageId: packageId || null,
+            addonServiceIds: selectedAddonIds,
           })
         : await createBookingSafe({
             tripId: search.tripId,
@@ -151,6 +168,7 @@ function BookPage() {
             flightNumber: flight.trim() || null,
             luggageCount: luggage,
             packageId: packageId || null,
+            addonServiceIds: selectedAddonIds,
           });
       toast.success(isPrivate ? "تم تثبيت الحجز الخاص — باقي الدفع." : "تم تثبيت مقعدك — باقي الدفع.");
       navigate({ to: "/payment", search: { ticket: ticketCode } });
@@ -212,6 +230,11 @@ function BookPage() {
                 notes={extrasNotes}
                 onNotesChange={setExtrasNotes}
                 onContinue={() => setPhase("passengers")}
+                addons={addonsQuery.data ?? []}
+                addonsLoading={addonsQuery.isLoading}
+                selectedAddonIds={selectedAddonIds}
+                onToggleAddon={toggleAddon}
+                direction={search.direction}
               />
             ) : null}
 

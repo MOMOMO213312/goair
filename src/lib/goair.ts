@@ -193,6 +193,8 @@ export type CreatePrivateBookingInput = {
   luggageCount: number;
   referralCodeOverride?: string | null;
   packageId?: string | null;
+  /** Selected `addon_services` ids (Fast Track, Meet & Assist, etc.) — flat, per-booking add-ons. */
+  addonServiceIds?: string[];
 };
 
 /** Reserve a whole vehicle for one group — flat price, no shared-capacity contention. */
@@ -212,6 +214,7 @@ export async function createPrivateBookingSafe(input: CreatePrivateBookingInput)
     p_flight_number: input.flightNumber,
     ...(pendingReferralCode ? { p_referral_code: pendingReferralCode } : {}),
     ...(input.packageId ? { p_package_id: input.packageId } : {}),
+    ...(input.addonServiceIds?.length ? { p_addon_ids: input.addonServiceIds } : {}),
   });
 
   if (error) throw new Error(error.message);
@@ -422,6 +425,8 @@ export type CreateBookingInput = {
   referralCodeOverride?: string | null;
   /** Selected add-on package (from /explore) — adds its price per seat. */
   packageId?: string | null;
+  /** Selected `addon_services` ids (Fast Track, Meet & Assist, etc.) — flat, per-booking add-ons. */
+  addonServiceIds?: string[];
 };
 
 /** A configured hourly departure (or legacy fallback slot) that has no stored `schedules` row yet. */
@@ -463,6 +468,7 @@ export async function createBookingSafe(input: CreateBookingInput) {
     p_luggage_count: input.luggageCount,
     ...(pendingReferralCode ? { p_referral_code: pendingReferralCode } : {}),
     ...(input.packageId ? { p_package_id: input.packageId } : {}),
+    ...(input.addonServiceIds?.length ? { p_addon_ids: input.addonServiceIds } : {}),
   };
 
   let { data, error } = await supabase.rpc("create_booking_safe", {

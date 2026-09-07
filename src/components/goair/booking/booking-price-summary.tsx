@@ -1,4 +1,5 @@
 import { Card } from "@/components/ui/card";
+import type { AddonService } from "@/lib/goair";
 import { formatUsd } from "@/lib/goair";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +12,8 @@ type BookingPriceSummaryProps = {
   packageName?: string;
   /** Private/charter booking — whole vehicle, flat price (not per seat). */
   isPrivate?: boolean;
+  /** Selected airport services — itemized under the base price. */
+  addons?: AddonService[];
 };
 
 export function BookingPriceSummary({
@@ -21,6 +24,7 @@ export function BookingPriceSummary({
   compact = false,
   packageName,
   isPrivate = false,
+  addons = [],
 }: BookingPriceSummaryProps) {
   return (
     <Card
@@ -57,6 +61,13 @@ export function BookingPriceSummary({
           </dt>
           <dd className="font-bold text-primary">{formatUsd(pricePerSeat)}</dd>
         </div>
+
+        {addons.map((addon) => (
+          <div key={addon.id} className="flex items-center justify-between gap-3">
+            <dt className="text-muted-foreground">{addon.name}</dt>
+            <dd className="font-bold text-accent">+{formatUsd(addon.priceUsd)}</dd>
+          </div>
+        ))}
       </dl>
 
       <div
