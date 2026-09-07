@@ -12,7 +12,6 @@ import { DealsTeaser } from "@/components/goair/deals-teaser";
 import { ExploreRoutesSection } from "@/components/goair/explore-routes-section";
 import { HeroTrustStrip } from "@/components/goair/hero-trust-strip";
 import { HowItWorks } from "@/components/goair/how-it-works";
-import { RideTypesSection } from "@/components/goair/ride-types-section";
 import { SectionHeader } from "@/components/goair/section-header";
 import { ServiceHighlights } from "@/components/goair/service-highlights";
 import { FlightPath } from "@/components/flight-path";
@@ -147,9 +146,6 @@ function Home() {
 
       {/* Before you land — walks through the arrival experience with real photos */}
       <BeforeYouLand />
-
-      {/* Choose your ride — real vehicle tiers from vehicle_types */}
-      <RideTypesSection />
 
       {/* Operational highlights */}
       <ServiceHighlights />
