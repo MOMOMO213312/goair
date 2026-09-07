@@ -71,10 +71,6 @@ export function SearchWidget({
   const [seats, setSeats] = useState(initial?.seats ?? 1);
   const [flight, setFlight] = useState("");
   const [showFlightField, setShowFlightField] = useState(false);
-  /** Cosmetic only — shared and private options always show together on the
-   * results page (never hidden), matching the existing private-booking design.
-   * "خاص" just jumps the results page straight down to that section. */
-  const [rideMode, setRideMode] = useState<"shared" | "private">("shared");
 
   const isDeparting = direction === "to_airport";
 
@@ -184,7 +180,6 @@ export function SearchWidget({
         seats,
         direction,
         ...(flight.trim() ? { flight: flight.trim() } : {}),
-        ...(rideMode === "private" ? { focus: "private" } : {}),
         ...(packageId ? { packageId } : {}),
       },
     });
@@ -273,30 +268,6 @@ export function SearchWidget({
         {isDeparting ? "تفاصيل رحلتك للمطار" : "تفاصيل رحلتك من المطار"}
       </p>
 
-      {/* Shared / Private toggle — cosmetic; both always appear in the results */}
-      <div className="mb-3 inline-flex rounded-lg border border-border bg-secondary/60 p-1">
-        <button
-          type="button"
-          onClick={() => setRideMode("shared")}
-          className={cn(
-            "rounded-md px-4 py-1.5 text-sm font-bold transition-colors",
-            rideMode === "shared" ? "bg-card text-primary shadow-sm" : "text-muted-foreground",
-          )}
-        >
-          نقل مشترك
-        </button>
-        <button
-          type="button"
-          onClick={() => setRideMode("private")}
-          className={cn(
-            "rounded-md px-4 py-1.5 text-sm font-bold transition-colors",
-            rideMode === "private" ? "bg-card text-primary shadow-sm" : "text-muted-foreground",
-          )}
-        >
-          نقل خاص
-        </button>
-      </div>
-
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div className="space-y-2">
           <Label className="flex items-center gap-1.5">
@@ -327,7 +298,7 @@ export function SearchWidget({
         {isDeparting ? (
           <>
             <SearchCombobox
-              label="من أين؟"
+              label="هتتحرك منين؟"
               placeholder="اكتب اسم منطقتك"
               emptyText="اختار الدولة أولاً."
               options={destinationOptions}
@@ -340,7 +311,7 @@ export function SearchWidget({
             />
 
             <SearchCombobox
-              label="المطار الذي سأسافر منه"
+              label="هتسافر من مطار إيه؟"
               placeholder="اختار المطار"
               emptyText="اختار منطقتك أولاً."
               options={airportOptions}
@@ -352,7 +323,7 @@ export function SearchWidget({
         ) : (
           <>
             <SearchCombobox
-              label="المطار الذي سأصل إليه"
+              label="هتنزل مطار إيه؟"
               placeholder="اختار المطار"
               emptyText="لا يوجد مطار في هذه الدولة."
               options={airportOptions}
@@ -365,7 +336,7 @@ export function SearchWidget({
             />
 
             <SearchCombobox
-              label="إلى أين أريد الذهاب؟"
+              label="وجهتك بعد الوصول"
               placeholder="رايح فين؟"
               emptyText="اختار المطار أولاً."
               options={destinationOptions}
