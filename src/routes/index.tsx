@@ -83,6 +83,8 @@ function Home() {
           alt="مدرج مطار وقت الغروب"
           width={1920}
           height={1088}
+          fetchPriority="high"
+          decoding="async"
           className="absolute inset-0 -z-10 size-full object-cover"
         />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ink/85 via-ink/25 to-transparent sm:from-ink/80 sm:via-ink/10" />

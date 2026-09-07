@@ -10,22 +10,22 @@ import vehicleVan from "@/assets/vehicle-van.jpg";
 import type { Trip } from "@/lib/goair";
 
 const heroImage =
-  "https://images.unsplash.com/photo-1566212774847-025968e5bf56?fm=jpg&q=80&w=1920&auto=format&fit=crop";
+  "https://images.unsplash.com/photo-1566212774847-025968e5bf56?q=80&w=1920&auto=format&fit=crop";
 
 const egyptImage =
-  "https://images.unsplash.com/photo-1524686975162-f6fb4d39759c?fm=jpg&q=80&w=1600&auto=format&fit=crop";
+  "https://images.unsplash.com/photo-1524686975162-f6fb4d39759c?q=80&w=1600&auto=format&fit=crop";
 
 const lebanonImage =
-  "https://images.unsplash.com/photo-1622142338658-eecd4db4e32f?fm=jpg&q=80&w=1600&auto=format&fit=crop";
+  "https://images.unsplash.com/photo-1622142338658-eecd4db4e32f?q=80&w=1600&auto=format&fit=crop";
 
 const destOctober =
-  "https://images.unsplash.com/photo-1568322445389-f64ac2515020?fm=jpg&q=80&w=1200&auto=format&fit=crop";
+  "https://images.unsplash.com/photo-1568322445389-f64ac2515020?q=80&w=1200&auto=format&fit=crop";
 
 const destNewCairo =
-  "https://images.unsplash.com/photo-1626692880062-35c360fb6afc?fm=jpg&q=80&w=1200&auto=format&fit=crop";
+  "https://images.unsplash.com/photo-1626692880062-35c360fb6afc?q=80&w=1200&auto=format&fit=crop";
 
 const destBeirut =
-  "https://images.unsplash.com/photo-1622142338658-eecd4db4e32f?fm=jpg&q=80&w=1200&auto=format&fit=crop";
+  "https://images.unsplash.com/photo-1622142338658-eecd4db4e32f?q=80&w=1200&auto=format&fit=crop";
 
 /** Destination photos mapped to canonical city names from Supabase. */
 export const DESTINATION_IMAGES: Record<string, string> = {

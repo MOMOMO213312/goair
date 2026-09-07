@@ -13,6 +13,8 @@ export function BusinessPromoBanner() {
             src={heroImage}
             alt=""
             aria-hidden
+            loading="lazy"
+            decoding="async"
             className="absolute inset-0 -z-10 size-full object-cover"
           />
           <div className="absolute inset-0 -z-10 bg-gradient-to-l from-primary/95 via-primary/85 to-primary/60" />
