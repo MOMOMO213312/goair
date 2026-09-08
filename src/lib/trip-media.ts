@@ -18,6 +18,17 @@ const egyptImage =
 const lebanonImage =
   "https://images.unsplash.com/photo-1622142338658-eecd4db4e32f?q=80&w=1600&auto=format&fit=crop";
 
+/**
+ * Absolute last-resort fallback — a generic travel/airport photo (the same
+ * curated, freely-licensed Pexels asset already used in before-you-land.tsx)
+ * shown instead of an empty gradient placeholder when a destination has no
+ * dedicated photo, its Edge-Function-resolved photo hasn't come back yet (or
+ * came back empty), AND its country has no photo pool of its own. This is
+ * what keeps every card populated, never blank.
+ */
+const GENERIC_TRAVEL_FALLBACK_IMAGE =
+  "https://images.pexels.com/photos/32176145/pexels-photo-32176145.jpeg?auto=compress&cs=tinysrgb&w=1600";
+
 const destOctober =
   "https://images.unsplash.com/photo-1568322445389-f64ac2515020?q=80&w=1200&auto=format&fit=crop";
 
@@ -64,11 +75,11 @@ function hashString(value: string): number {
   return hash;
 }
 
-function poolImageFor(destination: string, country?: string): string | null {
-  if (!country) return null;
+function poolImageFor(destination: string, country?: string): string {
+  if (!country) return GENERIC_TRAVEL_FALLBACK_IMAGE;
   const pool = COUNTRY_PHOTO_POOLS[country];
-  if (!pool || pool.length === 0) return null;
-  return pool[hashString(destination) % pool.length] ?? null;
+  if (!pool || pool.length === 0) return GENERIC_TRAVEL_FALLBACK_IMAGE;
+  return pool[hashString(destination) % pool.length] ?? GENERIC_TRAVEL_FALLBACK_IMAGE;
 }
 
 /** Obvious naming variants → canonical destination keys (existing assets only). */
@@ -171,17 +182,20 @@ export type RouteImageSource = Pick<
 
 function resolveRouteImage(source: RouteImageSource): string | null {
   const city = getTripCityLocation(source);
-  // Only 6 of 60 real destinations have a dedicated photo. Rather than fall
-  // back to one repeated country banner (which looked identical across ~90%
-  // of trip cards) or a plain color placeholder, unmatched destinations get
-  // a deterministic pick from a small per-country pool of real travel
-  // photos — varied, and still a real photo instead of an empty-feeling
-  // gradient block.
+  // This is now only the instant/offline layer: a dedicated GoAir photo, or
+  // (for the ~54 destinations without one) a deterministic pick from a
+  // per-country pool of real travel photos, or — for a country with no pool
+  // at all — the generic travel/airport fallback. It's what a card shows
+  // immediately and while `useDestinationPhoto` resolves the real,
+  // per-destination photo via the Edge Function; a card is never empty.
   return resolveDestinationImage(city, source.country);
 }
 
 /**
- * Best route image for a trip card: destination photo → null (placeholder).
+ * Best available route image for a trip card without the Edge Function
+ * round-trip: destination photo → country pool → generic travel/airport
+ * fallback. Never null for a non-empty location; pair with
+ * `useDestinationPhoto` for the real per-destination photo.
  */
 export function getTripRouteImage(trip: RouteImageSource): string | null {
   return resolveRouteImage(trip);
@@ -198,8 +212,9 @@ export function getDedicatedRouteImage(source: RouteImageSource): string | null 
 }
 
 /**
- * Destination card image: named destination → per-country photo pool
- * fallback → null (placeholder), same as resolveRouteImage.
+ * Destination card image: named destination → per-country photo pool →
+ * generic travel/airport fallback, same as resolveRouteImage. Never null
+ * for a non-empty destination name.
  */
 export function getDestinationCardImage(
   destinationName: string,
