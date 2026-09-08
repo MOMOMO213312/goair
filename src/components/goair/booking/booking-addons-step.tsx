@@ -84,6 +84,13 @@ const ADDON_CATEGORY_LABEL: Record<AddonServiceCategory, string> = {
 
 const ADDON_CATEGORY_ORDER: AddonServiceCategory[] = ["before_trip", "luggage", "airport", "destination"];
 
+/**
+ * Visual service card — image-led (photo up top, real Pexels photo where
+ * available), not an icon-first row. Matches the "Fast Track / Meet &
+ * Assist / Lounge" card treatment: [image] → icon+title → description →
+ * price → add button, with a distinct selected state on both the image
+ * (accent ring + check badge) and the card itself.
+ */
 function AddonButton({
   addon,
   isSelected,
@@ -97,7 +104,8 @@ function AddonButton({
   // Real photo priority: DB-cached / manually-set image_url → curated
   // hardcoded fallback for a couple of legacy items → live-resolved via
   // the resolve-stock-photo Edge Function (cached back to the DB after the
-  // first search) → plain icon if nothing is ever found.
+  // first search, so every service only ever triggers ONE real Pexels
+  // search, ever) → plain icon tile if nothing is ever found.
   const photo =
     useStockPhoto("addon_services", addon.id, addon.imageUrl) ?? ADDON_PHOTOS[addon.iconName];
 
@@ -107,40 +115,70 @@ function AddonButton({
       onClick={onToggle}
       aria-pressed={isSelected}
       className={cn(
-        "flex items-center gap-3 rounded-xl border p-3.5 text-start transition-colors",
+        "group flex flex-col overflow-hidden rounded-xl border text-start transition-colors",
         isSelected ? "border-accent bg-accent/5" : "border-border/80 hover:border-accent/40",
       )}
     >
-      {photo ? (
-        <span className="size-10 shrink-0 overflow-hidden rounded-lg">
-          <img src={photo} alt="" className="size-full object-cover" loading="lazy" />
-        </span>
-      ) : (
-        <span
-          className={cn(
-            "flex size-10 shrink-0 items-center justify-center rounded-lg",
-            isSelected ? "bg-accent/20 text-accent" : "bg-secondary text-primary",
-          )}
-        >
-          <Icon className="size-5" aria-hidden />
-        </span>
-      )}
-
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-display text-sm font-bold text-primary">{addon.name}</p>
-        {addon.description ? (
-          <p className="truncate text-xs text-muted-foreground">{addon.description}</p>
-        ) : null}
-      </div>
-
-      <span
-        className={cn(
-          "flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold",
-          isSelected ? "bg-accent text-accent-foreground" : "bg-secondary text-primary",
+      {/* Photo — real image when resolved, icon-on-tint tile while it loads
+          or if none is ever found, so the card never looks broken. */}
+      <span className="relative block aspect-[16/9] w-full shrink-0 overflow-hidden bg-secondary">
+        {photo ? (
+          <img
+            src={photo}
+            alt=""
+            className={cn(
+              "size-full object-cover transition-transform duration-300",
+              !isSelected && "group-hover:scale-105",
+            )}
+            loading="lazy"
+          />
+        ) : (
+          <span className="flex size-full items-center justify-center text-primary/40">
+            <Icon className="size-8" aria-hidden />
+          </span>
         )}
-      >
-        {isSelected ? <Check className="size-3.5" aria-hidden /> : <Plus className="size-3.5" aria-hidden />}
-        {isSelected ? "متضاف" : `+${formatUsd(addon.priceUsd)}`}
+
+        {/* Icon badge, top start — keeps the service's identity readable
+            even once the photo is a generic-looking stock shot. */}
+        <span className="absolute inset-x-2 top-2 flex items-center justify-between">
+          <span className="flex size-7 items-center justify-center rounded-lg bg-background/90 text-primary shadow-sm backdrop-blur">
+            <Icon className="size-3.5" aria-hidden />
+          </span>
+          {isSelected ? (
+            <span className="flex size-7 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-sm">
+              <Check className="size-4" aria-hidden />
+            </span>
+          ) : null}
+        </span>
+      </span>
+
+      <span className="flex flex-1 flex-col gap-1 p-3">
+        <span className="truncate font-display text-sm font-bold text-primary">{addon.name}</span>
+        {addon.description ? (
+          <span className="line-clamp-2 text-xs text-muted-foreground">{addon.description}</span>
+        ) : null}
+
+        <span className="mt-auto flex items-center justify-between pt-2">
+          <span className="text-sm font-extrabold text-primary">+{formatUsd(addon.priceUsd)}</span>
+          <span
+            className={cn(
+              "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold transition-colors",
+              isSelected ? "bg-accent text-accent-foreground" : "bg-secondary text-primary",
+            )}
+          >
+            {isSelected ? (
+              <>
+                <Check className="size-3.5" aria-hidden />
+                متضاف
+              </>
+            ) : (
+              <>
+                <Plus className="size-3.5" aria-hidden />
+                إضافة
+              </>
+            )}
+          </span>
+        </span>
       </span>
     </button>
   );
@@ -175,9 +213,10 @@ export function BookingAddonsStep({
       <p className="mt-1 text-sm text-muted-foreground">اختياري — ضيف أي خدمة تحسّن تجربتك.</p>
 
       {addonsLoading ? (
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <div className="h-20 animate-pulse rounded-xl bg-secondary/50" />
-          <div className="h-20 animate-pulse rounded-xl bg-secondary/50" />
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="h-48 animate-pulse rounded-xl bg-secondary/50" />
+          <div className="h-48 animate-pulse rounded-xl bg-secondary/50" />
+          <div className="hidden h-48 animate-pulse rounded-xl bg-secondary/50 lg:block" />
         </div>
       ) : (
         <div className="mt-6 space-y-6">
@@ -187,7 +226,7 @@ export function BookingAddonsStep({
             return (
               <div key={category}>
                 <h3 className="text-xs font-bold text-muted-foreground">{ADDON_CATEGORY_LABEL[category]}</h3>
-                <div className="mt-2.5 grid gap-3 sm:grid-cols-2">
+                <div className="mt-2.5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {items.map((addon) => (
                     <AddonButton
                       key={addon.id}
