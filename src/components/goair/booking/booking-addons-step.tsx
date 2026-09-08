@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
+import { useStockPhoto } from "@/hooks/use-stock-photo";
 import type { AddonService, AddonServiceCategory } from "@/lib/goair";
 import { formatUsd } from "@/lib/goair";
 import { cn } from "@/lib/utils";
@@ -83,6 +84,68 @@ const ADDON_CATEGORY_LABEL: Record<AddonServiceCategory, string> = {
 
 const ADDON_CATEGORY_ORDER: AddonServiceCategory[] = ["before_trip", "luggage", "airport", "destination"];
 
+function AddonButton({
+  addon,
+  isSelected,
+  onToggle,
+}: {
+  addon: AddonService;
+  isSelected: boolean;
+  onToggle: () => void;
+}) {
+  const Icon = ADDON_ICONS[addon.iconName] ?? Sparkles;
+  // Real photo priority: DB-cached / manually-set image_url → curated
+  // hardcoded fallback for a couple of legacy items → live-resolved via
+  // the resolve-stock-photo Edge Function (cached back to the DB after the
+  // first search) → plain icon if nothing is ever found.
+  const photo =
+    useStockPhoto("addon_services", addon.id, addon.imageUrl) ?? ADDON_PHOTOS[addon.iconName];
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={isSelected}
+      className={cn(
+        "flex items-center gap-3 rounded-xl border p-3.5 text-start transition-colors",
+        isSelected ? "border-accent bg-accent/5" : "border-border/80 hover:border-accent/40",
+      )}
+    >
+      {photo ? (
+        <span className="size-10 shrink-0 overflow-hidden rounded-lg">
+          <img src={photo} alt="" className="size-full object-cover" loading="lazy" />
+        </span>
+      ) : (
+        <span
+          className={cn(
+            "flex size-10 shrink-0 items-center justify-center rounded-lg",
+            isSelected ? "bg-accent/20 text-accent" : "bg-secondary text-primary",
+          )}
+        >
+          <Icon className="size-5" aria-hidden />
+        </span>
+      )}
+
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-display text-sm font-bold text-primary">{addon.name}</p>
+        {addon.description ? (
+          <p className="truncate text-xs text-muted-foreground">{addon.description}</p>
+        ) : null}
+      </div>
+
+      <span
+        className={cn(
+          "flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold",
+          isSelected ? "bg-accent text-accent-foreground" : "bg-secondary text-primary",
+        )}
+      >
+        {isSelected ? <Check className="size-3.5" aria-hidden /> : <Plus className="size-3.5" aria-hidden />}
+        {isSelected ? "متضاف" : `+${formatUsd(addon.priceUsd)}`}
+      </span>
+    </button>
+  );
+}
+
 type BookingAddonsStepProps = {
   addons: AddonService[];
   addonsLoading: boolean;
@@ -125,61 +188,14 @@ export function BookingAddonsStep({
               <div key={category}>
                 <h3 className="text-xs font-bold text-muted-foreground">{ADDON_CATEGORY_LABEL[category]}</h3>
                 <div className="mt-2.5 grid gap-3 sm:grid-cols-2">
-                  {items.map((addon) => {
-                    const Icon = ADDON_ICONS[addon.iconName] ?? Sparkles;
-                    const photo = ADDON_PHOTOS[addon.iconName];
-                    const isSelected = selectedAddonIds.includes(addon.id);
-                    return (
-                      <button
-                        key={addon.id}
-                        type="button"
-                        onClick={() => onToggleAddon(addon.id)}
-                        aria-pressed={isSelected}
-                        className={cn(
-                          "flex items-center gap-3 rounded-xl border p-3.5 text-start transition-colors",
-                          isSelected ? "border-accent bg-accent/5" : "border-border/80 hover:border-accent/40",
-                        )}
-                      >
-                        {photo ? (
-                          <span className="size-10 shrink-0 overflow-hidden rounded-lg">
-                            <img src={photo} alt="" className="size-full object-cover" loading="lazy" />
-                          </span>
-                        ) : (
-                          <span
-                            className={cn(
-                              "flex size-10 shrink-0 items-center justify-center rounded-lg",
-                              isSelected ? "bg-accent/20 text-accent" : "bg-secondary text-primary",
-                            )}
-                          >
-                            <Icon className="size-5" aria-hidden />
-                          </span>
-                        )}
-
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-display text-sm font-bold text-primary">{addon.name}</p>
-                          {addon.description ? (
-                            <p className="truncate text-xs text-muted-foreground">{addon.description}</p>
-                          ) : null}
-                        </div>
-
-                        <span
-                          className={cn(
-                            "flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold",
-                            isSelected
-                              ? "bg-accent text-accent-foreground"
-                              : "bg-secondary text-primary",
-                          )}
-                        >
-                          {isSelected ? (
-                            <Check className="size-3.5" aria-hidden />
-                          ) : (
-                            <Plus className="size-3.5" aria-hidden />
-                          )}
-                          {isSelected ? "متضاف" : `+${formatUsd(addon.priceUsd)}`}
-                        </span>
-                      </button>
-                    );
-                  })}
+                  {items.map((addon) => (
+                    <AddonButton
+                      key={addon.id}
+                      addon={addon}
+                      isSelected={selectedAddonIds.includes(addon.id)}
+                      onToggle={() => onToggleAddon(addon.id)}
+                    />
+                  ))}
                 </div>
               </div>
             );
