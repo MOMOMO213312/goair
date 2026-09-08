@@ -56,6 +56,24 @@ const ADDON_ICONS: Record<string, LucideIcon> = {
   Gift,
 };
 
+/**
+ * Real, freely-licensed photos (Pexels — see licensing note in the image
+ * library) for the handful of airport add-ons where a generic real photo
+ * reads better than an icon. Keyed by `icon_name` (stable, DB-assigned)
+ * rather than the Arabic label, which can be edited from the admin panel.
+ * Anything not listed here keeps its icon — no photo yet for the rest.
+ */
+const ADDON_PHOTOS: Partial<Record<string, string>> = {
+  // Fast Track — travelers at a security checkpoint.
+  Zap: "https://images.pexels.com/photos/37847918/pexels-photo-37847918.jpeg?auto=compress&cs=tinysrgb&w=400",
+  // دخول صالة كبار الشخصيات — modern airport lounge.
+  Armchair:
+    "https://images.pexels.com/photos/31773252/pexels-photo-31773252.jpeg?auto=compress&cs=tinysrgb&w=400",
+  // خدمة حمال — traveler with luggage at the terminal.
+  PackageOpen:
+    "https://images.pexels.com/photos/32176403/pexels-photo-32176403.jpeg?auto=compress&cs=tinysrgb&w=400",
+};
+
 const ADDON_CATEGORY_LABEL: Record<AddonServiceCategory, string> = {
   before_trip: "قبل الرحلة",
   luggage: "الأمتعة",
@@ -109,6 +127,7 @@ export function BookingAddonsStep({
                 <div className="mt-2.5 grid gap-3 sm:grid-cols-2">
                   {items.map((addon) => {
                     const Icon = ADDON_ICONS[addon.iconName] ?? Sparkles;
+                    const photo = ADDON_PHOTOS[addon.iconName];
                     const isSelected = selectedAddonIds.includes(addon.id);
                     return (
                       <button
@@ -121,14 +140,20 @@ export function BookingAddonsStep({
                           isSelected ? "border-accent bg-accent/5" : "border-border/80 hover:border-accent/40",
                         )}
                       >
-                        <span
-                          className={cn(
-                            "flex size-10 shrink-0 items-center justify-center rounded-lg",
-                            isSelected ? "bg-accent/20 text-accent" : "bg-secondary text-primary",
-                          )}
-                        >
-                          <Icon className="size-5" aria-hidden />
-                        </span>
+                        {photo ? (
+                          <span className="size-10 shrink-0 overflow-hidden rounded-lg">
+                            <img src={photo} alt="" className="size-full object-cover" loading="lazy" />
+                          </span>
+                        ) : (
+                          <span
+                            className={cn(
+                              "flex size-10 shrink-0 items-center justify-center rounded-lg",
+                              isSelected ? "bg-accent/20 text-accent" : "bg-secondary text-primary",
+                            )}
+                          >
+                            <Icon className="size-5" aria-hidden />
+                          </span>
+                        )}
 
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-display text-sm font-bold text-primary">{addon.name}</p>
