@@ -97,7 +97,14 @@ function normalizeLocationName(value: string): string {
   return value.trim().replace(/\s+/g, " ");
 }
 
-function resolveDestinationImage(location: string, country?: string): string | null {
+/**
+ * GoAir's own hand-picked photo for a destination, with no pool fallback —
+ * returns null when this specific place has no dedicated asset. Used to
+ * decide whether a card should try the real per-destination photo (via the
+ * resolve-destination-photo Edge Function) instead of settling for the
+ * repeated country pool image.
+ */
+function resolveDedicatedDestinationImage(location: string): string | null {
   const normalized = normalizeLocationName(location);
   if (!normalized) return null;
 
@@ -109,6 +116,16 @@ function resolveDestinationImage(location: string, country?: string): string | n
   if (aliasKey && DESTINATION_IMAGES[aliasKey]) {
     return DESTINATION_IMAGES[aliasKey];
   }
+
+  return null;
+}
+
+function resolveDestinationImage(location: string, country?: string): string | null {
+  const dedicated = resolveDedicatedDestinationImage(location);
+  if (dedicated) return dedicated;
+
+  const normalized = normalizeLocationName(location);
+  if (!normalized) return null;
 
   return poolImageFor(normalized, country);
 }
@@ -179,6 +196,16 @@ export function getDestinationCardImage(
   country?: string,
 ): string | null {
   return resolveDestinationImage(destinationName, country);
+}
+
+/**
+ * GoAir's own dedicated photo for a destination card, or null if this
+ * destination doesn't have one — pass this into `useDestinationPhoto` so it
+ * knows to look up a real per-destination photo instead of falling back to
+ * `getDestinationCardImage`'s repeated country pool image.
+ */
+export function getDedicatedDestinationImage(destinationName: string): string | null {
+  return resolveDedicatedDestinationImage(destinationName);
 }
 
 /**

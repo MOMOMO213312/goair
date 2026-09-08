@@ -3,8 +3,9 @@ import { Link } from "@tanstack/react-router";
 import { PriceCard } from "@/components/goair/price-card";
 import { DestinationPlaceholder } from "@/components/goair/destination-placeholder";
 import { Card } from "@/components/ui/card";
+import { useDestinationPhoto } from "@/hooks/use-destination-photo";
 import type { DestinationSummary } from "@/lib/trip-stats";
-import { getDestinationCardImage } from "@/lib/trip-media";
+import { getDedicatedDestinationImage, getDestinationCardImage } from "@/lib/trip-media";
 import { cn } from "@/lib/utils";
 
 type DestinationCardProps = {
@@ -13,7 +14,14 @@ type DestinationCardProps = {
 };
 
 export function DestinationCard({ destination, className }: DestinationCardProps) {
-  const image = getDestinationCardImage(destination.name, destination.country);
+  const dedicatedImage = getDedicatedDestinationImage(destination.name);
+  const poolFallback = getDestinationCardImage(destination.name, destination.country);
+  const image = useDestinationPhoto(
+    destination.country,
+    destination.name,
+    dedicatedImage,
+    poolFallback,
+  );
   const searchDate = new Date().toISOString().slice(0, 10);
 
   return (
