@@ -16,7 +16,12 @@ import {
 } from "@/components/ui/select";
 import type { ScheduleOption, Trip, VehicleType } from "@/lib/goair";
 import { formatTime, formatUsd, isGeneratedScheduleId } from "@/lib/goair";
-import { getTripCityLocation, getTripRouteImage } from "@/lib/trip-media";
+import { useDestinationPhoto } from "@/hooks/use-destination-photo";
+import {
+  getDedicatedRouteImage,
+  getTripCityLocation,
+  getTripRouteImage,
+} from "@/lib/trip-media";
 import { cn } from "@/lib/utils";
 
 export function isFallbackSchedule(scheduleId: string) {
@@ -71,7 +76,9 @@ export function SearchResultCard({
   flight,
 }: SearchResultCardProps) {
   const cityLabel = getTripCityLocation(trip);
-  const image = getTripRouteImage(trip);
+  const dedicatedImage = getDedicatedRouteImage(trip);
+  const poolFallback = getTripRouteImage(trip);
+  const image = useDestinationPhoto(trip.country, cityLabel, dedicatedImage, poolFallback);
   const hasFallback = options.some((option) => isFallbackSchedule(option.scheduleId));
   const maxLuggage = options.reduce<number | null>((max, option) => {
     const vehicle = option.vehicleTypeId ? vehicleTypesById?.get(option.vehicleTypeId) : null;

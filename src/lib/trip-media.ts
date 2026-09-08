@@ -188,6 +188,16 @@ export function getTripRouteImage(trip: RouteImageSource): string | null {
 }
 
 /**
+ * GoAir's own dedicated photo for a trip's city/area, or null — pass into
+ * `useDestinationPhoto` alongside `getTripRouteImage`'s pool fallback so
+ * routes without a dedicated asset get a real per-destination photo instead
+ * of settling for the repeated country pool image.
+ */
+export function getDedicatedRouteImage(source: RouteImageSource): string | null {
+  return resolveDedicatedDestinationImage(getTripCityLocation(source));
+}
+
+/**
  * Destination card image: named destination → per-country photo pool
  * fallback → null (placeholder), same as resolveRouteImage.
  */
@@ -228,6 +238,30 @@ export function getRouteImageFromTripOrFallback(
   }
 
   return getDestinationCardImage(destination, country || undefined);
+}
+
+/**
+ * Dedicated-only counterpart to `getRouteImageFromTripOrFallback`, for
+ * pages (payment/confirmation) that may only have the booking record, not
+ * the full trip — same trip-or-fallback shape, no pool fallback.
+ */
+export function getDedicatedRouteImageFromTripOrFallback(
+  trip: RouteImageSource | undefined,
+  fallback: Partial<RouteImageSource> & { destination?: string; country?: string },
+): string | null {
+  if (trip) return getDedicatedRouteImage(trip);
+
+  const origin = fallback.origin ?? "";
+  const destination = fallback.destination ?? "";
+  const airport_name = fallback.airport_name ?? "";
+  const airport_code = fallback.airport_code ?? "";
+  const country = fallback.country ?? "";
+
+  if (origin && destination && airport_name) {
+    return getDedicatedRouteImage({ origin, destination, airport_name, airport_code, country });
+  }
+
+  return getDedicatedDestinationImage(destination);
 }
 
 export function getDestinationImage(destination: string): string | null {

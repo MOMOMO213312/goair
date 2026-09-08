@@ -4,9 +4,14 @@ import { DestinationPlaceholder } from "@/components/goair/destination-placehold
 import { formatSearchDate } from "@/components/goair/search/search-summary";
 import { FlightPath } from "@/components/flight-path";
 import { Card } from "@/components/ui/card";
+import { useDestinationPhoto } from "@/hooks/use-destination-photo";
 import type { Trip } from "@/lib/goair";
 import { formatTime, isGeneratedScheduleId } from "@/lib/goair";
-import { getTripCityLocation, getTripRouteImage } from "@/lib/trip-media";
+import {
+  getDedicatedRouteImage,
+  getTripCityLocation,
+  getTripRouteImage,
+} from "@/lib/trip-media";
 import { cn } from "@/lib/utils";
 
 function isFallbackSchedule(scheduleId: string) {
@@ -31,8 +36,10 @@ export function BookingTripSummary({
   className,
 }: BookingTripSummaryProps) {
   const fallback = isFallbackSchedule(scheduleId);
-  const image = trip ? getTripRouteImage(trip) : null;
   const cityLabel = trip ? getTripCityLocation(trip) : "";
+  const dedicatedImage = trip ? getDedicatedRouteImage(trip) : null;
+  const poolFallback = trip ? getTripRouteImage(trip) : null;
+  const image = useDestinationPhoto(trip?.country ?? "", cityLabel, dedicatedImage, poolFallback);
   const originLabel = trip?.airport_name ?? trip?.origin ?? "المطار";
   const destLabel = trip?.destination ?? "الوجهة";
   const airportCode = trip?.airport_code ?? "";

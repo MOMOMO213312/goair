@@ -14,7 +14,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { BookingRecord, Trip } from "@/lib/goair";
 import { formatTime, formatUsd } from "@/lib/goair";
-import { getRouteImageFromTripOrFallback, getTripCityLocation } from "@/lib/trip-media";
+import { useDestinationPhoto } from "@/hooks/use-destination-photo";
+import {
+  getDedicatedRouteImageFromTripOrFallback,
+  getRouteImageFromTripOrFallback,
+  getTripCityLocation,
+} from "@/lib/trip-media";
 import { cn } from "@/lib/utils";
 
 type ConfirmationTicketCardProps = {
@@ -40,14 +45,17 @@ export function ConfirmationTicketCard({
   const destLabel = trip?.destination ?? bookingField(booking, ["destination"]);
   const airportCode = trip?.airport_code ?? bookingField(booking, ["airport_code"]);
   const country = trip?.country ?? bookingField(booking, ["country"]);
-  const image = getRouteImageFromTripOrFallback(trip, {
+  const fallbackArgs = {
     origin: trip?.origin ?? bookingField(booking, ["origin"]),
     destination: destLabel,
     airport_name: trip?.airport_name ?? bookingField(booking, ["airport_name"]),
     airport_code: airportCode,
     country,
-  });
+  };
+  const poolFallback = getRouteImageFromTripOrFallback(trip, fallbackArgs);
+  const dedicatedImage = getDedicatedRouteImageFromTripOrFallback(trip, fallbackArgs);
   const cityLabel = trip ? getTripCityLocation(trip) : destLabel;
+  const image = useDestinationPhoto(country, cityLabel, dedicatedImage, poolFallback);
 
   return (
     <Card
