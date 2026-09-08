@@ -34,6 +34,10 @@ import {
 } from "@/lib/goair";
 import { filterPublicTrips, getAirportsForCountry, getDestinationsForAirport } from "@/lib/trip-stats";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-context";
+import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
+
+const pageMeta = translations[DEFAULT_LANGUAGE].packagePage.meta;
 
 type PackageSearch = { packageId: string };
 
@@ -64,10 +68,10 @@ export const Route = createFileRoute("/package")({
   }),
   head: () => ({
     meta: [
-      { title: "حجز الباقة — GoAir" },
+      { title: pageMeta.title },
       {
         name: "description",
-        content: "اختار رحلتك واستكمل حجز باقتك في خطوات مستقلة تمامًا عن الحجز العادي.",
+        content: pageMeta.description,
       },
     ],
   }),
@@ -75,6 +79,7 @@ export const Route = createFileRoute("/package")({
 });
 
 function PackagePage() {
+  const { t } = useTranslation();
   const search = Route.useSearch();
   const navigate = useNavigate();
 
@@ -156,7 +161,7 @@ function PackagePage() {
   function onSearchTimes(event: React.FormEvent) {
     event.preventDefault();
     if (!country || !airport || !destination) {
-      toast.error("اختار المطار والوجهة الأول.");
+      toast.error(t("packagePage.chooseAirportDestinationFirst"));
       return;
     }
     setSelectedScheduleId(null);
@@ -165,7 +170,7 @@ function PackagePage() {
 
   function onContinueFromTrip() {
     if (!selectedOption) {
-      toast.error("اختار معاد الرحلة الأول.");
+      toast.error(t("packagePage.chooseTimeFirst"));
       return;
     }
     setPhase("extras");
@@ -174,11 +179,11 @@ function PackagePage() {
   function onPassengersSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (fullName.trim().length < 3) {
-      toast.error("اكتب الاسم بالكامل.");
+      toast.error(t("packagePage.nameFullRequired"));
       return;
     }
     if (phone.trim().length < 7) {
-      toast.error("اكتب رقم موبايل صحيح.");
+      toast.error(t("packagePage.phoneValidRequired"));
       return;
     }
     setPhase("confirm");
@@ -186,17 +191,17 @@ function PackagePage() {
 
   async function onConfirm() {
     if (!trip || !selectedOption) {
-      toast.error("لازم تختار رحلتك الأول.");
+      toast.error(t("packagePage.chooseTripFirst"));
       setPhase("trip");
       return;
     }
     if (fullName.trim().length < 3) {
-      toast.error("اكتب الاسم بالكامل.");
+      toast.error(t("packagePage.nameFullRequired"));
       setPhase("passengers");
       return;
     }
     if (phone.trim().length < 7) {
-      toast.error("اكتب رقم موبايل صحيح.");
+      toast.error(t("packagePage.phoneValidRequired"));
       setPhase("passengers");
       return;
     }
@@ -218,11 +223,11 @@ function PackagePage() {
         packageId: pkg?.id ?? null,
         addonIds: selectedAddonIds,
       });
-      toast.success("تم تثبيت حجز الباقة — باقي الدفع.");
+      toast.success(t("packagePage.bookingSuccess"));
       navigate({ to: "/payment", search: { ticket: ticketCode } });
     } catch (error) {
       toast.error(
-        friendlyErrorMessage(error, "لم نتمكن من إنشاء حجز الباقة. حاول مرة أخرى أو تواصل مع الدعم."),
+        friendlyErrorMessage(error, t("packagePage.bookingError")),
       );
     } finally {
       setBusy(false);
@@ -232,11 +237,11 @@ function PackagePage() {
   if (!search.packageId) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-20 text-center">
-        <p className="font-display text-lg font-bold text-primary">مفيش باقة محددة</p>
-        <p className="mt-2 text-sm text-muted-foreground">ارجع لصفحة الباقات واختار باقة الأول.</p>
+        <p className="font-display text-lg font-bold text-primary">{t("packagePage.noPackageTitle")}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{t("packagePage.noPackageBody")}</p>
         <Button asChild className="mt-6">
           <Link to="/explore" search={{ tab: "packages" }}>
-            عرض الباقات
+            {t("packagePage.viewPackages")}
           </Link>
         </Button>
       </div>
@@ -251,13 +256,13 @@ function PackagePage() {
           search={{ tab: "packages" }}
           className="text-sm font-bold text-accent hover:underline"
         >
-          ← رجوع للباقات
+          {t("packagePage.backToPackages")}
         </Link>
 
         <header className="mt-4 space-y-1">
-          <h1 className="font-display text-2xl font-extrabold text-primary sm:text-3xl">حجز باقة</h1>
+          <h1 className="font-display text-2xl font-extrabold text-primary sm:text-3xl">{t("packagePage.title")}</h1>
           <p className="text-sm text-muted-foreground">
-            دي خطوات حجز الباقة — منفصلة تمامًا عن حجز الرحلة العادي.
+            {t("packagePage.subtitle")}
           </p>
         </header>
 
@@ -265,7 +270,7 @@ function PackagePage() {
 
         <Card className="mt-6 border-accent/30 bg-accent/5 p-5">
           {packageQuery.isLoading ? (
-            <p className="text-sm text-muted-foreground">جارِ تحميل بيانات الباقة...</p>
+            <p className="text-sm text-muted-foreground">{t("packagePage.loadingPackage")}</p>
           ) : pkg ? (
             <>
               <p className="font-display text-lg font-extrabold text-primary">{pkg.name}</p>
@@ -280,11 +285,11 @@ function PackagePage() {
                 </ul>
               ) : null}
               <p className="mt-3 font-display text-xl font-extrabold text-accent">
-                {formatUsd(pkg.priceUsd)} / راكب
+                {formatUsd(pkg.priceUsd)} {t("packagePage.perPassenger")}
               </p>
             </>
           ) : (
-            <p className="text-sm text-destructive">تعذّر إيجاد هذه الباقة — ممكن تكون اتشالت.</p>
+            <p className="text-sm text-destructive">{t("packagePage.packageNotFound")}</p>
           )}
         </Card>
 
@@ -292,14 +297,14 @@ function PackagePage() {
           <div className="min-w-0 space-y-6">
             {phase === "trip" ? (
               <Card className="border-border/80 p-5 shadow-[var(--shadow-card)] sm:p-6">
-                <h2 className="font-display text-lg font-extrabold text-primary">اختار رحلتك</h2>
+                <h2 className="font-display text-lg font-extrabold text-primary">{t("packagePage.chooseTripTitle")}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  حدد المطار والوجهة والموعد اللي هتستخدم فيهم الباقة.
+                  {t("packagePage.chooseTripSubtitle")}
                 </p>
 
                 <form onSubmit={onSearchTimes} className="mt-5 grid gap-4 sm:grid-cols-2">
                   <div>
-                    <Label>الدولة</Label>
+                    <Label>{t("packagePage.countryLabel")}</Label>
                     <Select
                       value={country}
                       onValueChange={(value) => {
@@ -310,7 +315,7 @@ function PackagePage() {
                       }}
                     >
                       <SelectTrigger className="mt-1.5">
-                        <SelectValue placeholder="اختار الدولة" />
+                        <SelectValue placeholder={t("packagePage.countryPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         {(countriesQuery.data ?? []).map((item) => (
@@ -322,7 +327,7 @@ function PackagePage() {
                     </Select>
                   </div>
                   <div>
-                    <Label>المطار</Label>
+                    <Label>{t("packagePage.airportLabel")}</Label>
                     <Select
                       value={airport}
                       onValueChange={(value) => {
@@ -333,7 +338,7 @@ function PackagePage() {
                       disabled={!country}
                     >
                       <SelectTrigger className="mt-1.5">
-                        <SelectValue placeholder="اختار المطار" />
+                        <SelectValue placeholder={t("packagePage.airportPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         {airports.map((item) => (
@@ -345,7 +350,7 @@ function PackagePage() {
                     </Select>
                   </div>
                   <div>
-                    <Label>الوجهة</Label>
+                    <Label>{t("packagePage.destinationLabel")}</Label>
                     <Select
                       value={destination}
                       onValueChange={(value) => {
@@ -355,7 +360,7 @@ function PackagePage() {
                       disabled={!airport}
                     >
                       <SelectTrigger className="mt-1.5">
-                        <SelectValue placeholder="اختار الوجهة" />
+                        <SelectValue placeholder={t("packagePage.destinationPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent>
                         {destinations.map((item) => (
@@ -367,7 +372,7 @@ function PackagePage() {
                     </Select>
                   </div>
                   <div>
-                    <Label>التاريخ</Label>
+                    <Label>{t("packagePage.dateLabel")}</Label>
                     <Input
                       type="date"
                       className="mt-1.5"
@@ -379,7 +384,7 @@ function PackagePage() {
                     />
                   </div>
                   <div>
-                    <Label>عدد الركاب</Label>
+                    <Label>{t("packagePage.seatsLabel")}</Label>
                     <Input
                       type="number"
                       min={1}
@@ -390,7 +395,7 @@ function PackagePage() {
                   </div>
                   <div className="flex items-end">
                     <Button type="submit" className="w-full">
-                      عرض المواعيد المتاحة
+                      {t("packagePage.showAvailableTimes")}
                     </Button>
                   </div>
                 </form>
@@ -398,10 +403,10 @@ function PackagePage() {
                 {hasSearchedTimes ? (
                   <div className="mt-6">
                     {scheduleQuery.isLoading ? (
-                      <p className="text-sm text-muted-foreground">جارِ تحميل المواعيد...</p>
+                      <p className="text-sm text-muted-foreground">{t("packagePage.loadingTimes")}</p>
                     ) : timeOptions.length === 0 ? (
                       <p className="text-sm text-muted-foreground">
-                        مفيش مواعيد متاحة في التاريخ ده — جرّب تاريخ تاني.
+                        {t("packagePage.noTimesAvailable")}
                       </p>
                     ) : (
                       <div className="grid gap-2 sm:grid-cols-3">
@@ -433,7 +438,7 @@ function PackagePage() {
                   onClick={onContinueFromTrip}
                   disabled={!selectedOption}
                 >
-                  متابعة
+                  {t("packagePage.continue")}
                 </Button>
               </Card>
             ) : null}

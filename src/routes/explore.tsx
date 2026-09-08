@@ -33,6 +33,10 @@ import {
   type SubscriptionPlan,
 } from "@/lib/goair";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-context";
+import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
+
+const pageMeta = translations[DEFAULT_LANGUAGE].explorePage.meta;
 
 export const Route = createFileRoute("/explore")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -42,13 +46,13 @@ export const Route = createFileRoute("/explore")({
   }),
   head: () => ({
     meta: [
-      { title: "استكشف — GoAir" },
+      { title: pageMeta.title },
       {
         name: "description",
-        content: "خدمات إضافية، باقات، واشتراكات — كل حاجة GoAir بتقدمها لرحلتك، في صفحة واحدة.",
+        content: pageMeta.description,
       },
-      { property: "og:title", content: "استكشف — GoAir" },
-      { property: "og:description", content: "ضيف الراحة اللي محتاجها لرحلتك، أو اشترك بخصم دائم." },
+      { property: "og:title", content: pageMeta.title },
+      { property: "og:description", content: pageMeta.ogDescription },
     ],
   }),
   component: ExplorePage,
@@ -67,21 +71,20 @@ function ExplorePage() {
   );
 }
 
-const TAB_HERO_COPY: Record<ExploreTab, { eyebrow: string; title: string; description: string }> = {
-  packages: {
-    eyebrow: "كل خدمة وكل عرض، في مكان واحد",
-    title: "باقات الرحلة",
-    description: "باقات جاهزة بتضم أكتر من خدمة مع بعض، بسعر أوفر من اختيارها لوحدها.",
-  },
-  subscriptions: {
-    eyebrow: "كل خدمة وكل عرض، في مكان واحد",
-    title: "الاشتراكات",
-    description: "عضوية بخصم دائم على كل رحلاتك — اشترك مرة واستفاد كل رحلة.",
-  },
-};
-
 function ExploreHero({ tab }: { tab: ExploreTab }) {
-  const copy = TAB_HERO_COPY[tab];
+  const { t } = useTranslation();
+  const copy =
+    tab === "packages"
+      ? {
+          eyebrow: t("explorePage.tabEyebrow"),
+          title: t("explorePage.packagesHeroTitle"),
+          description: t("explorePage.packagesHeroDescription"),
+        }
+      : {
+          eyebrow: t("explorePage.tabEyebrow"),
+          title: t("explorePage.subscriptionsHeroTitle"),
+          description: t("explorePage.subscriptionsHeroDescription"),
+        };
   return (
     <section className="relative isolate overflow-hidden bg-gradient-to-b from-primary to-violet-deep py-14 sm:py-20">
       <img

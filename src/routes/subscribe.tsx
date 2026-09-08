@@ -17,6 +17,10 @@ import {
   friendlyErrorMessage,
   submitSubscriptionPayment,
 } from "@/lib/goair";
+import { useTranslation } from "@/lib/i18n/language-context";
+import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
+
+const pageMeta = translations[DEFAULT_LANGUAGE].subscribePage.meta;
 
 const FORM_ID = "goair-subscription-payment-form";
 
@@ -26,8 +30,8 @@ export const Route = createFileRoute("/subscribe")({
   }),
   head: () => ({
     meta: [
-      { title: "اشترك — GoAir" },
-      { name: "description", content: "اشترك في عضوية GoAir واحصل على خصم ثابت ورحلات مجانية على مدار الاشتراك." },
+      { title: pageMeta.title },
+      { name: "description", content: pageMeta.description },
     ],
   }),
   component: SubscribePage,
@@ -36,6 +40,7 @@ export const Route = createFileRoute("/subscribe")({
 type Step = "form" | "payment" | "done";
 
 function SubscribePage() {
+  const { t } = useTranslation();
   const { planId } = Route.useSearch();
   const [step, setStep] = useState<Step>("form");
   const [fullName, setFullName] = useState("");
@@ -67,11 +72,11 @@ function SubscribePage() {
   async function onCreateSubscription(event: React.FormEvent) {
     event.preventDefault();
     if (!planId) {
-      toast.error("مفيش باقة اشتراك محددة — ارجع لصفحة العروض واختار باقة.");
+      toast.error(t("subscribePage.noPlanSelectedError"));
       return;
     }
     if (fullName.trim().length < 3 || phone.trim().length < 8) {
-      toast.error("اكتب اسمك ورقم موبايلك بشكل صحيح.");
+      toast.error(t("subscribePage.nameAndPhoneRequired"));
       return;
     }
     setBusy(true);
@@ -86,7 +91,7 @@ function SubscribePage() {
       setExpectedTotal(result.expectedTotalUsd || plan?.priceUsd || 0);
       setStep("payment");
     } catch (error) {
-      toast.error(friendlyErrorMessage(error, "لم نتمكن من إنشاء الاشتراك. حاول مرة أخرى."));
+      toast.error(friendlyErrorMessage(error, t("subscribePage.createError")));
     } finally {
       setBusy(false);
     }
@@ -95,7 +100,7 @@ function SubscribePage() {
   async function onSubmitPayment(event: React.FormEvent) {
     event.preventDefault();
     if (!method) {
-      toast.error("اختار طريقة الدفع.");
+      toast.error(t("subscribePage.choosePaymentMethod"));
       return;
     }
     setBusy(true);
@@ -109,37 +114,37 @@ function SubscribePage() {
       });
       setStep("done");
     } catch (error) {
-      toast.error(friendlyErrorMessage(error, "لم نتمكن من تسجيل الدفع. حاول مرة أخرى."));
+      toast.error(friendlyErrorMessage(error, t("subscribePage.paymentSubmitError")));
     } finally {
       setBusy(false);
     }
   }
 
   function copyCode() {
-    navigator.clipboard.writeText(subscriptionCode).then(() => toast.success("اتنسخ الكود."));
+    navigator.clipboard.writeText(subscriptionCode).then(() => toast.success(t("subscribePage.codeCopied")));
   }
 
   if (!planId) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <p className="text-sm text-muted-foreground">مفيش باقة اشتراك محددة.</p>
+        <p className="text-sm text-muted-foreground">{t("subscribePage.noPlanSelected")}</p>
         <Button asChild className="mt-4">
-          <Link to="/explore" search={{ tab: "subscriptions" }}>شوف الاشتراكات المتاحة</Link>
+          <Link to="/explore" search={{ tab: "subscriptions" }}>{t("subscribePage.viewAvailableSubscriptions")}</Link>
         </Button>
       </div>
     );
   }
 
   if (planQuery.isLoading) {
-    return <div className="py-24 text-center text-sm text-muted-foreground">جاري التحميل...</div>;
+    return <div className="py-24 text-center text-sm text-muted-foreground">{t("subscribePage.loading")}</div>;
   }
 
   if (!plan) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <p className="text-sm text-muted-foreground">مش لاقيين الباقة دي.</p>
+        <p className="text-sm text-muted-foreground">{t("subscribePage.planNotFound")}</p>
         <Button asChild className="mt-4">
-          <Link to="/explore" search={{ tab: "subscriptions" }}>شوف الاشتراكات المتاحة</Link>
+          <Link to="/explore" search={{ tab: "subscriptions" }}>{t("subscribePage.viewAvailableSubscriptions")}</Link>
         </Button>
       </div>
     );
@@ -149,27 +154,27 @@ function SubscribePage() {
     <div className="bg-mist/30 py-10">
       <div className="mx-auto max-w-2xl px-4">
         <Card className="p-6 shadow-[var(--shadow-card)] sm:p-8">
-          <p className="text-xs font-bold text-muted-foreground">اشتراك</p>
+          <p className="text-xs font-bold text-muted-foreground">{t("subscribePage.subscriptionLabel")}</p>
           <h1 className="mt-1 font-display text-xl font-extrabold text-primary">{plan.name}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{plan.country} · خصم {plan.discountPercent}%</p>
+          <p className="mt-1 text-sm text-muted-foreground">{plan.country} · {t("subscribePage.discountLabel")} {plan.discountPercent}%</p>
 
           {step === "form" ? (
             <form onSubmit={onCreateSubscription} className="mt-6 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="sub-name">الاسم الكامل</Label>
+                <Label htmlFor="sub-name">{t("subscribePage.nameLabel")}</Label>
                 <Input id="sub-name" value={fullName} onChange={(e) => setFullName(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sub-phone">رقم الموبايل</Label>
+                <Label htmlFor="sub-phone">{t("subscribePage.phoneLabel")}</Label>
                 <Input id="sub-phone" value={phone} onChange={(e) => setPhone(e.target.value)} dir="ltr" />
               </div>
               <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-4 py-3">
-                <span className="text-sm font-bold text-muted-foreground">السعر</span>
+                <span className="text-sm font-bold text-muted-foreground">{t("subscribePage.priceLabel")}</span>
                 <span className="font-display text-xl font-extrabold text-accent">{formatUsd(plan.priceUsd)}</span>
               </div>
               <Button type="submit" disabled={busy} className="h-11 w-full font-bold">
                 {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-                متابعة للدفع
+                {t("subscribePage.continueToPayment")}
               </Button>
             </form>
           ) : null}
@@ -177,7 +182,7 @@ function SubscribePage() {
           {step === "payment" ? (
             <div className="mt-6">
               <div className="mb-4 rounded-lg border border-accent/30 bg-accent/10 px-4 py-3 text-sm">
-                كود الاشتراك بتاعك: <span className="font-mono font-bold">{subscriptionCode}</span> — احتفظ بيه لحد ما نأكد الدفع.
+                {t("subscribePage.subscriptionCodeNote")} <span className="font-mono font-bold">{subscriptionCode}</span> — {t("subscribePage.keepCodeNote")}
               </div>
               <PaymentMethodsForm
                 formId={FORM_ID}
@@ -200,7 +205,7 @@ function SubscribePage() {
                 className="mt-4 h-11 w-full font-bold"
               >
                 {busy ? <Loader2 className="size-4 animate-spin" /> : null}
-                أرسلت الدفع
+                {t("subscribePage.paidSubmit")}
               </Button>
             </div>
           ) : null}
@@ -208,9 +213,9 @@ function SubscribePage() {
           {step === "done" ? (
             <div className="mt-6 flex flex-col items-center text-center">
               <CheckCircle2 className="size-12 text-accent" aria-hidden />
-              <p className="mt-3 font-display text-lg font-extrabold text-primary">استلمنا بيانات الدفع</p>
+              <p className="mt-3 font-display text-lg font-extrabold text-primary">{t("subscribePage.paymentReceivedTitle")}</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                بنراجعها الآن، والاشتراك هيتفعّل بمجرد التأكيد.
+                {t("subscribePage.paymentReceivedBody")}
               </p>
               <div className="mt-5 flex items-center gap-2 rounded-lg border border-border bg-secondary/50 px-4 py-2.5">
                 <span className="font-mono text-sm font-bold text-primary">{subscriptionCode}</span>
@@ -219,10 +224,10 @@ function SubscribePage() {
                 </button>
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
-                احتفظ بالكود ده — تقدر تتابع حالة اشتراكك بيه من صفحة "حجزي" (تبويب اشتراك).
+                {t("subscribePage.keepCodeLong")}
               </p>
               <Button asChild className="mt-6">
-                <Link to="/my-bookings" search={{ ticket: "" }}>تتبع الاشتراك</Link>
+                <Link to="/my-bookings" search={{ ticket: "" }}>{t("subscribePage.trackSubscription")}</Link>
               </Button>
             </div>
           ) : null}
