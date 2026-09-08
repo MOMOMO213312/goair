@@ -3,13 +3,17 @@ import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 
+import heroAirportImage from "@/assets/hero-airport.jpg";
 import heroImage from "@/assets/hero-goair-van.png";
+import routeEgyptImage from "@/assets/route-egypt.jpg";
+import routeLebanonImage from "@/assets/route-lebanon.jpg";
 import { AnnouncementTicker } from "@/components/goair/announcement-ticker";
 import { BeforeYouLand } from "@/components/goair/before-you-land";
 import { BusinessPromoBanner } from "@/components/goair/business-promo-banner";
 import { CoverageCountriesSection } from "@/components/goair/coverage-countries-section";
 import { DealsTeaser } from "@/components/goair/deals-teaser";
 import { ExploreRoutesSection } from "@/components/goair/explore-routes-section";
+import { HeroBackgroundCarousel } from "@/components/goair/hero-background-carousel";
 import { HeroTrustStrip } from "@/components/goair/hero-trust-strip";
 import { HowItWorks } from "@/components/goair/how-it-works";
 import { SectionHeader } from "@/components/goair/section-header";
@@ -72,20 +76,20 @@ function Home() {
       <AnnouncementTicker />
 
       {/* Hero + Search */}
-      <section className="relative isolate overflow-hidden">
-        <img
-          src={heroImage}
-          alt="مدرج مطار وقت الغروب"
-          width={1920}
-          height={1088}
-          fetchPriority="high"
-          decoding="async"
-          className="absolute inset-0 -z-10 size-full object-cover"
+      <section className="relative isolate overflow-hidden lg:min-h-[640px]">
+        <HeroBackgroundCarousel
+          images={[heroImage, heroAirportImage, routeEgyptImage, routeLebanonImage]}
         />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ink/85 via-ink/25 to-transparent sm:from-ink/80 sm:via-ink/10" />
         <FlightPath className="pointer-events-none absolute inset-x-0 top-10 -z-10 h-24 w-full text-accent/40 sm:top-16 sm:h-32 [stroke-dasharray:1200] [stroke-dashoffset:1200] motion-safe:animate-[draw-route_1.8s_ease-out_forwards]" />
 
-        <div className="mx-auto max-w-6xl px-4 pb-16 pt-14 sm:pb-20 sm:pt-20">
+        {/* Anchor kept separate from either search UI below so the hash link
+            in TravelExperienceSection has one stable target regardless of
+            which search layout (floating desktop card vs. stacked mobile
+            block) is visible at the current breakpoint. */}
+        <div id="find-your-ride" className="absolute top-0 h-0 scroll-mt-24" />
+
+        <div className="mx-auto max-w-6xl px-4 pb-16 pt-14 sm:pb-20 sm:pt-20 lg:pb-24">
           <div className="max-w-2xl">
             <p className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1 text-xs font-bold text-primary-foreground">
               <Sparkles className="size-3.5 text-accent" />
@@ -117,16 +121,21 @@ function Home() {
             </div>
           </div>
         </div>
+
+        {/* Desktop: compact search card floats over the left side of the hero
+            photo (the side the headline text doesn't occupy in RTL), instead
+            of a full-width bar stretching across it. */}
+        <div className="pointer-events-none absolute inset-y-10 left-6 z-10 hidden w-[340px] items-center lg:flex xl:left-10 xl:w-[360px]">
+          <div className="pointer-events-auto w-full">
+            <SearchWidget trips={trips} countries={countries} compact />
+          </div>
+        </div>
       </section>
 
-      {/* Search dock — sits right under the hero photo instead of overlapping it,
-          so the van/branding at the bottom of the image stays fully visible.
-          Narrower and centered (not full hero width) so it reads as a focused
-          search box, not a wall that covers the photo. */}
-      <div className="relative z-10 mx-auto -mt-6 max-w-3xl px-4 sm:-mt-8">
-        <div id="find-your-ride" className="scroll-mt-24">
-          <SearchWidget trips={trips} countries={countries} />
-        </div>
+      {/* Mobile/tablet: search sits right under the hero photo as a full-width
+          block, since the floating compact card is desktop-only. */}
+      <div className="relative z-10 mx-auto -mt-6 max-w-3xl px-4 sm:-mt-8 lg:hidden">
+        <SearchWidget trips={trips} countries={countries} />
       </div>
 
       {/* Trust strip — directly under the hero, per Final Vision */}

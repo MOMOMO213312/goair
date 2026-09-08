@@ -47,6 +47,7 @@ export function SearchWidget({
   countries,
   initial,
   className,
+  compact = false,
 }: {
   trips: Trip[];
   countries: string[];
@@ -59,6 +60,11 @@ export function SearchWidget({
     direction?: Direction;
   };
   className?: string;
+  /** Tight vertical card for floating over the hero image — stacks every
+   * field in a single column regardless of viewport width, since Tailwind's
+   * sm:/lg: variants key off the viewport, not this component's own (much
+   * narrower) container. */
+  compact?: boolean;
 }) {
   const navigate = useNavigate();
   const [direction, setDirection] = useState<Direction>(initial?.direction ?? "from_airport");
@@ -187,13 +193,15 @@ export function SearchWidget({
     {/* Direction — the first decision, as two big visual cards instead of a
         cramped One-way/Round-trip tab bar (GoAir only ever sells a
         single-direction airport transfer, so this is the real fork). */}
-    <div className="mb-3 grid grid-cols-2 gap-3">
+    <div className={cn("mb-3 grid grid-cols-2 gap-2", compact && "gap-1.5")}>
       <button
         type="button"
         onClick={() => selectDirection("to_airport")}
         aria-pressed={isDeparting}
         className={cn(
-          "flex flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition-all sm:flex-row sm:gap-3 sm:p-5 sm:text-right",
+          "flex flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition-all",
+          !compact && "sm:flex-row sm:gap-3 sm:p-5 sm:text-right",
+          compact && "gap-1.5 p-3",
           isDeparting
             ? "border-accent bg-card shadow-[var(--shadow-float)]"
             : "border-white/30 bg-card/70 hover:border-accent/40",
@@ -202,18 +210,21 @@ export function SearchWidget({
         <span
           className={cn(
             "flex size-11 shrink-0 items-center justify-center rounded-xl",
+            compact && "size-9",
             isDeparting ? "bg-accent text-accent-foreground" : "bg-secondary text-primary",
           )}
         >
-          <PlaneTakeoff className="size-5" aria-hidden />
+          <PlaneTakeoff className={cn("size-5", compact && "size-4")} aria-hidden />
         </span>
         <span>
-          <span className="block font-display text-base font-extrabold text-primary sm:text-lg">
+          <span className={cn("block font-display text-base font-extrabold text-primary sm:text-lg", compact && "text-sm sm:text-sm")}>
             أنا مسافر
           </span>
-          <span className="mt-0.5 block text-xs text-muted-foreground sm:text-sm">
-            من موقعي إلى المطار
-          </span>
+          {!compact ? (
+            <span className="mt-0.5 block text-xs text-muted-foreground sm:text-sm">
+              من موقعي إلى المطار
+            </span>
+          ) : null}
         </span>
       </button>
 
@@ -222,7 +233,9 @@ export function SearchWidget({
         onClick={() => selectDirection("from_airport")}
         aria-pressed={!isDeparting}
         className={cn(
-          "flex flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition-all sm:flex-row sm:gap-3 sm:p-5 sm:text-right",
+          "flex flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition-all",
+          !compact && "sm:flex-row sm:gap-3 sm:p-5 sm:text-right",
+          compact && "gap-1.5 p-3",
           !isDeparting
             ? "border-accent bg-card shadow-[var(--shadow-float)]"
             : "border-white/30 bg-card/70 hover:border-accent/40",
@@ -231,18 +244,21 @@ export function SearchWidget({
         <span
           className={cn(
             "flex size-11 shrink-0 items-center justify-center rounded-xl",
+            compact && "size-9",
             !isDeparting ? "bg-accent text-accent-foreground" : "bg-secondary text-primary",
           )}
         >
-          <PlaneLanding className="size-5" aria-hidden />
+          <PlaneLanding className={cn("size-5", compact && "size-4")} aria-hidden />
         </span>
         <span>
-          <span className="block font-display text-base font-extrabold text-primary sm:text-lg">
+          <span className={cn("block font-display text-base font-extrabold text-primary sm:text-lg", compact && "text-sm sm:text-sm")}>
             أنا واصل
           </span>
-          <span className="mt-0.5 block text-xs text-muted-foreground sm:text-sm">
-            من المطار إلى وجهتي
-          </span>
+          {!compact ? (
+            <span className="mt-0.5 block text-xs text-muted-foreground sm:text-sm">
+              من المطار إلى وجهتي
+            </span>
+          ) : null}
         </span>
       </button>
     </div>
@@ -250,7 +266,8 @@ export function SearchWidget({
     <form
       onSubmit={onSubmit}
       className={cn(
-        "rounded-2xl border border-white/30 bg-card/85 p-4 shadow-[var(--shadow-float)] backdrop-blur-xl sm:p-5",
+        "rounded-2xl border border-white/30 bg-card/85 p-4 shadow-[var(--shadow-float)] backdrop-blur-xl",
+        !compact && "sm:p-5",
         className,
       )}
     >
@@ -259,7 +276,7 @@ export function SearchWidget({
         {isDeparting ? "تفاصيل رحلتك للمطار" : "تفاصيل رحلتك من المطار"}
       </p>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className={cn("grid gap-3", !compact && "sm:grid-cols-2 lg:grid-cols-3")}>
         <div className="space-y-2">
           <Label className="flex items-center gap-1.5">
             <Globe2 className="size-3.5 text-muted-foreground" />
