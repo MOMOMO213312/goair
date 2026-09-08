@@ -28,6 +28,7 @@ import {
 
 import { Card } from "@/components/ui/card";
 import { useStockPhoto } from "@/hooks/use-stock-photo";
+import { useTranslation } from "@/lib/i18n/language-context";
 import type { AddonService, AddonServiceCategory } from "@/lib/goair";
 import { formatUsd } from "@/lib/goair";
 import { cn } from "@/lib/utils";
@@ -75,13 +76,6 @@ const ADDON_PHOTOS: Partial<Record<string, string>> = {
     "https://images.pexels.com/photos/32176403/pexels-photo-32176403.jpeg?auto=compress&cs=tinysrgb&w=400",
 };
 
-const ADDON_CATEGORY_LABEL: Record<AddonServiceCategory, string> = {
-  before_trip: "قبل الرحلة",
-  luggage: "الأمتعة",
-  airport: "في المطار",
-  destination: "خدمات الوجهة",
-};
-
 const ADDON_CATEGORY_ORDER: AddonServiceCategory[] = ["before_trip", "luggage", "airport", "destination"];
 
 /**
@@ -100,6 +94,7 @@ function AddonButton({
   isSelected: boolean;
   onToggle: () => void;
 }) {
+  const { t } = useTranslation();
   const Icon = ADDON_ICONS[addon.iconName] ?? Sparkles;
   // Real photo priority: DB-cached / manually-set image_url → curated
   // hardcoded fallback for a couple of legacy items → live-resolved via
@@ -169,12 +164,12 @@ function AddonButton({
             {isSelected ? (
               <>
                 <Check className="size-3.5" aria-hidden />
-                متضاف
+                {t("booking.addonsStep.added")}
               </>
             ) : (
               <>
                 <Plus className="size-3.5" aria-hidden />
-                إضافة
+                {t("booking.addonsStep.add")}
               </>
             )}
           </span>
@@ -205,12 +200,20 @@ export function BookingAddonsStep({
   onToggleAddon,
   className,
 }: BookingAddonsStepProps) {
+  const { t } = useTranslation();
+  const ADDON_CATEGORY_LABEL: Record<AddonServiceCategory, string> = {
+    before_trip: t("booking.addonsStep.categories.before_trip"),
+    luggage: t("booking.addonsStep.categories.luggage"),
+    airport: t("booking.addonsStep.categories.airport"),
+    destination: t("booking.addonsStep.categories.destination"),
+  };
+
   if (!addonsLoading && addons.length === 0) return null;
 
   return (
     <Card className={cn("border-border/80 p-5 shadow-[var(--shadow-card)] sm:p-6", className)}>
-      <h2 className="font-display text-lg font-extrabold text-primary">سهّل رحلتك من المطار</h2>
-      <p className="mt-1 text-sm text-muted-foreground">اختياري — ضيف أي خدمة تحسّن تجربتك.</p>
+      <h2 className="font-display text-lg font-extrabold text-primary">{t("booking.addonsStep.title")}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{t("booking.addonsStep.subtitle")}</p>
 
       {addonsLoading ? (
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

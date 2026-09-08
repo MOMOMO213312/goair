@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTranslation } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/utils";
 
 type BookingPassengersStepProps = {
@@ -33,24 +34,25 @@ export function BookingPassengersStep({
   onContinue,
   className,
 }: BookingPassengersStepProps) {
+  const { t } = useTranslation();
   return (
     <Card className={cn("border-border/80 p-5 shadow-[var(--shadow-card)] sm:p-6", className)}>
-      <h2 className="font-display text-lg font-extrabold text-primary">بيانات المسافر والاستقبال</h2>
+      <h2 className="font-display text-lg font-extrabold text-primary">{t("booking.passengersStep.title")}</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        البيانات دي بتظهر على تذكرتك وبتوصل للسائق.
+        {t("booking.passengerForm.subtitle")}
       </p>
 
       <form onSubmit={onContinue} className="mt-6 space-y-6">
         <fieldset className="space-y-4">
           <legend className="font-display text-sm font-bold text-primary">
-            المسافر 1
-            <span className="ms-2 text-xs font-medium text-muted-foreground">جهة الاتصال</span>
+            {t("booking.passengerForm.passenger1")}
+            <span className="ms-2 text-xs font-medium text-muted-foreground">{t("booking.passengerForm.contact")}</span>
           </legend>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="name" className="font-medium">
-                الاسم بالكامل <span className="text-accent">*</span>
+                {t("booking.passengerForm.fullName")} <span className="text-accent">*</span>
               </Label>
               <div className="relative">
                 <User
@@ -70,7 +72,7 @@ export function BookingPassengersStep({
 
             <div className="space-y-2">
               <Label htmlFor="phone" className="font-medium">
-                رقم الموبايل / واتساب <span className="text-accent">*</span>
+                {t("booking.passengerForm.mobileWhatsapp")} <span className="text-accent">*</span>
               </Label>
               <div className="relative">
                 <Phone
@@ -99,9 +101,9 @@ export function BookingPassengersStep({
                 key={index + 2}
                 className="rounded-lg border border-dashed border-border bg-secondary/20 px-4 py-3"
               >
-                <p className="font-display text-sm font-bold text-primary">المسافر {index + 2}</p>
+                <p className="font-display text-sm font-bold text-primary">{t("booking.passengerForm.additionalPassenger", { number: index + 2 })}</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  مقعد إضافي ضمن نفس الحجز — لا يلزم بيانات منفصلة.
+                  {t("booking.passengerForm.additionalSeatNote")}
                 </p>
               </div>
             ))}
@@ -110,7 +112,7 @@ export function BookingPassengersStep({
 
         <fieldset className="space-y-2">
           <Label htmlFor="flight" className="font-medium">
-            رقم الرحلة <span className="text-xs text-muted-foreground">(اختياري)</span>
+            {t("booking.passengerForm.flightNumber")} <span className="text-xs text-muted-foreground">{t("booking.passengerForm.optional")}</span>
           </Label>
           <div className="relative">
             <Plane
@@ -127,13 +129,13 @@ export function BookingPassengersStep({
             />
           </div>
           <p className="text-xs text-muted-foreground">
-            يساعدنا ننسّق استقبالك من المطار مع موعد وصول رحلتك.
+            {t("booking.passengerForm.flightHint")}
           </p>
         </fieldset>
 
         <div className="flex items-start gap-2 rounded-lg bg-accent/10 p-3 text-xs text-muted-foreground">
           <Info className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
-          <span>لو دخّلت رقم رحلتك، السائق هيستناك مجانًا لحد ساعة بعد الهبوط الفعلي.</span>
+          <span>{t("booking.passengerForm.flightWaitNote")}</span>
         </div>
 
         <BookingTrustNote />
@@ -146,14 +148,14 @@ export function BookingPassengersStep({
             onClick={onBack}
             className="h-12 flex-1 font-bold sm:flex-none sm:px-8"
           >
-            رجوع
+            {t("booking.passengersStep.back")}
           </Button>
           <Button
             type="submit"
             size="lg"
             className="h-12 flex-1 bg-accent text-base font-bold text-accent-foreground hover:bg-accent/90"
           >
-            متابعة للمراجعة
+            {t("booking.passengersStep.continueReview")}
           </Button>
         </div>
       </form>

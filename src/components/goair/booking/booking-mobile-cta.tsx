@@ -2,6 +2,7 @@ import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { formatUsd } from "@/lib/goair";
+import { useTranslation } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/utils";
 
 type BookingMobileCtaProps = {
@@ -12,6 +13,7 @@ type BookingMobileCtaProps = {
 };
 
 export function BookingMobileCta({ formId, total, busy, className }: BookingMobileCtaProps) {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -21,7 +23,7 @@ export function BookingMobileCta({ formId, total, busy, className }: BookingMobi
     >
       <div className="mx-auto flex max-w-lg items-center gap-4">
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-muted-foreground">الإجمالي</p>
+          <p className="text-xs text-muted-foreground">{t("booking.mobileCta.total")}</p>
           <p className="font-display text-xl font-extrabold text-accent">{formatUsd(total)}</p>
         </div>
         <Button
@@ -34,10 +36,10 @@ export function BookingMobileCta({ formId, total, busy, className }: BookingMobi
           {busy ? (
             <>
               <Loader2 className="size-5 animate-spin" aria-hidden />
-              جاري التجهيز...
+              {t("booking.mobileCta.preparing")}
             </>
           ) : (
-            "متابعة الحجز"
+            t("booking.mobileCta.continueButton")
           )}
         </Button>
       </div>

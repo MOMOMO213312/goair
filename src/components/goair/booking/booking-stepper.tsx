@@ -1,16 +1,11 @@
 import { Check } from "lucide-react";
 
+import { useTranslation } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/utils";
 
-export const BOOKING_STEPS = [
-  { id: 1, label: "المركبة" },
-  { id: 2, label: "الإضافات" },
-  { id: 3, label: "المسافرين" },
-  { id: 4, label: "المراجعة" },
-  { id: 5, label: "الدفع" },
-] as const;
+export const BOOKING_STEP_IDS = [1, 2, 3, 4, 5] as const;
 
-export type BookingStepId = (typeof BOOKING_STEPS)[number]["id"];
+export type BookingStepId = (typeof BOOKING_STEP_IDS)[number];
 
 type BookingStepperProps = {
   current: BookingStepId;
@@ -25,9 +20,17 @@ type BookingStepperProps = {
  * transfer-booking sites, restyled with GoAir's own tokens.
  */
 export function BookingStepper({ current, className }: BookingStepperProps) {
+  const { t } = useTranslation();
+  const BOOKING_STEPS = [
+    { id: 1 as const, label: t("booking.stepper.vehicle") },
+    { id: 2 as const, label: t("booking.stepper.extras") },
+    { id: 3 as const, label: t("booking.stepper.passengers") },
+    { id: 4 as const, label: t("booking.stepper.review") },
+    { id: 5 as const, label: t("booking.stepper.payment") },
+  ];
   return (
     <nav
-      aria-label="خطوات الحجز"
+      aria-label={t("booking.stepper.ariaLabel")}
       className={cn(
         "overflow-x-auto rounded-xl border border-border/80 bg-card px-4 py-4 shadow-[var(--shadow-card)] sm:px-6",
         className,
