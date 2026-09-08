@@ -60,7 +60,7 @@ function ExplorePage() {
 
   return (
     <div>
-      <ExploreHero tab={activeTab} />
+      {activeTab === "packages" ? <ExploreHero tab={activeTab} /> : null}
       {activeTab === "packages" ? <PackagesBlock /> : null}
       {activeTab === "subscriptions" ? <SubscriptionsBlock /> : null}
     </div>
@@ -209,129 +209,210 @@ function PackageCard({ pkg }: { pkg: PackageTier }) {
 const SUB_COUNTRIES = ["مصر", "لبنان"];
 const DURATION_LABEL: Record<string, string> = { semi_annual: "6 شهور", annual: "سنوي" };
 
+/** Group plans by tier so each tier shows once with its duration as a switch, not 6 flat cards. */
+function groupPlansByTier(plans: SubscriptionPlan[]): { tier: string; byDuration: Record<string, SubscriptionPlan> }[] {
+  const order: string[] = [];
+  const map = new Map<string, Record<string, SubscriptionPlan>>();
+  for (const plan of plans) {
+    if (!map.has(plan.tier)) {
+      map.set(plan.tier, {});
+      order.push(plan.tier);
+    }
+    map.get(plan.tier)![plan.duration] = plan;
+  }
+  return order.map((tier) => ({ tier, byDuration: map.get(tier)! }));
+}
+
 function SubscriptionsBlock() {
   const [subCountry, setSubCountry] = useState<string>(SUB_COUNTRIES[0] ?? "مصر");
+  const [duration, setDuration] = useState<string>("annual");
   const { data: plans, isPending } = useQuery({
     queryKey: ["goair", "subscription-plans", subCountry],
     queryFn: () => fetchSubscriptionPlans(subCountry),
   });
 
+  const tiers = plans ? groupPlansByTier(plans) : [];
+  const availableDurations = plans ? Array.from(new Set(plans.map((p) => p.duration))) : [];
+
   return (
-    <section className="goair-section">
-      <div className="goair-container">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <SectionHeader title="الاشتراكات" description="عضوية بخصم دائم على كل رحلاتك." />
-          <Select value={subCountry} onValueChange={setSubCountry}>
-            <SelectTrigger className="h-10 w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SUB_COUNTRIES.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <>
+      {/* Membership hero — large premium visual, not a SaaS pricing header. */}
+      <section className="relative isolate overflow-hidden">
+        <div className="relative h-64 w-full overflow-hidden sm:h-80">
+          <img
+            src="https://images.pexels.com/photos/2026324/pexels-photo-2026324.jpeg?auto=compress&cs=tinysrgb&w=1920"
+            alt=""
+            loading="eager"
+            className="size-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/60 to-primary/20" />
         </div>
-
-        {isPending ? (
-          <p className="mt-10 text-center text-sm text-muted-foreground">جاري تحميل الاشتراكات...</p>
-        ) : !plans || plans.length === 0 ? (
-          <p className="mt-10 text-center text-sm text-muted-foreground">مفيش اشتراكات متاحة في الدولة دي دلوقتي.</p>
-        ) : (
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {plans.map((plan) => (
-              <SubscriptionPlanCard key={plan.id} plan={plan} />
-            ))}
+        <div className="goair-container -mt-20 relative pb-4 sm:-mt-24">
+          <div className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-primary/80 px-3 py-1 text-xs font-bold text-primary-foreground backdrop-blur">
+            <Crown className="size-3.5 text-accent" aria-hidden />
+            عضوية GoAir
           </div>
-        )}
-
-        <div className="mt-10 flex items-center justify-center gap-2 rounded-xl border border-border bg-mist/60 px-4 py-3 text-center text-sm text-muted-foreground">
-          <Award className="size-4 shrink-0" />
-          الاشتراك عضوية منفصلة عن الحجز — بعد الاشتراك هتاخد كود تتبع من صفحة "حجزي" (تبويب اشتراك).
+          <h2 className="mt-3 max-w-lg font-display text-2xl font-extrabold text-primary-foreground sm:text-3xl">
+            رحلاتك، بخصم دائم وأولوية دايمة
+          </h2>
+          <p className="mt-2 max-w-lg text-sm leading-relaxed text-primary-foreground/85">
+            اشترك مرة واستفاد كل رحلة — خصم ثابت، حقائب إضافية، ومقعد مضمون وقت الزحمة.
+          </p>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <section className="goair-section pt-6 sm:pt-8">
+        <div className="goair-container">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <SectionHeader title="اختار خطتك" description="نفس المزايا، بمدة اشتراك حسب اللي يناسبك." />
+            <div className="flex flex-wrap items-center gap-2">
+              {availableDurations.length > 1 ? (
+                <div className="flex rounded-full border border-border bg-mist/60 p-1">
+                  {availableDurations
+                    .sort((a) => (a === "annual" ? -1 : 1))
+                    .map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setDuration(d)}
+                        className={cn(
+                          "rounded-full px-4 py-1.5 text-xs font-bold transition-colors",
+                          duration === d ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground",
+                        )}
+                      >
+                        {DURATION_LABEL[d] ?? d}
+                      </button>
+                    ))}
+                </div>
+              ) : null}
+              <Select value={subCountry} onValueChange={setSubCountry}>
+                <SelectTrigger className="h-10 w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUB_COUNTRIES.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {isPending ? (
+            <p className="mt-10 text-center text-sm text-muted-foreground">جاري تحميل الاشتراكات...</p>
+          ) : tiers.length === 0 ? (
+            <p className="mt-10 text-center text-sm text-muted-foreground">مفيش اشتراكات متاحة في الدولة دي دلوقتي.</p>
+          ) : (
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {tiers.map(({ tier, byDuration }) => {
+                const plan = byDuration[duration] ?? Object.values(byDuration)[0];
+                if (!plan) return null;
+                return <SubscriptionPlanCard key={tier} plan={plan} />;
+              })}
+            </div>
+          )}
+
+          <div className="mt-10 flex items-center justify-center gap-2 rounded-xl border border-border bg-mist/60 px-4 py-3 text-center text-sm text-muted-foreground">
+            <Award className="size-4 shrink-0" />
+            الاشتراك عضوية منفصلة عن الحجز — بعد الاشتراك هتاخد كود تتبع من صفحة "حجزي" (تبويب اشتراك).
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
 
 function SubscriptionPlanCard({ plan }: { plan: SubscriptionPlan }) {
   const Icon = ICONS[plan.iconName] ?? Sparkles;
+  const photo = useStockPhoto("subscription_plans", plan.id, plan.imageUrl);
+
   return (
     <div
       className={cn(
-        "flex flex-col rounded-2xl border p-6 shadow-sm",
+        "flex flex-col overflow-hidden rounded-2xl border shadow-sm",
         plan.isHighlighted
           ? "border-accent bg-primary text-primary-foreground shadow-lg ring-2 ring-accent"
           : "border-border bg-card text-card-foreground",
       )}
     >
-      {plan.isHighlighted ? (
-        <span className="mb-3 inline-flex w-fit items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-foreground">
-          الأكثر توفيرًا
+      <div className="relative aspect-[16/10] w-full overflow-hidden">
+        {photo ? (
+          <img src={photo} alt="" loading="lazy" className="size-full object-cover" />
+        ) : (
+          <div className={cn("size-full", plan.isHighlighted ? "bg-primary-foreground/10" : "bg-secondary")} />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
+
+        {plan.isHighlighted ? (
+          <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-foreground">
+            الأكثر توفيرًا
+          </span>
+        ) : null}
+
+        <span className="absolute left-3 top-3 flex size-9 items-center justify-center rounded-lg bg-white/15 backdrop-blur">
+          <Icon className="size-4.5 text-white" />
         </span>
-      ) : null}
 
-      <span className={cn("flex size-11 items-center justify-center rounded-xl", plan.isHighlighted ? "bg-primary-foreground/15" : "bg-secondary")}>
-        <Icon className={cn("size-5", plan.isHighlighted ? "text-accent" : "text-primary")} />
-      </span>
+        <div className="absolute inset-x-0 bottom-0 p-4">
+          <h3 className="font-display text-lg font-extrabold text-white">{plan.name}</h3>
+          {plan.tagline ? <p className="mt-0.5 text-xs text-white/80">{plan.tagline}</p> : null}
+        </div>
+      </div>
 
-      <h3 className="mt-4 font-display text-lg font-extrabold">{plan.name}</h3>
-      {plan.tagline ? (
-        <p className={cn("mt-1 text-sm", plan.isHighlighted ? "text-primary-foreground/80" : "text-muted-foreground")}>{plan.tagline}</p>
-      ) : null}
+      <div className="flex flex-1 flex-col p-6">
+        <p className="flex items-baseline gap-1">
+          <span className="font-display text-3xl font-extrabold">${plan.priceUsd}</span>
+          <span className={cn("text-sm", plan.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>
+            / {DURATION_LABEL[plan.duration] ?? plan.duration}
+          </span>
+        </p>
 
-      <p className="mt-5 flex items-baseline gap-1">
-        <span className="font-display text-3xl font-extrabold">${plan.priceUsd}</span>
-        <span className={cn("text-sm", plan.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>
-          / {DURATION_LABEL[plan.duration] ?? plan.duration}
-        </span>
-      </p>
-
-      <ul className="mt-6 flex-1 space-y-3 text-sm">
-        <li className="flex items-start gap-2">
-          <Check className={cn("mt-0.5 size-4 shrink-0", plan.isHighlighted ? "text-accent" : "text-primary")} />
-          <span>خصم {plan.discountPercent}% على كل رحلاتك</span>
-        </li>
-        {plan.freeRideCredits > 0 ? (
+        <ul className="mt-5 flex-1 space-y-3 text-sm">
           <li className="flex items-start gap-2">
             <Check className={cn("mt-0.5 size-4 shrink-0", plan.isHighlighted ? "text-accent" : "text-primary")} />
-            <span>{plan.freeRideCredits} رحلة مجانية</span>
+            <span>خصم {plan.discountPercent}% على كل رحلاتك</span>
           </li>
-        ) : null}
-        <li className="flex items-start gap-2">
-          <Check className={cn("mt-0.5 size-4 shrink-0", plan.isHighlighted ? "text-accent" : "text-primary")} />
-          <span>{plan.extraLuggagePieces} حقيبة إضافية لكل رحلة</span>
-        </li>
-        {plan.guaranteedSeat ? (
+          {plan.freeRideCredits > 0 ? (
+            <li className="flex items-start gap-2">
+              <Check className={cn("mt-0.5 size-4 shrink-0", plan.isHighlighted ? "text-accent" : "text-primary")} />
+              <span>{plan.freeRideCredits} رحلة مجانية</span>
+            </li>
+          ) : null}
           <li className="flex items-start gap-2">
             <Check className={cn("mt-0.5 size-4 shrink-0", plan.isHighlighted ? "text-accent" : "text-primary")} />
-            <span>مقعد مضمون حتى في أوقات الزحمة</span>
+            <span>{plan.extraLuggagePieces} حقيبة إضافية لكل رحلة</span>
           </li>
-        ) : null}
-        {plan.prioritySupport ? (
-          <li className="flex items-start gap-2">
-            <Check className={cn("mt-0.5 size-4 shrink-0", plan.isHighlighted ? "text-accent" : "text-primary")} />
-            <span>دعم عملاء بأولوية</span>
-          </li>
-        ) : null}
-        {plan.features.map((feature) => (
-          <li key={feature} className="flex items-start gap-2">
-            <Check className={cn("mt-0.5 size-4 shrink-0", plan.isHighlighted ? "text-accent" : "text-primary")} />
-            <span className={plan.isHighlighted ? "text-primary-foreground/90" : "text-foreground/90"}>{feature}</span>
-          </li>
-        ))}
-      </ul>
+          {plan.guaranteedSeat ? (
+            <li className="flex items-start gap-2">
+              <Check className={cn("mt-0.5 size-4 shrink-0", plan.isHighlighted ? "text-accent" : "text-primary")} />
+              <span>مقعد مضمون حتى في أوقات الزحمة</span>
+            </li>
+          ) : null}
+          {plan.prioritySupport ? (
+            <li className="flex items-start gap-2">
+              <Check className={cn("mt-0.5 size-4 shrink-0", plan.isHighlighted ? "text-accent" : "text-primary")} />
+              <span>دعم عملاء بأولوية</span>
+            </li>
+          ) : null}
+          {plan.features.map((feature) => (
+            <li key={feature} className="flex items-start gap-2">
+              <Check className={cn("mt-0.5 size-4 shrink-0", plan.isHighlighted ? "text-accent" : "text-primary")} />
+              <span className={plan.isHighlighted ? "text-primary-foreground/90" : "text-foreground/90"}>{feature}</span>
+            </li>
+          ))}
+        </ul>
 
-      <Button
-        asChild
-        className={cn("mt-6 w-full font-bold", plan.isHighlighted ? "bg-accent text-accent-foreground hover:bg-accent/90" : "bg-primary text-primary-foreground hover:bg-primary/90")}
-      >
-        <Link to="/subscribe" search={{ planId: plan.id }}>
-          اشترك الآن
-        </Link>
-      </Button>
+        <Button
+          asChild
+          className={cn("mt-6 w-full font-bold", plan.isHighlighted ? "bg-accent text-accent-foreground hover:bg-accent/90" : "bg-primary text-primary-foreground hover:bg-primary/90")}
+        >
+          <Link to="/subscribe" search={{ planId: plan.id }}>
+            اشترك الآن
+          </Link>
+        </Button>
+      </div>
     </div>
   );
 }
