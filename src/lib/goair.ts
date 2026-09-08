@@ -61,6 +61,8 @@ export type PackageTier = {
   iconName: string;
   features: string[];
   isHighlighted: boolean;
+  /** Cached real stock photo (resolved server-side) — null until resolved. */
+  imageUrl: string | null;
 };
 
 export type AddonServiceCategory = "before_trip" | "luggage" | "airport" | "destination";
@@ -73,6 +75,8 @@ export type AddonService = {
   priceUsd: number;
   iconName: string;
   isHighlighted: boolean;
+  /** Cached real stock photo (resolved server-side) — null until resolved. */
+  imageUrl: string | null;
 };
 
 export async function fetchAddonServices(): Promise<AddonService[]> {
@@ -90,6 +94,7 @@ export async function fetchAddonServices(): Promise<AddonService[]> {
     priceUsd: Number(pick(row, ["price_usd"]) ?? 0),
     iconName: String(pick(row, ["icon_name"]) ?? "Sparkles"),
     isHighlighted: pick<boolean>(row, ["is_highlighted"]) === true,
+    imageUrl: pick<string>(row, ["image_url"]),
   }));
 }
 
@@ -108,6 +113,7 @@ export async function fetchActivePackages(): Promise<PackageTier[]> {
     iconName: String(pick(row, ["icon_name"]) ?? "Sparkles"),
     features: (pick<string[]>(row, ["features"]) ?? []) as string[],
     isHighlighted: pick<boolean>(row, ["is_highlighted"]) === true,
+    imageUrl: pick<string>(row, ["image_url"]),
   }));
 }
 
