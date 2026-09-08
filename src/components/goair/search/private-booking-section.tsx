@@ -1,22 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Briefcase, Bus, Car, Caravan, Lock, Sparkle, Users } from "lucide-react";
+import { Briefcase, Lock, Sparkle, Users } from "lucide-react";
 
-import { Card } from "@/components/ui/card";
 import type { Trip } from "@/lib/goair";
 import { fetchPrivateTripOptions, formatUsd } from "@/lib/goair";
+import { getVehicleImageByCode } from "@/lib/trip-media";
 import { cn } from "@/lib/utils";
 
 const VEHICLE_BLURB: Record<string, string> = {
   car: "لغاية 4 ركاب — أسرع وأخصوصية لعيلة أو مجموعة صغيرة.",
   van: "لغاية 8 ركاب — العربية كلها لمجموعتك من غير مشاركة حد.",
   hiace: "لغاية 14 راكب — أنسب لمجموعات السياحة والشركات.",
-};
-
-const VEHICLE_ICON: Record<string, typeof Car> = {
-  car: Car,
-  van: Caravan,
-  hiace: Bus,
 };
 
 type PrivateBookingSectionProps = {
@@ -66,88 +60,94 @@ export function PrivateBookingSection({ trip, destination, date, seats, classNam
         </div>
       </div>
 
-      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+      <div className="mt-4 grid gap-5 sm:grid-cols-3">
         {options.map((option) => {
-          const VehicleIcon = VEHICLE_ICON[option.vehicleCode] ?? Users;
           const isRecommended = option.tripOptionId === recommendedId;
           const dotCount = Math.min(option.capacity, 6);
+          const vehicleImage = getVehicleImageByCode(option.vehicleCode);
 
           return (
-            <Card
+            <div
               key={option.tripOptionId}
               className={cn(
-                "flex flex-col p-5 shadow-[var(--shadow-card)] transition-shadow",
+                "flex flex-col overflow-hidden rounded-2xl border bg-card shadow-[var(--shadow-card)] transition-shadow",
                 isRecommended
                   ? "border-2 border-accent shadow-[var(--shadow-float)]"
                   : "border-border/80",
               )}
             >
-              <div className="flex items-start justify-between">
-                <span className="flex size-11 items-center justify-center rounded-lg bg-accent/15 text-accent">
-                  <VehicleIcon className="size-5.5" aria-hidden />
-                </span>
+              <div className="relative aspect-[4/3] w-full overflow-hidden">
+                <img
+                  src={vehicleImage}
+                  alt=""
+                  loading="lazy"
+                  className="size-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent" />
                 {isRecommended ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-accent-foreground">
+                  <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-accent-foreground">
                     <Sparkle className="size-3" aria-hidden />
                     الأنسب لمجموعتك
                   </span>
                 ) : null}
+                <h3 className="absolute inset-x-0 bottom-0 p-4 font-display text-base font-extrabold text-white">
+                  {option.vehicleLabelAr}
+                </h3>
               </div>
 
-              <h3 className="mt-4 font-display text-base font-extrabold text-primary">
-                {option.vehicleLabelAr}
-              </h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                {VEHICLE_BLURB[option.vehicleCode] ?? `لغاية ${option.capacity} راكب.`}
-              </p>
+              <div className="flex flex-1 flex-col p-5">
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {VEHICLE_BLURB[option.vehicleCode] ?? `لغاية ${option.capacity} راكب.`}
+                </p>
 
-              <div className="mt-3 flex items-center gap-2">
-                <div className="flex items-center -space-x-1 space-x-reverse">
-                  {Array.from({ length: dotCount }).map((_, i) => (
-                    <Users key={i} className="size-3.5 text-accent" aria-hidden />
-                  ))}
-                  {option.capacity > dotCount ? (
-                    <span className="ms-1 text-xs font-bold text-accent">+{option.capacity - dotCount}</span>
+                <div className="mt-3 flex items-center gap-2">
+                  <div className="flex items-center -space-x-1 space-x-reverse">
+                    {Array.from({ length: dotCount }).map((_, i) => (
+                      <Users key={i} className="size-3.5 text-accent" aria-hidden />
+                    ))}
+                    {option.capacity > dotCount ? (
+                      <span className="ms-1 text-xs font-bold text-accent">+{option.capacity - dotCount}</span>
+                    ) : null}
+                  </div>
+                  {option.maxLuggage != null ? (
+                    <span className="flex items-center gap-1 text-xs font-bold text-muted-foreground">
+                      <Briefcase className="size-3.5 text-muted-foreground/70" aria-hidden />
+                      حتى {option.maxLuggage} حقيبة
+                    </span>
                   ) : null}
                 </div>
-                {option.maxLuggage != null ? (
-                  <span className="flex items-center gap-1 text-xs font-bold text-muted-foreground">
-                    <Briefcase className="size-3.5 text-muted-foreground/70" aria-hidden />
-                    حتى {option.maxLuggage} حقيبة
+
+                <div className="mt-4 flex items-baseline justify-between border-t border-border pt-4">
+                  <span className="text-xs font-bold text-muted-foreground">السعر الكامل للعربية</span>
+                  <span className="font-display text-xl font-extrabold text-accent">
+                    {formatUsd(option.priceUsd)}
                   </span>
-                ) : null}
-              </div>
+                </div>
 
-              <div className="mt-4 flex items-baseline justify-between border-t border-border pt-4">
-                <span className="text-xs font-bold text-muted-foreground">السعر الكامل للعربية</span>
-                <span className="font-display text-xl font-extrabold text-accent">
-                  {formatUsd(option.priceUsd)}
-                </span>
+                <Link
+                  to="/book"
+                  search={{
+                    tripId: trip.id,
+                    scheduleId: "",
+                    tripOptionId: option.tripOptionId,
+                    date,
+                    seats: Math.min(seats, option.capacity),
+                    time: "",
+                    price: option.priceUsd,
+                    bookingType: "private",
+                    vehicleTypeId: option.vehicleTypeId,
+                  }}
+                  className={cn(
+                    "mt-5 inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-bold transition-colors",
+                    isRecommended
+                      ? "bg-accent text-accent-foreground hover:bg-accent/90"
+                      : "bg-primary text-primary-foreground hover:bg-primary/90",
+                  )}
+                >
+                  احجز خاص لـ {destination}
+                </Link>
               </div>
-
-              <Link
-                to="/book"
-                search={{
-                  tripId: trip.id,
-                  scheduleId: "",
-                  tripOptionId: option.tripOptionId,
-                  date,
-                  seats: Math.min(seats, option.capacity),
-                  time: "",
-                  price: option.priceUsd,
-                  bookingType: "private",
-                  vehicleTypeId: option.vehicleTypeId,
-                }}
-                className={cn(
-                  "mt-5 inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-bold transition-colors",
-                  isRecommended
-                    ? "bg-accent text-accent-foreground hover:bg-accent/90"
-                    : "bg-primary text-primary-foreground hover:bg-primary/90",
-                )}
-              >
-                احجز خاص لـ {destination}
-              </Link>
-            </Card>
+            </div>
           );
         })}
       </div>
