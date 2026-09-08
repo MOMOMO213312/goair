@@ -192,7 +192,6 @@ export type CreatePrivateBookingInput = {
   flightNumber: string | null;
   luggageCount: number;
   referralCodeOverride?: string | null;
-  packageId?: string | null;
   /** Selected individual add-on services (from `addon_services`) — flat amounts, saved to `booking_addon_services`. */
   addonIds?: string[];
 };
@@ -213,7 +212,6 @@ export async function createPrivateBookingSafe(input: CreatePrivateBookingInput)
     p_luggage_count: input.luggageCount,
     p_flight_number: input.flightNumber,
     ...(pendingReferralCode ? { p_referral_code: pendingReferralCode } : {}),
-    ...(input.packageId ? { p_package_id: input.packageId } : {}),
     ...(input.addonIds && input.addonIds.length > 0 ? { p_addon_ids: input.addonIds } : {}),
   });
 
@@ -423,8 +421,6 @@ export type CreateBookingInput = {
    * omitted, same as before.
    */
   referralCodeOverride?: string | null;
-  /** Selected add-on package (from /explore) — adds its price per seat. */
-  packageId?: string | null;
   /** Selected individual add-on services (from `addon_services`) — flat amounts, saved to `booking_addon_services`. */
   addonIds?: string[];
 };
@@ -467,7 +463,6 @@ export async function createBookingSafe(input: CreateBookingInput) {
     p_flight_number: input.flightNumber,
     p_luggage_count: input.luggageCount,
     ...(pendingReferralCode ? { p_referral_code: pendingReferralCode } : {}),
-    ...(input.packageId ? { p_package_id: input.packageId } : {}),
     ...(input.addonIds && input.addonIds.length > 0 ? { p_addon_ids: input.addonIds } : {}),
   };
 

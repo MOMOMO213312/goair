@@ -2,34 +2,15 @@ import type { LucideIcon } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  Accessibility,
-  Armchair,
   Award,
-  Baby,
-  CalendarClock,
-  Car,
   Check,
   Clock,
   Compass,
   Crown,
-  Dumbbell,
   Gem,
-  Gift,
-  Hotel,
-  KeyRound,
   Luggage,
-  MapPinned,
-  PackageOpen,
-  ParkingCircle,
-  ShieldCheck,
-  ShoppingBag,
-  Smartphone,
   Sparkles,
   UserRound,
-  Users,
-  Weight,
-  Wifi,
-  Zap,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -46,10 +27,7 @@ import {
 import { EXPLORE_TAB_VALUES, type ExploreTab } from "@/lib/explore-tabs";
 import {
   fetchActivePackages,
-  fetchAddonServices,
   fetchSubscriptionPlans,
-  type AddonService,
-  type AddonServiceCategory,
   type PackageTier,
   type SubscriptionPlan,
 } from "@/lib/goair";
@@ -77,12 +55,11 @@ export const Route = createFileRoute("/explore")({
 
 function ExplorePage() {
   const { tab } = Route.useSearch();
-  const activeTab: ExploreTab = tab ?? "addons";
+  const activeTab: ExploreTab = tab ?? "packages";
 
   return (
     <div>
       <ExploreHero tab={activeTab} />
-      {activeTab === "addons" ? <AddonServicesBlock /> : null}
       {activeTab === "packages" ? <PackagesBlock /> : null}
       {activeTab === "subscriptions" ? <SubscriptionsBlock /> : null}
     </div>
@@ -90,11 +67,6 @@ function ExplorePage() {
 }
 
 const TAB_HERO_COPY: Record<ExploreTab, { eyebrow: string; title: string; description: string }> = {
-  addons: {
-    eyebrow: "كل خدمة وكل عرض، في مكان واحد",
-    title: "الخدمات الإضافية",
-    description: "لمسات راحة تقدر تضيفها فوق رحلتك — من قبل ما تسافر لحد ما توصل الوجهة.",
-  },
   packages: {
     eyebrow: "كل خدمة وكل عرض، في مكان واحد",
     title: "باقات الرحلة",
@@ -125,126 +97,6 @@ function ExploreHero({ tab }: { tab: ExploreTab }) {
         </p>
       </div>
     </section>
-  );
-}
-
-/* ------------------------------ الخدمات الإضافية ------------------------------ */
-
-const ADDON_ICONS: Record<string, LucideIcon> = {
-  Zap,
-  ShieldCheck,
-  CalendarClock,
-  Luggage,
-  Baby,
-  Dumbbell,
-  UserRound,
-  Armchair,
-  PackageOpen,
-  Wifi,
-  Smartphone,
-  Sparkles,
-  Car,
-  ParkingCircle,
-  KeyRound,
-  Users,
-  Accessibility,
-  ShoppingBag,
-  Hotel,
-  MapPinned,
-  Weight,
-  Gift,
-};
-
-const ADDON_CATEGORY_LABEL: Record<AddonServiceCategory, string> = {
-  before_trip: "قبل الرحلة",
-  luggage: "الأمتعة",
-  airport: "في المطار",
-  destination: "خدمات الوجهة",
-};
-
-const ADDON_CATEGORY_ORDER: AddonServiceCategory[] = ["before_trip", "luggage", "airport", "destination"];
-
-function AddonServicesBlock() {
-  const { data: addons, isPending } = useQuery({ queryKey: ["goair", "addon-services"], queryFn: fetchAddonServices });
-
-  return (
-    <section className="goair-section">
-      <div className="goair-container">
-        <SectionHeader
-          title="خدمات إضافية لرحلتك"
-          description="لمسات راحة تقدر تضيفها فوق رحلتك — من قبل ما تسافر لحد ما توصل الوجهة."
-        />
-
-        {isPending ? (
-          <p className="mt-10 text-center text-sm text-muted-foreground">جاري تحميل الخدمات...</p>
-        ) : !addons || addons.length === 0 ? (
-          <p className="mt-10 text-center text-sm text-muted-foreground">مفيش خدمات إضافية متاحة دلوقتي.</p>
-        ) : (
-          <div className="mt-10 space-y-12">
-            {ADDON_CATEGORY_ORDER.map((category) => {
-              const items = addons.filter((a) => a.category === category);
-              if (items.length === 0) return null;
-              return (
-                <div key={category}>
-                  <h3 className="font-display text-base font-extrabold text-accent">
-                    {ADDON_CATEGORY_LABEL[category]}
-                  </h3>
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {items.map((addon) => (
-                      <AddonCard key={addon.id} addon={addon} />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        <div className="mt-12 flex items-center justify-center gap-2 rounded-xl border border-border bg-mist/60 px-4 py-3 text-center text-sm text-muted-foreground">
-          <Sparkles className="size-4 shrink-0 text-accent" />
-          هتقدر تضيف أي خدمة من دول وأنت بتأكد حجزك — قريبًا في خطوة الحجز.
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function AddonCard({ addon }: { addon: AddonService }) {
-  const Icon = ADDON_ICONS[addon.iconName] ?? Sparkles;
-  return (
-    <div
-      className={cn(
-        "group relative flex items-start gap-4 overflow-hidden rounded-2xl border p-5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]",
-        addon.isHighlighted ? "border-accent bg-primary text-primary-foreground shadow-lg" : "border-border bg-card text-card-foreground",
-      )}
-    >
-      {addon.isHighlighted ? (
-        <span className="absolute -left-9 top-3 w-28 -rotate-45 bg-accent py-0.5 text-center text-[10px] font-bold text-accent-foreground">
-          الأكثر طلبًا
-        </span>
-      ) : null}
-
-      <span
-        className={cn(
-          "flex size-12 shrink-0 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110",
-          addon.isHighlighted ? "bg-primary-foreground/15 text-accent" : "bg-accent/15 text-accent",
-        )}
-      >
-        <Icon className="size-6" aria-hidden />
-      </span>
-
-      <div className="min-w-0">
-        <h4 className="font-display text-sm font-extrabold">{addon.name}</h4>
-        {addon.description ? (
-          <p className={cn("mt-1 text-xs leading-relaxed", addon.isHighlighted ? "text-primary-foreground/80" : "text-muted-foreground")}>
-            {addon.description}
-          </p>
-        ) : null}
-        <p className="mt-2 font-display text-base font-extrabold">
-          +${addon.priceUsd}
-        </p>
-      </div>
-    </div>
   );
 }
 
@@ -321,18 +173,18 @@ function PackageCard({ pkg }: { pkg: PackageTier }) {
         ))}
       </ul>
 
-      {/* Carries the chosen package all the way through search → book,
-          where its price is added to the real total via create_booking_safe. */}
+      {/* Booking flow no longer carries package selection end-to-end, so
+          route interested customers to contact instead of a dead param. */}
       <Button
         asChild
         className={cn("mt-6 w-full font-bold", pkg.isHighlighted ? "bg-accent text-accent-foreground hover:bg-accent/90" : "bg-primary text-primary-foreground hover:bg-primary/90")}
       >
-        <Link to="/" search={{ packageId: pkg.id }} hash="find-your-ride">
-          اختار الباقة دي وابحث عن رحلتك
+        <Link to="/contact" search={{ package: pkg.name }}>
+          اطلب الباقة دي
         </Link>
       </Button>
       <p className={cn("mt-2 text-center text-xs", pkg.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>
-        الخطوة الجاية: اختار رحلتك، والباقة هتتضاف تلقائيًا
+        هيتواصل معاك فريقنا لتفاصيل الرحلة وتأكيد الحجز
       </p>
     </div>
   );

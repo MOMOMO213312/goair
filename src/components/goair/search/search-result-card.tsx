@@ -20,7 +20,6 @@ type SearchResultCardProps = {
   options: ScheduleOption[];
   seats: number;
   travelDate: string;
-  packageId?: string;
   className?: string;
   /** Group-size tier per departure — used only for capacity/luggage info, never shown as a vehicle name. */
   vehicleTypesById?: Map<string, VehicleType>;
@@ -62,7 +61,6 @@ export function SearchResultCard({
   options,
   seats,
   travelDate,
-  packageId,
   className,
   vehicleTypesById,
   cheapestPrice = null,
@@ -197,7 +195,6 @@ export function SearchResultCard({
                 option={option}
                 seats={seats}
                 travelDate={travelDate}
-                packageId={packageId}
                 flight={flight}
                 isBestPrice={options.length > 1 && cheapestPrice !== null && option.pricePerSeat === cheapestPrice}
                 isFastest={
@@ -220,7 +217,6 @@ function ScheduleRow({
   option,
   seats,
   travelDate,
-  packageId,
   flight,
   isBestPrice,
   isFastest,
@@ -229,7 +225,6 @@ function ScheduleRow({
   option: ScheduleOption;
   seats: number;
   travelDate: string;
-  packageId?: string;
   flight?: string;
   isBestPrice: boolean;
   isFastest: boolean;
@@ -283,7 +278,6 @@ function ScheduleRow({
           seats={seats}
           travelDate={travelDate}
           disabled={notEnough}
-          packageId={packageId}
           flight={flight}
         />
       </div>
@@ -319,7 +313,6 @@ function BookButton({
   seats,
   travelDate,
   disabled,
-  packageId,
   flight,
   className,
 }: {
@@ -328,7 +321,6 @@ function BookButton({
   seats: number;
   travelDate: string;
   disabled: boolean;
-  packageId?: string;
   flight?: string;
   className?: string;
 }) {
@@ -359,7 +351,6 @@ function BookButton({
           time: option.departureTime,
           price: option.pricePerSeat,
           bookingType: "shared",
-          ...(packageId ? { packageId } : {}),
           ...(flight ? { flight } : {}),
         }}
       >

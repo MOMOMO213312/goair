@@ -16,7 +16,6 @@ const links = [
 ] as const;
 
 const EXPLORE_LINKS = [
-  { tab: "addons", label: "الخدمات الإضافية" },
   { tab: "packages", label: "الباقات" },
   { tab: "subscriptions", label: "الاشتراكات" },
 ] as const;

@@ -1,18 +1,12 @@
-import { Check, Luggage, Sparkles } from "lucide-react";
+import { Luggage } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { PackageTier } from "@/lib/goair";
-import { formatUsd } from "@/lib/goair";
 import { cn } from "@/lib/utils";
 
 type BookingExtrasStepProps = {
-  packages: PackageTier[];
-  packagesLoading: boolean;
-  selectedPackageId: string | null;
-  onSelectPackage: (id: string | null) => void;
   luggage: number;
   onLuggageChange: (value: number) => void;
   notes: string;
@@ -22,10 +16,6 @@ type BookingExtrasStepProps = {
 };
 
 export function BookingExtrasStep({
-  packages,
-  packagesLoading,
-  selectedPackageId,
-  onSelectPackage,
   luggage,
   onLuggageChange,
   notes,
@@ -39,87 +29,6 @@ export function BookingExtrasStep({
       <p className="mt-1 text-sm text-muted-foreground">
         اختياري — تقدر تكمل من غير أي إضافة.
       </p>
-
-      {/* Package add-ons */}
-      <div className="mt-6 space-y-3">
-        <button
-          type="button"
-          onClick={() => onSelectPackage(null)}
-          className={cn(
-            "flex w-full items-center justify-between gap-3 rounded-xl border p-4 text-start transition-colors",
-            selectedPackageId === null
-              ? "border-accent bg-accent/5"
-              : "border-border/80 hover:border-accent/40",
-          )}
-        >
-          <div>
-            <p className="font-display text-sm font-bold text-primary">من غير إضافات</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">النقل بس، بالسعر الأساسي</p>
-          </div>
-          {selectedPackageId === null ? (
-            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
-              <Check className="size-3.5" aria-hidden />
-            </span>
-          ) : null}
-        </button>
-
-        {packagesLoading ? (
-          <div className="h-16 animate-pulse rounded-xl bg-secondary/50" />
-        ) : (
-          packages.map((pkg) => {
-            const isSelected = selectedPackageId === pkg.id;
-            return (
-              <button
-                key={pkg.id}
-                type="button"
-                onClick={() => onSelectPackage(pkg.id)}
-                className={cn(
-                  "flex w-full items-start justify-between gap-3 rounded-xl border p-4 text-start transition-colors",
-                  isSelected ? "border-accent bg-accent/5" : "border-border/80 hover:border-accent/40",
-                )}
-              >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
-                      <Sparkles className="size-3.5" aria-hidden />
-                    </span>
-                    <p className="font-display text-sm font-bold text-primary">{pkg.name}</p>
-                    {pkg.isHighlighted ? (
-                      <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold text-accent">
-                        الأكثر طلبًا
-                      </span>
-                    ) : null}
-                  </div>
-                  {pkg.tagline ? (
-                    <p className="mt-1 text-xs text-muted-foreground">{pkg.tagline}</p>
-                  ) : null}
-                  {pkg.features.length > 0 ? (
-                    <ul className="mt-2 space-y-1">
-                      {pkg.features.slice(0, 3).map((feature) => (
-                        <li key={feature} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
-                          <Check className="mt-0.5 size-3 shrink-0 text-accent" aria-hidden />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </div>
-                <div className="shrink-0 text-end">
-                  <p className="font-display text-base font-extrabold text-accent">
-                    +{formatUsd(pkg.priceUsd)}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">للمقعد</p>
-                  {isSelected ? (
-                    <span className="mt-2 flex size-6 items-center justify-center rounded-full bg-accent text-accent-foreground">
-                      <Check className="size-3.5" aria-hidden />
-                    </span>
-                  ) : null}
-                </div>
-              </button>
-            );
-          })
-        )}
-      </div>
 
       {/* Luggage stepper */}
       <div className="mt-6 flex items-center justify-between gap-4 rounded-xl border border-border/80 p-4">

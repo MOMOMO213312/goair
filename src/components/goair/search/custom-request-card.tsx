@@ -15,7 +15,6 @@ export type SearchParams = {
   destination: string;
   date: string;
   seats: number;
-  packageId?: string;
   flight?: string;
   focus?: "private";
   direction?: "to_airport" | "from_airport";

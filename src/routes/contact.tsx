@@ -11,6 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { sendContactMessage } from "@/lib/goair";
 
 export const Route = createFileRoute("/contact")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    package: typeof search["package"] === "string" ? search["package"] : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "تواصل معنا — GoAir" },
@@ -26,7 +29,13 @@ export const Route = createFileRoute("/contact")({
 });
 
 function ContactPage() {
-  const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+  const { package: packageName } = Route.useSearch();
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: packageName ? `عايز أعرف تفاصيل باقة "${packageName}" وأحجزها.` : "",
+  });
   const [busy, setBusy] = useState(false);
 
   async function onSubmit(event: React.FormEvent) {
@@ -59,6 +68,11 @@ function ContactPage() {
         <p className="mt-2 text-sm text-muted-foreground">
           أي استفسار عن حجز أو موعد رحلة — ابعتلنا وهنرد بسرعة.
         </p>
+        {packageName ? (
+          <div className="mt-4 rounded-xl border border-accent/30 bg-accent/10 px-4 py-2.5 text-sm font-bold text-primary">
+            بخصوص باقة "{packageName}"
+          </div>
+        ) : null}
         <form onSubmit={onSubmit} className="mt-6 space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
