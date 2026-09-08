@@ -3,6 +3,8 @@ import { ChevronDown, Menu, Plane, Ticket } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { LanguageToggle } from "@/components/language-toggle";
+import { useTranslation } from "@/lib/i18n/language-context";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,21 +12,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const links = [
-  { to: "/", hash: undefined, label: "الرئيسية" },
-  { to: "/my-bookings", hash: undefined, label: "رحلاتي" },
-] as const;
-
-const EXPLORE_LINKS = [
-  { tab: "packages", label: "الباقات" },
-  { tab: "subscriptions", label: "الاشتراكات" },
-] as const;
-
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const [exploreOpenMobile, setExploreOpenMobile] = useState(false);
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const isExploreActive = pathname.startsWith("/explore");
+  const { t } = useTranslation();
+
+  const links = [
+    { to: "/", hash: undefined, label: t("header.home") },
+    { to: "/my-bookings", hash: undefined, label: t("header.myTrips") },
+  ] as const;
+
+  const EXPLORE_LINKS = [
+    { tab: "packages", label: t("header.packages") },
+    { tab: "subscriptions", label: t("header.subscriptions") },
+  ] as const;
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/70 bg-background/95 backdrop-blur">
@@ -45,7 +48,7 @@ export function SiteHeader() {
             className="rounded-md px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
             activeProps={{ className: "text-primary bg-secondary" }}
           >
-            الرئيسية
+            {t("header.home")}
           </Link>
 
           <DropdownMenu>
@@ -54,7 +57,7 @@ export function SiteHeader() {
                 isExploreActive ? "bg-secondary text-primary" : "text-muted-foreground"
               }`}
             >
-              استكشف
+              {t("header.explore")}
               <ChevronDown className="size-3.5" aria-hidden />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="min-w-40">
@@ -77,7 +80,7 @@ export function SiteHeader() {
             className="rounded-md px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
             activeProps={{ className: "text-primary bg-secondary" }}
           >
-            رحلاتي
+            {t("header.myTrips")}
           </Link>
         </nav>
 
@@ -90,14 +93,15 @@ export function SiteHeader() {
           >
             <Link to="/my-bookings">
               <Ticket className="size-4" aria-hidden />
-              تتبع حجزي
+              {t("header.trackBooking")}
             </Link>
           </Button>
+          <LanguageToggle className="hidden sm:inline-flex" />
           <Button
             variant="ghost"
             size="icon"
             className="md:hidden"
-            aria-label="القائمة"
+            aria-label={t("header.menu")}
             onClick={() => setOpen((value) => !value)}
           >
             <Menu className="size-5" />
@@ -114,7 +118,7 @@ export function SiteHeader() {
             className="block rounded-md px-3 py-3 text-sm font-semibold text-muted-foreground"
             activeProps={{ className: "text-primary" }}
           >
-            الرئيسية
+            {t("header.home")}
           </Link>
 
           <button
@@ -124,7 +128,7 @@ export function SiteHeader() {
               isExploreActive ? "text-primary" : "text-muted-foreground"
             }`}
           >
-            استكشف
+            {t("header.explore")}
             <ChevronDown
               className={`size-4 transition-transform ${exploreOpenMobile ? "rotate-180" : ""}`}
               aria-hidden
@@ -168,8 +172,11 @@ export function SiteHeader() {
             className="mt-1 flex items-center gap-1.5 rounded-md px-3 py-3 text-sm font-bold text-primary"
           >
             <Ticket className="size-4" aria-hidden />
-            تتبع حجزي
+            {t("header.trackBooking")}
           </Link>
+          <div className="mt-1 px-3 py-2 sm:hidden">
+            <LanguageToggle />
+          </div>
         </nav>
       ) : null}
     </header>
