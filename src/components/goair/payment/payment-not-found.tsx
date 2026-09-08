@@ -15,7 +15,7 @@ export function PaymentNotFound() {
         description={t("payment.notFound.description")}
       />
       <Button asChild variant="outline" className="mt-6 font-bold">
-        <Link to="/my-bookings">{t("payment.notFound.searchButton")}</Link>
+        <Link to="/my-bookings" search={{ ticket: "" }}>{t("payment.notFound.searchButton")}</Link>
       </Button>
     </div>
   );

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { supabase } from "@/lib/supabase";
 
-type StockPhotoTable = "addon_services" | "packages" | "subscription_plans";
+type StockPhotoTable = "addon_services" | "packages" | "subscription_plans" | "vehicle_types";
 
 /**
  * Resolves a real stock photo for a catalog row (addon service / package /

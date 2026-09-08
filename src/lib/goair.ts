@@ -731,7 +731,7 @@ export async function createSubscriptionSafe(input: {
   return {
     subscriptionId,
     subscriptionCode,
-    expectedTotalUsd: Number(pick(row, ["expected_total_usd"]) ?? 0),
+    expectedTotalUsd: Number((row ? pick(row, ["expected_total_usd"]) : undefined) ?? 0),
   };
 }
 

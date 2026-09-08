@@ -52,7 +52,7 @@ export function SearchFiltersSheet(props: SearchFiltersSheetProps) {
           <SheetTitle className="font-display text-right">{t("search.filters.title")}</SheetTitle>
         </SheetHeader>
         <div className="mt-6 pb-6">
-          <SearchFiltersPanel {...panelProps} showReset={false} />
+          <SearchFiltersPanel {...panelProps} onReset={onReset} showReset={false} />
           <Button
             type="button"
             variant="outline"

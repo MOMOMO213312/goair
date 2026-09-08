@@ -17,7 +17,7 @@ export function ConfirmationNotFound() {
       />
       <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
         <Button asChild variant="outline" className="font-bold">
-          <Link to="/my-bookings">{t("confirmation.notFound.searchButton")}</Link>
+          <Link to="/my-bookings" search={{ ticket: "" }}>{t("confirmation.notFound.searchButton")}</Link>
         </Button>
         <Button asChild className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">
           <Link to="/">{t("confirmation.notFound.backHome")}</Link>

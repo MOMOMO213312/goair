@@ -16,8 +16,8 @@ type SearchSummaryProps = {
   seats: number;
   /** "to_airport" (أنا مسافر) shows the city first, then the airport —
    * the reverse of "from_airport" (أنا واصل), which is the historical default. */
-  direction?: "to_airport" | "from_airport";
-  className?: string;
+  direction?: "to_airport" | "from_airport" | undefined;
+  className?: string | undefined;
 };
 
 export function formatSearchDate(dateStr: string, locale: "ar" | "en" = "ar") {

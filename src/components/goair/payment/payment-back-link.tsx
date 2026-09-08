@@ -40,6 +40,9 @@ export function PaymentBackLink({ booking, className }: PaymentBackLinkProps) {
   const seats = Math.max(1, Number(booking.seats_count ?? 1));
   const time = extractDepartureTime(booking);
   const price = pricePerSeat(booking);
+  const bookingType = bookingField(booking, ["booking_type"]) === "private" ? "private" : "shared";
+  const vehicleTypeId = bookingField(booking, ["vehicle_type_id"]) || undefined;
+  const flight = bookingField(booking, ["flight_number", "flight"]) || undefined;
 
   if (!tripId || !scheduleId || !date) {
     return (
@@ -67,6 +70,9 @@ export function PaymentBackLink({ booking, className }: PaymentBackLinkProps) {
         seats,
         time,
         price,
+        bookingType,
+        vehicleTypeId,
+        flight,
       }}
       className={cn(
         "inline-flex items-center gap-1.5 text-sm font-bold text-muted-foreground transition-colors hover:text-primary",

@@ -16,9 +16,9 @@ export type SearchParams = {
   destination: string;
   date: string;
   seats: number;
-  flight?: string;
-  focus?: "private";
-  direction?: "to_airport" | "from_airport";
+  flight?: string | undefined;
+  focus?: "private" | undefined;
+  direction?: "to_airport" | "from_airport" | undefined;
 };
 
 export function CustomRequestCard({ params }: { params: SearchParams }) {

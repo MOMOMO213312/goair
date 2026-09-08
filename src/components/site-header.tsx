@@ -19,11 +19,6 @@ export function SiteHeader() {
   const isExploreActive = pathname.startsWith("/explore");
   const { t } = useTranslation();
 
-  const links = [
-    { to: "/", hash: undefined, label: t("header.home") },
-    { to: "/my-bookings", hash: undefined, label: t("header.myTrips") },
-  ] as const;
-
   const EXPLORE_LINKS = [
     { tab: "packages", label: t("header.packages") },
     { tab: "subscriptions", label: t("header.subscriptions") },
@@ -77,6 +72,7 @@ export function SiteHeader() {
 
           <Link
             to="/my-bookings"
+            search={{ ticket: "" }}
             className="rounded-md px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
             activeProps={{ className: "text-primary bg-secondary" }}
           >
@@ -91,7 +87,7 @@ export function SiteHeader() {
             variant="outline"
             className="hidden gap-1.5 sm:inline-flex"
           >
-            <Link to="/my-bookings">
+            <Link to="/my-bookings" search={{ ticket: "" }}>
               <Ticket className="size-4" aria-hidden />
               {t("header.trackBooking")}
             </Link>
@@ -154,20 +150,18 @@ export function SiteHeader() {
             </div>
           ) : null}
 
-          {links.slice(1).map((link) => (
-            <Link
-              key={link.label}
-              to={link.to}
-              hash={link.hash}
-              onClick={() => setOpen(false)}
-              className="block rounded-md px-3 py-3 text-sm font-semibold text-muted-foreground"
-              activeProps={{ className: "text-primary" }}
-            >
-              {link.label}
-            </Link>
-          ))}
           <Link
             to="/my-bookings"
+            search={{ ticket: "" }}
+            onClick={() => setOpen(false)}
+            className="block rounded-md px-3 py-3 text-sm font-semibold text-muted-foreground"
+            activeProps={{ className: "text-primary" }}
+          >
+            {t("header.myTrips")}
+          </Link>
+          <Link
+            to="/my-bookings"
+            search={{ ticket: "" }}
             onClick={() => setOpen(false)}
             className="mt-1 flex items-center gap-1.5 rounded-md px-3 py-3 text-sm font-bold text-primary"
           >

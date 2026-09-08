@@ -36,9 +36,9 @@ type BookSearch = {
   /** 'private' = whole-vehicle charter (flat price); default 'shared' = per-seat, unchanged. */
   bookingType: "shared" | "private";
   /** Required when bookingType === 'private' — which vehicle tier was picked. */
-  vehicleTypeId?: string;
+  vehicleTypeId?: string | undefined;
   /** Prefilled from the hero search, if entered — no live tracking, just carried through. */
-  flight?: string;
+  flight?: string | undefined;
 };
 
 /** Wizard phase — mirrors booking steps 2 (Extras), 3 (Passengers+Transfers) and 4 (Confirmation). */

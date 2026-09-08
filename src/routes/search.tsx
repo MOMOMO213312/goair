@@ -268,7 +268,7 @@ function SearchPage() {
               <div className="min-w-0 space-y-4">
                 {visibleOptions.length > 0 ? (
                   <SearchResultCard
-                    trip={trip}
+                    trip={trip!}
                     options={visibleOptions}
                     seats={params.seats}
                     travelDate={params.date}

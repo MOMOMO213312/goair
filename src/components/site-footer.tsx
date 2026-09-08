@@ -70,9 +70,9 @@ export function SiteFooter() {
         <div>
           <h3 className="font-display text-sm font-bold">{t("footer.goairHeading")}</h3>
           <ul className="mt-4 space-y-2 text-sm text-primary-foreground/75">
-            <li><Link to="/my-bookings">{t("footer.myBookings")}</Link></li>
+            <li><Link to="/my-bookings" search={{ ticket: "" }}>{t("footer.myBookings")}</Link></li>
             <li><Link to="/partner">{t("footer.partnerPrograms")}</Link></li>
-            <li><Link to="/contact">{t("footer.contactUs")}</Link></li>
+            <li><Link to="/contact" search={{ package: undefined }}>{t("footer.contactUs")}</Link></li>
           </ul>
         </div>
 

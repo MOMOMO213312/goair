@@ -131,7 +131,7 @@ export function AgencyStatCard({
 }: {
   label: string;
   value: string;
-  hint?: string;
+  hint?: string | undefined;
   highlight?: boolean;
 }) {
   return (

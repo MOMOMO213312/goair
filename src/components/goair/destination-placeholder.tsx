@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 type DestinationPlaceholderProps = {
   destination: string;
-  className?: string;
+  className?: string | undefined;
 };
 
 /**
@@ -28,7 +28,7 @@ function paletteFor(destination: string): string {
   for (let i = 0; i < destination.length; i++) {
     hash = (hash * 31 + destination.charCodeAt(i)) >>> 0;
   }
-  return PALETTE[hash % PALETTE.length];
+  return PALETTE[hash % PALETTE.length] ?? PALETTE[0];
 }
 
 export function DestinationPlaceholder({ destination, className }: DestinationPlaceholderProps) {

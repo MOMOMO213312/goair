@@ -147,7 +147,7 @@ function FaqPage() {
 
         <p className="mt-10 text-center text-sm text-muted-foreground">
           مش لاقي إجابة سؤالك؟{" "}
-          <Link to="/contact" className="font-bold text-accent hover:underline">
+          <Link to="/contact" search={{ package: undefined }} className="font-bold text-accent hover:underline">
             تواصل معنا
           </Link>
         </p>

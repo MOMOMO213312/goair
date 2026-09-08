@@ -124,7 +124,7 @@ function SubscribePage() {
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <p className="text-sm text-muted-foreground">مفيش باقة اشتراك محددة.</p>
         <Button asChild className="mt-4">
-          <Link to="/explore">شوف الاشتراكات المتاحة</Link>
+          <Link to="/explore" search={{ tab: "subscriptions" }}>شوف الاشتراكات المتاحة</Link>
         </Button>
       </div>
     );
@@ -139,7 +139,7 @@ function SubscribePage() {
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <p className="text-sm text-muted-foreground">مش لاقيين الباقة دي.</p>
         <Button asChild className="mt-4">
-          <Link to="/explore">شوف الاشتراكات المتاحة</Link>
+          <Link to="/explore" search={{ tab: "subscriptions" }}>شوف الاشتراكات المتاحة</Link>
         </Button>
       </div>
     );

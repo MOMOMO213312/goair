@@ -39,7 +39,7 @@ type SearchResultCardProps = {
   /** Group-size tier per departure — used only for capacity/luggage info, never shown as a vehicle name. */
   vehicleTypesById?: Map<string, VehicleType>;
   /** Carried over from the hero search — prefills the booking form, nothing more (no live tracking yet). */
-  flight?: string;
+  flight?: string | undefined;
 };
 
 function RouteImage({
@@ -221,7 +221,7 @@ export function SearchResultCard({
           {/* Single time picker — not a row per departure */}
           <div className="mt-5 rounded-xl border border-border/80 bg-mist/20 p-4">
             <Label className="text-xs font-bold text-primary">{t("search.resultCard.pickTime")}</Label>
-            <Select value={selectedScheduleId} onValueChange={setSelectedScheduleId}>
+            <Select value={selectedScheduleId ?? ""} onValueChange={setSelectedScheduleId}>
               <SelectTrigger className="mt-1.5 bg-card">
                 <SelectValue placeholder={t("search.resultCard.pickTimePlaceholder")} />
               </SelectTrigger>
@@ -310,8 +310,8 @@ function BookButton({
   seats: number;
   travelDate: string;
   disabled: boolean;
-  flight?: string;
-  className?: string;
+  flight?: string | undefined;
+  className?: string | undefined;
 }) {
   const { t } = useTranslation();
   if (disabled || !option) {
