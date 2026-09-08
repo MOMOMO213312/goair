@@ -1,12 +1,14 @@
 import { Lock } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-context";
 
 type BookingTrustNoteProps = {
   className?: string;
 };
 
 export function BookingTrustNote({ className }: BookingTrustNoteProps) {
+  const { t } = useTranslation();
   return (
     <p
       className={cn(
@@ -15,7 +17,7 @@ export function BookingTrustNote({ className }: BookingTrustNoteProps) {
       )}
     >
       <Lock className="mt-0.5 size-3.5 shrink-0 text-accent" aria-hidden />
-      <span>بياناتك تُستخدم فقط لإتمام الحجز والتواصل معك</span>
+      <span>{t("booking.trustNote")}</span>
     </p>
   );
 }

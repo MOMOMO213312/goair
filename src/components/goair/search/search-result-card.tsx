@@ -23,6 +23,7 @@ import {
   getTripRouteImage,
 } from "@/lib/trip-media";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-context";
 
 export function isFallbackSchedule(scheduleId: string) {
   return isGeneratedScheduleId(scheduleId);
@@ -75,6 +76,7 @@ export function SearchResultCard({
   vehicleTypesById,
   flight,
 }: SearchResultCardProps) {
+  const { t } = useTranslation();
   const cityLabel = getTripCityLocation(trip);
   const dedicatedImage = getDedicatedRouteImage(trip);
   const poolFallback = getTripRouteImage(trip);
@@ -149,14 +151,14 @@ export function SearchResultCard({
           {/* Route visual — horizontal on md+ */}
           <div className="mt-4 hidden items-center gap-3 md:flex">
             <div className="text-center">
-              <p className="text-[10px] font-bold uppercase text-muted-foreground">المطار</p>
+              <p className="text-[10px] font-bold uppercase text-muted-foreground">{t("search.resultCard.airport")}</p>
               <p className="mt-1 font-display text-sm font-bold text-primary">{trip.airport_code}</p>
             </div>
             <div className="relative min-w-0 flex-1 px-2">
               <FlightPath className="h-8 w-full text-accent/50" />
             </div>
             <div className="max-w-[8rem] text-center">
-              <p className="text-[10px] font-bold uppercase text-muted-foreground">الوجهة</p>
+              <p className="text-[10px] font-bold uppercase text-muted-foreground">{t("search.resultCard.destination")}</p>
               <p className="mt-1 truncate font-display text-sm font-bold text-primary">
                 {trip.destination}
               </p>
@@ -170,8 +172,8 @@ export function SearchResultCard({
                 <UserRound className="size-4" aria-hidden />
               </span>
               <div>
-                <p className="text-[10px] font-bold text-muted-foreground">نوع الرحلة</p>
-                <p className="font-display text-base font-extrabold text-primary">نقل مشترك</p>
+                <p className="text-[10px] font-bold text-muted-foreground">{t("search.resultCard.tripType")}</p>
+                <p className="font-display text-base font-extrabold text-primary">{t("search.resultCard.shared")}</p>
               </div>
             </div>
 
@@ -181,9 +183,9 @@ export function SearchResultCard({
                   <Briefcase className="size-4" aria-hidden />
                 </span>
                 <div>
-                  <p className="text-[10px] font-bold text-muted-foreground">الحقائب</p>
+                  <p className="text-[10px] font-bold text-muted-foreground">{t("search.resultCard.luggage")}</p>
                   <p className="font-display text-base font-extrabold text-primary">
-                    حتى {maxLuggage} حقيبة
+                    {t("search.resultCard.upToLuggage", { count: maxLuggage })}
                   </p>
                 </div>
               </div>
@@ -195,9 +197,9 @@ export function SearchResultCard({
                   <MapPin className="size-4" aria-hidden />
                 </span>
                 <div>
-                  <p className="text-[10px] font-bold text-muted-foreground">المسافة</p>
+                  <p className="text-[10px] font-bold text-muted-foreground">{t("search.resultCard.distance")}</p>
                   <p className="font-display text-base font-bold text-primary">
-                    {trip.distance_km} كم
+                    {t("search.filters.distanceKm", { km: trip.distance_km })}
                   </p>
                 </div>
               </div>
@@ -208,20 +210,20 @@ export function SearchResultCard({
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <CalendarX2 className="size-3.5 text-accent" aria-hidden />
-              إلغاء مجاني حتى 24 ساعة
+              {t("search.resultCard.freeCancellation")}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <UserRound className="size-3.5 text-accent" aria-hidden />
-              استقبال بلافتة باسمك
+              {t("search.resultCard.namedPickup")}
             </span>
           </div>
 
           {/* Single time picker — not a row per departure */}
           <div className="mt-5 rounded-xl border border-border/80 bg-mist/20 p-4">
-            <Label className="text-xs font-bold text-primary">اختار ميعاد رحلتك</Label>
+            <Label className="text-xs font-bold text-primary">{t("search.resultCard.pickTime")}</Label>
             <Select value={selectedScheduleId} onValueChange={setSelectedScheduleId}>
               <SelectTrigger className="mt-1.5 bg-card">
-                <SelectValue placeholder="اختار الميعاد المناسب" />
+                <SelectValue placeholder={t("search.resultCard.pickTimePlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {options.map((option) => (
@@ -231,7 +233,7 @@ export function SearchResultCard({
                     disabled={!option.isAvailable}
                   >
                     {formatTime(option.departureTime) || option.departureTime.slice(0, 5)}
-                    {!option.isAvailable ? " — مقاعد كاملة" : ""}
+                    {!option.isAvailable ? t("search.resultCard.full") : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -240,12 +242,12 @@ export function SearchResultCard({
             {notEnough ? (
               <p className="mt-2 flex items-center gap-1 text-xs font-medium text-destructive">
                 <Info className="size-3 shrink-0" aria-hidden />
-                المقاعد المتبقية في الميعاد ده مش كفاية لعدد المسافرين.
+                {t("search.resultCard.notEnoughSeats")}
               </p>
             ) : hasFallback ? (
               <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
                 <Info className="size-3 shrink-0" aria-hidden />
-                يُؤكَّد توفر المقعد عند إتمام الحجز.
+                {t("search.resultCard.seatConfirmedOnBooking")}
               </p>
             ) : null}
 
@@ -280,11 +282,12 @@ function PriceBlock({
   total: number;
   seats: number;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="text-left sm:text-right">
       <p className="text-xs text-muted-foreground">
-        {formatUsd(pricePerSeat)} للمقعد
-        {seats > 1 ? ` · ${seats} مقاعد` : ""}
+        {formatUsd(pricePerSeat)} {t("search.resultCard.perSeat")}
+        {seats > 1 ? t("search.resultCard.seatsCount", { count: seats }) : ""}
       </p>
       <p className="font-display text-xl font-extrabold text-accent sm:text-2xl">
         {formatUsd(total)}
@@ -310,10 +313,11 @@ function BookButton({
   flight?: string;
   className?: string;
 }) {
+  const { t } = useTranslation();
   if (disabled || !option) {
     return (
       <Button disabled className={cn("h-11 shrink-0 font-bold", className)}>
-        لا توجد مقاعد كافية
+        {t("search.resultCard.noSeatsAvailable")}
       </Button>
     );
   }
@@ -340,7 +344,7 @@ function BookButton({
           ...(flight ? { flight } : {}),
         }}
       >
-        احجز الآن
+        {t("search.resultCard.bookNow")}
       </Link>
     </Button>
   );

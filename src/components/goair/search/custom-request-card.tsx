@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { submitCustomRequest } from "@/lib/goair";
+import { useTranslation } from "@/lib/i18n/language-context";
 
 export type SearchParams = {
   country: string;
@@ -21,6 +22,7 @@ export type SearchParams = {
 };
 
 export function CustomRequestCard({ params }: { params: SearchParams }) {
+  const { t } = useTranslation();
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
@@ -28,7 +30,7 @@ export function CustomRequestCard({ params }: { params: SearchParams }) {
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (phone.trim().length < 7) {
-      toast.error("اكتب رقم موبايل صحيح.");
+      toast.error(t("search.customRequest.invalidPhone"));
       return;
     }
     setBusy(true);
@@ -42,9 +44,9 @@ export function CustomRequestCard({ params }: { params: SearchParams }) {
         phone: phone.trim(),
       });
       setDone(true);
-      toast.success("وصلنا طلبك — هنكلمك على واتساب.");
+      toast.success(t("search.customRequest.submitSuccess"));
     } catch {
-      toast.error("لم نتمكن من إرسال الطلب. حاول مرة أخرى أو تواصل معنا.");
+      toast.error(t("search.customRequest.submitError"));
     } finally {
       setBusy(false);
     }
@@ -55,20 +57,20 @@ export function CustomRequestCard({ params }: { params: SearchParams }) {
       <div className="bg-secondary/40 px-6 py-8 text-center">
         <FlightPath className="mx-auto h-10 w-56 text-accent/50" />
         <h2 className="mt-4 font-display text-xl font-extrabold text-primary">
-          مفيش مواعيد على الخط ده في اليوم المختار
+          {t("search.customRequest.noSchedulesTitle")}
         </h2>
         <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-          اطلب الخط وسيب رقمك — فريقنا هيرجع لك بموعد مناسب.
+          {t("search.customRequest.noSchedulesBody")}
         </p>
       </div>
 
       <div className="border-t border-border p-6">
         {done ? (
-          <p className="text-center font-display font-bold text-accent">تم إرسال طلبك ✓</p>
+          <p className="text-center font-display font-bold text-accent">{t("search.customRequest.submitted")}</p>
         ) : (
           <form onSubmit={onSubmit} className="mx-auto flex max-w-sm flex-col gap-3">
             <div className="space-y-2 text-start">
-              <Label htmlFor="custom-request-phone">رقم الموبايل / واتساب</Label>
+              <Label htmlFor="custom-request-phone">{t("search.customRequest.phoneLabel")}</Label>
               <Input
                 id="custom-request-phone"
                 value={phone}
@@ -82,13 +84,13 @@ export function CustomRequestCard({ params }: { params: SearchParams }) {
               disabled={busy}
               className="h-11 bg-accent font-bold text-accent-foreground hover:bg-accent/90"
             >
-              اطلب الخط ده
+              {t("search.customRequest.submitButton")}
             </Button>
           </form>
         )}
         <div className="mt-4 text-center">
           <Button asChild variant="link" className="font-bold text-accent">
-            <Link to="/">تعديل البحث</Link>
+            <Link to="/">{t("search.editSearch")}</Link>
           </Button>
         </div>
       </div>

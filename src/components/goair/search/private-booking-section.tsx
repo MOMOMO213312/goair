@@ -7,12 +7,16 @@ import type { PrivateOption, Trip } from "@/lib/goair";
 import { fetchPrivateTripOptions, formatUsd } from "@/lib/goair";
 import { getVehicleImageByCode } from "@/lib/trip-media";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-context";
 
-const VEHICLE_BLURB: Record<string, string> = {
-  car: "لغاية 4 ركاب — أسرع وأخصوصية لعيلة أو مجموعة صغيرة.",
-  van: "لغاية 8 ركاب — العربية كلها لمجموعتك من غير مشاركة حد.",
-  hiace: "لغاية 14 راكب — أنسب لمجموعات السياحة والشركات.",
-};
+function getVehicleBlurb(t: ReturnType<typeof useTranslation>["t"], vehicleCode: string): string | undefined {
+  const map: Record<string, string> = {
+    car: t("search.privateBooking.vehicleBlurbCar"),
+    van: t("search.privateBooking.vehicleBlurbVan"),
+    hiace: t("search.privateBooking.vehicleBlurbHiace"),
+  };
+  return map[vehicleCode];
+}
 
 type PrivateBookingSectionProps = {
   trip: Trip;
@@ -38,6 +42,7 @@ function PrivateOptionCard({
   date: string;
   seats: number;
 }) {
+  const { t } = useTranslation();
   const dotCount = Math.min(option.capacity, 6);
   // Real photo priority: cached DB image (once resolved, shared by every
   // card for this vehicle tier across the whole site) -> live Pexels
@@ -58,7 +63,7 @@ function PrivateOptionCard({
         {isRecommended ? (
           <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-accent-foreground">
             <Sparkle className="size-3" aria-hidden />
-            الأنسب لمجموعتك
+            {t("search.privateBooking.recommended")}
           </span>
         ) : null}
         <h3 className="absolute inset-x-0 bottom-0 p-4 font-display text-base font-extrabold text-white">
@@ -68,7 +73,7 @@ function PrivateOptionCard({
 
       <div className="flex flex-1 flex-col p-5">
         <p className="text-sm leading-relaxed text-muted-foreground">
-          {VEHICLE_BLURB[option.vehicleCode] ?? `لغاية ${option.capacity} راكب.`}
+          {getVehicleBlurb(t, option.vehicleCode) ?? t("search.privateBooking.upToPassengers", { count: option.capacity })}
         </p>
 
         <div className="mt-3 flex items-center gap-2">
@@ -83,13 +88,13 @@ function PrivateOptionCard({
           {option.maxLuggage != null ? (
             <span className="flex items-center gap-1 text-xs font-bold text-muted-foreground">
               <Briefcase className="size-3.5 text-muted-foreground/70" aria-hidden />
-              حتى {option.maxLuggage} حقيبة
+              {t("search.privateBooking.upToLuggage", { count: option.maxLuggage })}
             </span>
           ) : null}
         </div>
 
         <div className="mt-4 flex items-baseline justify-between border-t border-border pt-4">
-          <span className="text-xs font-bold text-muted-foreground">السعر الكامل للعربية</span>
+          <span className="text-xs font-bold text-muted-foreground">{t("search.privateBooking.fullVehiclePrice")}</span>
           <span className="font-display text-xl font-extrabold text-accent">{formatUsd(option.priceUsd)}</span>
         </div>
 
@@ -113,7 +118,7 @@ function PrivateOptionCard({
               : "bg-primary text-primary-foreground hover:bg-primary/90",
           )}
         >
-          احجز خاص لـ {destination}
+          {t("search.privateBooking.bookPrivateFor", { destination })}
         </Link>
       </div>
     </div>
@@ -128,6 +133,7 @@ function PrivateOptionCard({
  * market's average route pricing (see `estimate_private_price` in the DB).
  */
 export function PrivateBookingSection({ trip, destination, date, seats, className, id }: PrivateBookingSectionProps) {
+  const { t } = useTranslation();
   const { data: options, isLoading } = useQuery({
     queryKey: ["goair", "private-options", trip.id],
     queryFn: () => fetchPrivateTripOptions(trip.id),
@@ -137,7 +143,7 @@ export function PrivateBookingSection({ trip, destination, date, seats, classNam
   if (!options || options.length === 0) return null;
 
   // Smallest vehicle that still fits the group the user actually searched for —
-  // ties the "حجز خاص" cards to the real search instead of showing three static options.
+  // ties the private-booking cards to the real search instead of showing three static options.
   const fitting = options.filter((option) => option.capacity >= seats);
   const recommendedId = (fitting.length > 0
     ? fitting.reduce((best, option) => (option.capacity < best.capacity ? option : best))
@@ -151,9 +157,9 @@ export function PrivateBookingSection({ trip, destination, date, seats, classNam
           <Lock className="size-4" aria-hidden />
         </span>
         <div>
-          <h2 className="font-display text-lg font-extrabold text-primary">حجز خاص</h2>
+          <h2 className="font-display text-lg font-extrabold text-primary">{t("search.privateBooking.title")}</h2>
           <p className="text-sm text-muted-foreground">
-            العربية كلها لمجموعتك بس — مفيش ركاب تانيين، وسعر ثابت مش لكل مقعد.
+            {t("search.privateBooking.subtitle")}
           </p>
         </div>
       </div>

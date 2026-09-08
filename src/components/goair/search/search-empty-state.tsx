@@ -3,6 +3,7 @@ import { SearchX } from "lucide-react";
 
 import { EmptyState } from "@/components/goair/empty-state";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n/language-context";
 
 type SearchEmptyStateProps = {
   title?: string;
@@ -11,17 +12,22 @@ type SearchEmptyStateProps = {
 };
 
 export function SearchEmptyState({
-  title = "مفيش رحلات متاحة حاليًا",
-  description = "جرّب تغيير التاريخ أو الوجهة للعثور على خيارات أخرى.",
+  title,
+  description,
   showEditSearch = true,
 }: SearchEmptyStateProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
-      <EmptyState icon={SearchX} title={title} description={description} />
+      <EmptyState
+        icon={SearchX}
+        title={title ?? t("search.emptyState.title")}
+        description={description ?? t("search.emptyState.description")}
+      />
       {showEditSearch ? (
         <div className="flex justify-center">
           <Button asChild variant="outline" className="font-bold">
-            <Link to="/">تعديل البحث</Link>
+            <Link to="/">{t("search.editSearch")}</Link>
           </Button>
         </div>
       ) : null}

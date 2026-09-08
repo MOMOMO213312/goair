@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 
 import type { Trip } from "@/lib/goair";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-context";
 
 type BookingBackLinkProps = {
   trip: Trip | undefined;
@@ -12,6 +13,7 @@ type BookingBackLinkProps = {
 };
 
 export function BookingBackLink({ trip, date, seats, className }: BookingBackLinkProps) {
+  const { t } = useTranslation();
   if (!trip) {
     return (
       <Link
@@ -22,7 +24,7 @@ export function BookingBackLink({ trip, date, seats, className }: BookingBackLin
         )}
       >
         <ArrowRight className="size-4" aria-hidden />
-        العودة للرحلات
+        {t("booking.backToTrips")}
       </Link>
     );
   }
@@ -43,7 +45,7 @@ export function BookingBackLink({ trip, date, seats, className }: BookingBackLin
       )}
     >
       <ArrowRight className="size-4" aria-hidden />
-      العودة للرحلات
+      {t("booking.backToTrips")}
     </Link>
   );
 }

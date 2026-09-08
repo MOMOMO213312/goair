@@ -1,6 +1,7 @@
 import { CalendarX2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-context";
 
 type BookingCancellationNoteProps = {
   className?: string;
@@ -8,6 +9,7 @@ type BookingCancellationNoteProps = {
 
 /** Shown on the booking page itself — not buried in /terms. Per Final Vision. */
 export function BookingCancellationNote({ className }: BookingCancellationNoteProps) {
+  const { t } = useTranslation();
   return (
     <p
       className={cn(
@@ -16,7 +18,7 @@ export function BookingCancellationNote({ className }: BookingCancellationNotePr
       )}
     >
       <CalendarX2 className="mt-0.5 size-3.5 shrink-0 text-accent" aria-hidden />
-      <span>تقدر تلغي أو تعدّل حجزك مجانًا لحد 24 ساعة قبل موعد الرحلة.</span>
+      <span>{t("booking.cancellationNote")}</span>
     </p>
   );
 }

@@ -20,6 +20,10 @@ import {
   fetchTrips,
   friendlyErrorMessage,
 } from "@/lib/goair";
+import { useTranslation } from "@/lib/i18n/language-context";
+import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
+
+const pageMeta = translations[DEFAULT_LANGUAGE].bookPage.meta;
 
 type BookSearch = {
   tripId: string;
@@ -61,19 +65,20 @@ export const Route = createFileRoute("/book")({
   }),
   head: () => ({
     meta: [
-      { title: "إتمام الحجز — GoAir" },
+      { title: pageMeta.title },
       {
         name: "description",
-        content: "أدخل بيانات المسافرين لإتمام حجز مقعدك في النقل المشترك من المطار.",
+        content: pageMeta.description,
       },
-      { property: "og:title", content: "إتمام الحجز — GoAir" },
-      { property: "og:description", content: "خطوات واضحة تفصلك عن تأكيد مقعدك." },
+      { property: "og:title", content: pageMeta.title },
+      { property: "og:description", content: pageMeta.ogDescription },
     ],
   }),
   component: BookPage,
 });
 
 function BookPage() {
+  const { t } = useTranslation();
   const search = Route.useSearch();
   const navigate = useNavigate();
 
@@ -105,17 +110,17 @@ function BookPage() {
 
   async function onConfirm() {
     if (fullName.trim().length < 3) {
-      toast.error("اكتب الاسم بالكامل.");
+      toast.error(t("bookPage.fullNameRequired"));
       setPhase("passengers");
       return;
     }
     if (phone.trim().length < 7) {
-      toast.error("اكتب رقم موبايل صحيح.");
+      toast.error(t("bookPage.invalidPhone"));
       setPhase("passengers");
       return;
     }
     if (isPrivate && !search.vehicleTypeId) {
-      toast.error("نوع العربية مش محدد — ارجع لصفحة البحث واختار من جديد.");
+      toast.error(t("bookPage.vehicleTypeMissing"));
       return;
     }
 
@@ -148,11 +153,11 @@ function BookPage() {
             luggageCount: luggage,
             addonIds: selectedAddonIds,
           });
-      toast.success(isPrivate ? "تم تثبيت الحجز الخاص — باقي الدفع." : "تم تثبيت مقعدك — باقي الدفع.");
+      toast.success(isPrivate ? t("bookPage.privateBookingConfirmed") : t("bookPage.seatConfirmed"));
       navigate({ to: "/payment", search: { ticket: ticketCode } });
     } catch (error) {
       toast.error(
-        friendlyErrorMessage(error, "لم نتمكن من إنشاء الحجز. حاول مرة أخرى أو تواصل مع الدعم."),
+        friendlyErrorMessage(error, t("bookPage.bookingCreateError")),
       );
     } finally {
       setBusy(false);
@@ -162,11 +167,11 @@ function BookPage() {
   function onPassengersSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (fullName.trim().length < 3) {
-      toast.error("اكتب الاسم بالكامل.");
+      toast.error(t("bookPage.fullNameRequired"));
       return;
     }
     if (phone.trim().length < 7) {
-      toast.error("اكتب رقم موبايل صحيح.");
+      toast.error(t("bookPage.invalidPhone"));
       return;
     }
     setPhase("confirm");

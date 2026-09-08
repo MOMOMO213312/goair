@@ -10,6 +10,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import type { Trip } from "@/lib/goair";
+import { useTranslation } from "@/lib/i18n/language-context";
 
 type SearchFiltersSheetProps = {
   trip: Trip | undefined;
@@ -25,6 +26,7 @@ type SearchFiltersSheetProps = {
 };
 
 export function SearchFiltersSheet(props: SearchFiltersSheetProps) {
+  const { t } = useTranslation();
   const { activeFilterCount, onReset, ...panelProps } = props;
 
   return (
@@ -34,10 +36,10 @@ export function SearchFiltersSheet(props: SearchFiltersSheetProps) {
           type="button"
           variant="outline"
           className="h-10 w-full gap-2 font-bold lg:hidden"
-          aria-label="تصفية النتائج"
+          aria-label={t("search.filters.title")}
         >
           <SlidersHorizontal className="size-4" />
-          تصفية النتائج
+          {t("search.filters.title")}
           {activeFilterCount > 0 ? (
             <span className="rounded-full bg-accent px-2 py-0.5 text-xs text-accent-foreground">
               {activeFilterCount}
@@ -47,7 +49,7 @@ export function SearchFiltersSheet(props: SearchFiltersSheetProps) {
       </SheetTrigger>
       <SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-2xl">
         <SheetHeader>
-          <SheetTitle className="font-display text-right">تصفية النتائج</SheetTitle>
+          <SheetTitle className="font-display text-right">{t("search.filters.title")}</SheetTitle>
         </SheetHeader>
         <div className="mt-6 pb-6">
           <SearchFiltersPanel {...panelProps} showReset={false} />
@@ -57,7 +59,7 @@ export function SearchFiltersSheet(props: SearchFiltersSheetProps) {
             className="mt-6 w-full font-bold"
             onClick={onReset}
           >
-            مسح الفلاتر
+            {t("search.filters.clearFilters")}
           </Button>
         </div>
       </SheetContent>

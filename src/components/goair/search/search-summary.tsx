@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { Trip } from "@/lib/goair";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-context";
 
 type SearchSummaryProps = {
   trip: Trip | undefined;
@@ -19,10 +20,10 @@ type SearchSummaryProps = {
   className?: string;
 };
 
-export function formatSearchDate(dateStr: string) {
+export function formatSearchDate(dateStr: string, locale: "ar" | "en" = "ar") {
   const parsed = new Date(`${dateStr}T12:00:00`);
   if (Number.isNaN(parsed.getTime())) return dateStr;
-  return parsed.toLocaleDateString("ar-EG", {
+  return parsed.toLocaleDateString(locale === "ar" ? "ar-EG" : "en-US", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -39,6 +40,7 @@ export function SearchSummary({
   direction = "from_airport",
   className,
 }: SearchSummaryProps) {
+  const { t, language } = useTranslation();
   const airportLabel = trip?.airport_name ?? trip?.origin ?? airportCode;
   const destLabel = trip?.destination ?? destination;
   const code = trip?.airport_code ?? airportCode;
@@ -80,11 +82,11 @@ export function SearchSummary({
           <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <CalendarDays className="size-4 shrink-0 text-accent" aria-hidden />
-              {formatSearchDate(date)}
+              {formatSearchDate(date, language)}
             </span>
             <span className="inline-flex items-center gap-1.5">
               <Users className="size-4 shrink-0 text-accent" aria-hidden />
-              {seats} {seats === 1 ? "مقعد" : "مقاعد"}
+              {seats} {seats === 1 ? t("search.summary.seat") : t("search.summary.seats")}
             </span>
             {country ? (
               <span className="inline-flex items-center gap-1.5">
@@ -103,7 +105,7 @@ export function SearchSummary({
         >
           <Link to="/">
             <Pencil className="size-4" aria-hidden />
-            تعديل البحث
+            {t("search.editSearch")}
           </Link>
         </Button>
       </div>

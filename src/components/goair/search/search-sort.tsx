@@ -6,14 +6,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-context";
 
 export type SortKey = "recommended" | "cheapest" | "earliest";
-
-const SORT_OPTIONS: { key: SortKey; label: string }[] = [
-  { key: "recommended", label: "الأنسب" },
-  { key: "cheapest", label: "الأقل سعرًا" },
-  { key: "earliest", label: "الأقرب في موعد المغادرة" },
-];
 
 type SearchSortProps = {
   value: SortKey;
@@ -22,11 +17,17 @@ type SearchSortProps = {
 };
 
 export function SearchSortDesktop({ value, onChange, className }: SearchSortProps) {
+  const { t } = useTranslation();
+  const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+    { key: "recommended", label: t("search.sort.recommended") },
+    { key: "cheapest", label: t("search.sort.cheapest") },
+    { key: "earliest", label: t("search.sort.earliest") },
+  ];
   return (
     <div
       className={cn("hidden items-center gap-1 rounded-lg border border-border bg-secondary/40 p-1 lg:flex", className)}
       role="tablist"
-      aria-label="ترتيب النتائج"
+      aria-label={t("search.filters.sortLabel")}
     >
       {SORT_OPTIONS.map((option) => (
         <button
@@ -50,11 +51,17 @@ export function SearchSortDesktop({ value, onChange, className }: SearchSortProp
 }
 
 export function SearchSortMobile({ value, onChange, className }: SearchSortProps) {
+  const { t } = useTranslation();
+  const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+    { key: "recommended", label: t("search.sort.recommended") },
+    { key: "cheapest", label: t("search.sort.cheapest") },
+    { key: "earliest", label: t("search.sort.earliest") },
+  ];
   return (
     <div className={cn("lg:hidden", className)}>
       <Select value={value} onValueChange={(v) => onChange(v as SortKey)}>
-        <SelectTrigger className="h-10 w-full font-bold" aria-label="ترتيب النتائج">
-          <SelectValue placeholder="ترتيب" />
+        <SelectTrigger className="h-10 w-full font-bold" aria-label={t("search.filters.sortLabel")}>
+          <SelectValue placeholder={t("search.filters.sortPlaceholder")} />
         </SelectTrigger>
         <SelectContent>
           {SORT_OPTIONS.map((option) => (

@@ -20,6 +20,10 @@ import { Card } from "@/components/ui/card";
 import { DestinationCard } from "@/components/goair/destination-card";
 import { fetchScheduleOptions, fetchTrips, fetchVehicleTypes, type VehicleType } from "@/lib/goair";
 import { getDestinationSummariesForAirport } from "@/lib/trip-stats";
+import { useTranslation } from "@/lib/i18n/language-context";
+import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
+
+const pageMeta = translations[DEFAULT_LANGUAGE].searchPage.meta;
 
 export const Route = createFileRoute("/search")({
   validateSearch: (search: Record<string, unknown>): SearchParams => ({
@@ -34,15 +38,15 @@ export const Route = createFileRoute("/search")({
   }),
   head: () => ({
     meta: [
-      { title: "المواعيد والأسعار — GoAir" },
+      { title: pageMeta.title },
       {
         name: "description",
-        content: "شوف مواعيد الرحلات المتاحة والسعر الإجمالي قبل الحجز.",
+        content: pageMeta.description,
       },
-      { property: "og:title", content: "المواعيد والأسعار — GoAir" },
+      { property: "og:title", content: pageMeta.title },
       {
         property: "og:description",
-        content: "مواعيد ثابتة وسعر واضح لكل مقعد قبل تأكيد الحجز.",
+        content: pageMeta.ogDescription,
       },
     ],
   }),
@@ -50,6 +54,7 @@ export const Route = createFileRoute("/search")({
 });
 
 function SearchPage() {
+  const { t } = useTranslation();
   const params = Route.useSearch();
   const [sort, setSort] = useState<SortKey>("recommended");
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
@@ -169,11 +174,13 @@ function SearchPage() {
         {needsDestinationChoice ? (
           <div className="mt-8">
             <h2 className="font-display text-xl font-extrabold text-primary sm:text-2xl">
-              اختار وجهتك
+              {t("searchPage.chooseDestination")}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {destinationChoices.length}{" "}
-              {destinationChoices.length === 1 ? "وجهة متاحة من هذا المطار" : "وجهات متاحة من هذا المطار"}
+              {destinationChoices.length === 1
+                ? t("searchPage.destinationsAvailableSingular")
+                : t("searchPage.destinationsAvailablePlural")}
             </p>
 
             {destinationChoices.length > 0 ? (
@@ -187,8 +194,8 @@ function SearchPage() {
               </div>
             ) : !tripsQuery.isLoading ? (
               <SearchEmptyState
-                title="لا توجد وجهات متاحة من هذا المطار حاليًا"
-                description="جرّب مطارًا آخر أو عدّل البحث من الصفحة الرئيسية."
+                title={t("searchPage.noDestinationsTitle")}
+                description={t("searchPage.noDestinationsBody")}
               />
             ) : (
               <SearchResultsSkeleton />
@@ -199,8 +206,8 @@ function SearchPage() {
         {tripNotFound ? (
           <div className="mt-8">
             <SearchEmptyState
-              title="لم نجد خطًا مطابقًا لبحثك"
-              description="تأكد من الوجهة والمطار، أو عدّل البحث من الصفحة الرئيسية."
+              title={t("searchPage.tripNotFoundTitle")}
+              description={t("searchPage.tripNotFoundBody")}
             />
           </div>
         ) : null}
@@ -221,12 +228,15 @@ function SearchPage() {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <h1 className="font-display text-2xl font-extrabold text-primary sm:text-3xl">
-                  الرحلات المتاحة
+                  {t("searchPage.availableTrips")}
                 </h1>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {visibleOptions.length} {visibleOptions.length === 1 ? "رحلة متاحة" : "رحلات متاحة"}
+                  {visibleOptions.length}{" "}
+                  {visibleOptions.length === 1
+                    ? t("searchPage.tripsAvailableSingular")
+                    : t("searchPage.tripsAvailablePlural")}
                   {visibleOptions.length !== allOptions.length
-                    ? ` من ${allOptions.length}`
+                    ? ` ${t("searchPage.outOf", { count: allOptions.length })}`
                     : ""}
                 </p>
               </div>
@@ -268,8 +278,8 @@ function SearchPage() {
                 ) : (
                   <Card className="border-dashed p-8 text-center">
                     <SearchEmptyState
-                      title="لا توجد رحلات في نطاق السعر المختار"
-                      description="وسّع نطاق السعر أو امسح الفلاتر لعرض كل المواعيد."
+                      title={t("searchPage.noTripsInPriceRangeTitle")}
+                      description={t("searchPage.noTripsInPriceRangeBody")}
                       showEditSearch={false}
                     />
                     <button
@@ -277,7 +287,7 @@ function SearchPage() {
                       onClick={resetFilters}
                       className="mt-4 text-sm font-bold text-accent hover:underline"
                     >
-                      مسح الفلاتر
+                      {t("searchPage.clearFilters")}
                     </button>
                   </Card>
                 )}
@@ -291,10 +301,8 @@ function SearchPage() {
         {/* Schedule load issue — friendly, no technical errors */}
         {!isLoading && trip && optionsQuery.isError ? (
           <Card className="mt-6 border-border bg-card p-5 text-sm text-muted-foreground">
-            <p className="font-display font-bold text-primary">تعذّر تحميل المواعيد الآن</p>
-            <p className="mt-2">
-              جرّب تحديث الصفحة. إذا استمرت المشكلة، عدّل البحث أو تواصل مع الدعم.
-            </p>
+            <p className="font-display font-bold text-primary">{t("searchPage.scheduleLoadErrorTitle")}</p>
+            <p className="mt-2">{t("searchPage.scheduleLoadErrorBody")}</p>
           </Card>
         ) : null}
       </div>
