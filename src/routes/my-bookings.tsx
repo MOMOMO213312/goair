@@ -17,7 +17,11 @@ import {
   type BookingRecord,
   type SubscriptionRecord,
 } from "@/lib/goair";
+import { useTranslation } from "@/lib/i18n/language-context";
+import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
+
+const pageMeta = translations[DEFAULT_LANGUAGE].myBookingsPage.meta;
 
 export const Route = createFileRoute("/my-bookings")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -25,19 +29,20 @@ export const Route = createFileRoute("/my-bookings")({
   }),
   head: () => ({
     meta: [
-      { title: "حجزي — استعلام وإلغاء | GoAir" },
+      { title: pageMeta.title },
       {
         name: "description",
-        content: "ابحث عن حجزك بكود التذكرة لعرض التفاصيل أو إلغاء الرحلة بدون رسوم.",
+        content: pageMeta.description,
       },
-      { property: "og:title", content: "حجزي — استعلام وإلغاء | GoAir" },
-      { property: "og:description", content: "كود التذكرة يكفي لعرض حجزك أو إلغائه." },
+      { property: "og:title", content: pageMeta.title },
+      { property: "og:description", content: pageMeta.ogDescription },
     ],
   }),
   component: MyBookingsPage,
 });
 
 function MyBookingsPage() {
+  const { t } = useTranslation();
   const initial = Route.useSearch();
   const [mode, setMode] = useState<"booking" | "subscription">("booking");
 
@@ -54,20 +59,20 @@ function MyBookingsPage() {
   async function lookupSubscription(event: React.FormEvent) {
     event.preventDefault();
     if (subCode.trim().length < 4) {
-      toast.error("اكتب كود الاشتراك.");
+      toast.error(t("myBookingsPage.subscription.emptyCodeError"));
       return;
     }
     setSubBusy(true);
     try {
       const result = await getSubscriptionByCode(subCode);
       if (!result) {
-        toast.error("مفيش اشتراك بالكود ده.");
+        toast.error(t("myBookingsPage.subscription.notFoundError"));
         setSubscription(null);
       } else {
         setSubscription(result);
       }
     } catch (error) {
-      toast.error(friendlyErrorMessage(error, "حصل خطأ في البحث."));
+      toast.error(friendlyErrorMessage(error, t("myBookingsPage.subscription.searchError")));
     } finally {
       setSubBusy(false);
     }
@@ -76,11 +81,11 @@ function MyBookingsPage() {
   async function cancelSubscription() {
     setSubCancelling(true);
     try {
-      await cancelSubscriptionByCode(subCode, "إلغاء من العميل");
-      toast.success("تم إلغاء الاشتراك.");
+      await cancelSubscriptionByCode(subCode, t("myBookingsPage.subscription.cancelReason"));
+      toast.success(t("myBookingsPage.subscription.cancelSuccess"));
       setSubscription(await getSubscriptionByCode(subCode));
     } catch (error) {
-      toast.error(friendlyErrorMessage(error, "لم نتمكن من الإلغاء."));
+      toast.error(friendlyErrorMessage(error, t("myBookingsPage.subscription.cancelError")));
     } finally {
       setSubCancelling(false);
     }
@@ -89,20 +94,20 @@ function MyBookingsPage() {
   async function lookup(event: React.FormEvent) {
     event.preventDefault();
     if (code.trim().length < 4) {
-      toast.error("اكتب كود التذكرة.");
+      toast.error(t("myBookingsPage.booking.emptyTicketError"));
       return;
     }
     setBusy(true);
     try {
       const result = await getBookingByTicket(code);
       if (!result) {
-        toast.error("مفيش حجز بالكود ده.");
+        toast.error(t("myBookingsPage.booking.notFoundError"));
         setBooking(null);
       } else {
         setBooking(result);
       }
     } catch (error) {
-      toast.error(friendlyErrorMessage(error, "حصل خطأ في البحث."));
+      toast.error(friendlyErrorMessage(error, t("myBookingsPage.booking.searchError")));
     } finally {
       setBusy(false);
     }
@@ -111,11 +116,11 @@ function MyBookingsPage() {
   async function cancel() {
     setCancelling(true);
     try {
-      await cancelBookingByTicket(code, "إلغاء من العميل");
-      toast.success("تم إلغاء الحجز.");
+      await cancelBookingByTicket(code, t("myBookingsPage.booking.cancelReason"));
+      toast.success(t("myBookingsPage.booking.cancelSuccess"));
       setBooking(await getBookingByTicket(code));
     } catch (error) {
-      toast.error(friendlyErrorMessage(error, "لم نتمكن من الإلغاء."));
+      toast.error(friendlyErrorMessage(error, t("myBookingsPage.booking.cancelError")));
     } finally {
       setCancelling(false);
     }
@@ -137,10 +142,10 @@ function MyBookingsPage() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-12">
-      <h1 className="font-display text-2xl font-extrabold text-primary">حجزي</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        اكتب كود التذكرة لعرض تفاصيل الحجز أو إلغائه، أو كود الاشتراك لعرض عضويتك.
-      </p>
+      <h1 className="font-display text-2xl font-extrabold text-primary">
+        {t("myBookingsPage.title")}
+      </h1>
+      <p className="mt-2 text-sm text-muted-foreground">{t("myBookingsPage.subtitle")}</p>
 
       <div className="mt-5 inline-flex rounded-lg border border-border bg-secondary/60 p-1">
         <button
@@ -151,7 +156,7 @@ function MyBookingsPage() {
             mode === "booking" ? "bg-card text-primary shadow-sm" : "text-muted-foreground",
           )}
         >
-          حجز رحلة
+          {t("myBookingsPage.tabs.booking")}
         </button>
         <button
           type="button"
@@ -161,7 +166,7 @@ function MyBookingsPage() {
             mode === "subscription" ? "bg-card text-primary shadow-sm" : "text-muted-foreground",
           )}
         >
-          اشتراك
+          {t("myBookingsPage.tabs.subscription")}
         </button>
       </div>
 
@@ -169,37 +174,42 @@ function MyBookingsPage() {
       <>
       <form onSubmit={lookup} className="mt-6 flex items-end gap-3">
         <div className="flex-1 space-y-2">
-          <Label htmlFor="ticket">كود التذكرة</Label>
+          <Label htmlFor="ticket">{t("myBookingsPage.booking.ticketLabel")}</Label>
           <Input
             id="ticket"
             value={code}
             onChange={(event) => setCode(event.target.value.toUpperCase())}
-            placeholder="GA-XXXXXX"
+            placeholder={t("myBookingsPage.booking.ticketPlaceholder")}
           />
         </div>
         <Button type="submit" disabled={busy} className="h-10">
           {busy ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
-          بحث
+          {t("myBookingsPage.booking.searchButton")}
         </Button>
       </form>
 
       {booking ? (
         <Card className="mt-8 rounded-xl p-6 shadow-[var(--shadow-card)]">
           <dl className="space-y-2.5 text-sm">
-            <Row label="الاسم" value={String(booking["full_name"] ?? "—")} />
-            <Row label="التاريخ" value={String(booking["travel_date"] ?? "—")} />
-            <Row label="عدد المقاعد" value={String(booking["seats_count"] ?? "—")} />
+            <Row label={t("myBookingsPage.booking.fields.name")} value={String(booking["full_name"] ?? "—")} />
+            <Row label={t("myBookingsPage.booking.fields.date")} value={String(booking["travel_date"] ?? "—")} />
             <Row
-              label="الإجمالي"
+              label={t("myBookingsPage.booking.fields.seats")}
+              value={String(booking["seats_count"] ?? "—")}
+            />
+            <Row
+              label={t("myBookingsPage.booking.fields.total")}
               value={booking.expected_total_usd ? formatUsd(Number(booking.expected_total_usd)) : "—"}
             />
-            <Row label="الحالة" value={String(booking["status"] ?? "—")} />
+            <Row label={t("myBookingsPage.booking.fields.status")} value={String(booking["status"] ?? "—")} />
           </dl>
 
           {isActive ? <TripStatusPanel booking={booking} /> : null}
 
           {status.includes("cancel") ? (
-            <p className="mt-5 text-sm font-bold text-destructive">هذا الحجز ملغي.</p>
+            <p className="mt-5 text-sm font-bold text-destructive">
+              {t("myBookingsPage.booking.cancelledNote")}
+            </p>
           ) : (
             <Button
               variant="outline"
@@ -208,7 +218,7 @@ function MyBookingsPage() {
               className="mt-6 w-full border-destructive/40 text-destructive hover:bg-destructive/10"
             >
               {cancelling ? <Loader2 className="size-4 animate-spin" /> : <XCircle className="size-4" />}
-              إلغاء الحجز
+              {t("myBookingsPage.booking.cancelButton")}
             </Button>
           )}
         </Card>
@@ -218,17 +228,17 @@ function MyBookingsPage() {
       <>
       <form onSubmit={lookupSubscription} className="mt-6 flex items-end gap-3">
         <div className="flex-1 space-y-2">
-          <Label htmlFor="sub-code">كود الاشتراك</Label>
+          <Label htmlFor="sub-code">{t("myBookingsPage.subscription.codeLabel")}</Label>
           <Input
             id="sub-code"
             value={subCode}
             onChange={(event) => setSubCode(event.target.value)}
-            placeholder="مثال: 4f2a91c8b3d0"
+            placeholder={t("myBookingsPage.subscription.codePlaceholder")}
           />
         </div>
         <Button type="submit" disabled={subBusy} className="h-10">
           {subBusy ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
-          بحث
+          {t("myBookingsPage.subscription.searchButton")}
         </Button>
       </form>
 
@@ -244,17 +254,28 @@ function MyBookingsPage() {
             </div>
           </div>
           <dl className="space-y-2.5 text-sm">
-            <Row label="الاسم" value={subscription.full_name} />
-            <Row label="يبدأ" value={subscription.starts_at ?? "—"} />
-            <Row label="ينتهي" value={subscription.ends_at ?? "—"} />
-            <Row label="رحلات مجانية متبقية" value={String(subscription.ride_credits_remaining)} />
-            <Row label="رحلات استخدمت الخصم" value={String(subscription.rides_discounted_count)} />
-            <Row label="نسبة الخصم" value={`${subscription.discount_percent}%`} />
-            <Row label="الحالة" value={subscription.status} />
+            <Row label={t("myBookingsPage.subscription.fields.name")} value={subscription.full_name} />
+            <Row label={t("myBookingsPage.subscription.fields.startsAt")} value={subscription.starts_at ?? "—"} />
+            <Row label={t("myBookingsPage.subscription.fields.endsAt")} value={subscription.ends_at ?? "—"} />
+            <Row
+              label={t("myBookingsPage.subscription.fields.creditsRemaining")}
+              value={String(subscription.ride_credits_remaining)}
+            />
+            <Row
+              label={t("myBookingsPage.subscription.fields.discountedCount")}
+              value={String(subscription.rides_discounted_count)}
+            />
+            <Row
+              label={t("myBookingsPage.subscription.fields.discountPercent")}
+              value={`${subscription.discount_percent}%`}
+            />
+            <Row label={t("myBookingsPage.subscription.fields.status")} value={subscription.status} />
           </dl>
 
           {subscription.status.includes("cancel") ? (
-            <p className="mt-5 text-sm font-bold text-destructive">هذا الاشتراك ملغي.</p>
+            <p className="mt-5 text-sm font-bold text-destructive">
+              {t("myBookingsPage.subscription.cancelledNote")}
+            </p>
           ) : (
             <Button
               variant="outline"
@@ -263,7 +284,7 @@ function MyBookingsPage() {
               className="mt-6 w-full border-destructive/40 text-destructive hover:bg-destructive/10"
             >
               {subCancelling ? <Loader2 className="size-4 animate-spin" /> : <XCircle className="size-4" />}
-              إلغاء الاشتراك
+              {t("myBookingsPage.subscription.cancelButton")}
             </Button>
           )}
         </Card>
@@ -276,6 +297,7 @@ function MyBookingsPage() {
 
 /** Live driver/vehicle assignment — appears automatically once staff assign it from /admin. */
 function TripStatusPanel({ booking }: { booking: BookingRecord }) {
+  const { t } = useTranslation();
   const driverName = booking["driver_name"] as string | null;
   const driverPhone = booking["driver_phone"] as string | null;
   const vehiclePlate = booking["vehicle_plate"] as string | null;
@@ -291,7 +313,7 @@ function TripStatusPanel({ booking }: { booking: BookingRecord }) {
     >
       <p className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
         <span className={cn("size-2 rounded-full", assigned ? "bg-accent" : "bg-muted-foreground/40")} />
-        {assigned ? "🟢 سائقك متخصص" : "بانتظار تخصيص السائق والعربية"}
+        {assigned ? t("myBookingsPage.tripStatus.assigned") : t("myBookingsPage.tripStatus.waiting")}
       </p>
 
       {assigned ? (
@@ -314,19 +336,19 @@ function TripStatusPanel({ booking }: { booking: BookingRecord }) {
           {vehiclePlate ? (
             <div className="flex items-center gap-2 text-primary">
               <Car className="size-4 shrink-0 text-accent" aria-hidden />
-              <span>لوحة العربية: {vehiclePlate}</span>
+              <span>{t("myBookingsPage.tripStatus.vehiclePlate", { plate: vehiclePlate })}</span>
             </div>
           ) : null}
           {meetingPoint ? (
             <div className="flex items-center gap-2 text-primary">
               <MapPin className="size-4 shrink-0 text-accent" aria-hidden />
-              <span>نقطة الالتقاء: {meetingPoint}</span>
+              <span>{t("myBookingsPage.tripStatus.meetingPoint", { point: meetingPoint })}</span>
             </div>
           ) : null}
         </div>
       ) : (
         <p className="mt-1.5 text-xs text-muted-foreground">
-          هيظهر هنا اسم السائق ورقم العربية أول ما فريق GoAir يخصصهم لرحلتك — الصفحة بتتحدث تلقائيًا.
+          {t("myBookingsPage.tripStatus.unassignedHint")}
         </p>
       )}
     </div>

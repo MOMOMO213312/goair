@@ -1,9 +1,7 @@
 import { Badge } from "@/components/ui/badge";
-import {
-  STATUS_LABELS,
-  normalizeBookingStatus,
-} from "@/components/goair/confirmation/confirmation-utils";
+import { normalizeBookingStatus } from "@/components/goair/confirmation/confirmation-utils";
 import type { BookingRecord } from "@/lib/goair";
+import { useTranslation } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/utils";
 
 type ConfirmationStatusBadgeProps = {
@@ -12,8 +10,9 @@ type ConfirmationStatusBadgeProps = {
 };
 
 export function ConfirmationStatusBadge({ booking, className }: ConfirmationStatusBadgeProps) {
+  const { t } = useTranslation();
   const status = normalizeBookingStatus(booking);
-  const label = STATUS_LABELS[status];
+  const label = t(`confirmation.statusLabels.${status}`);
 
   return (
     <Badge

@@ -27,35 +27,6 @@ export function normalizeBookingStatus(booking: BookingRecord | undefined): Book
   return "unknown";
 }
 
-export const STATUS_LABELS: Record<BookingStatusKey, string> = {
-  confirmed: "مؤكد",
-  pending: "قيد المراجعة",
-  cancelled: "ملغي",
-  unknown: "قيد المعالجة",
-};
-
-export const SUCCESS_COPY: Record<
-  BookingStatusKey,
-  { title: string; subtitle: string; successLine: string }
-> = {
-  confirmed: {
-    title: "تم تأكيد حجزك",
-    subtitle: "رحلتك مع GoAir جاهزة",
-    successLine: "تم الحجز بنجاح",
-  },
-  pending: {
-    title: "تم استلام حجزك",
-    subtitle: "فريق GoAir يراجع بيانات الدفع",
-    successLine: "تم إرسال الحجز بنجاح",
-  },
-  cancelled: {
-    title: "الحجز ملغي",
-    subtitle: "هذا الحجز لم يعد نشطًا",
-    successLine: "الحجز غير متاح",
-  },
-  unknown: {
-    title: "تم استلام حجزك",
-    subtitle: "رحلتك مع GoAir قيد المعالجة",
-    successLine: "تم إرسال الحجز بنجاح",
-  },
-};
+// Status label / success copy text now lives in the i18n translation files
+// (confirmation.statusLabels / confirmation.successCopy) — look them up via
+// useTranslation()'s t() with the BookingStatusKey as the last path segment.

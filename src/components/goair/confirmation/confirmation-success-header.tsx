@@ -1,10 +1,8 @@
 import { CheckCircle2 } from "lucide-react";
 
-import {
-  SUCCESS_COPY,
-  normalizeBookingStatus,
-} from "@/components/goair/confirmation/confirmation-utils";
+import { normalizeBookingStatus } from "@/components/goair/confirmation/confirmation-utils";
 import type { BookingRecord } from "@/lib/goair";
+import { useTranslation } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/utils";
 
 type ConfirmationSuccessHeaderProps = {
@@ -13,8 +11,8 @@ type ConfirmationSuccessHeaderProps = {
 };
 
 export function ConfirmationSuccessHeader({ booking, className }: ConfirmationSuccessHeaderProps) {
+  const { t } = useTranslation();
   const status = normalizeBookingStatus(booking);
-  const copy = SUCCESS_COPY[status];
 
   return (
     <div className={cn("text-center", className)}>
@@ -27,11 +25,15 @@ export function ConfirmationSuccessHeader({ booking, className }: ConfirmationSu
           aria-hidden
         />
       </div>
-      <p className="mt-4 text-sm font-bold text-accent">{copy.successLine}</p>
+      <p className="mt-4 text-sm font-bold text-accent">
+        {t(`confirmation.successCopy.${status}.successLine`)}
+      </p>
       <h1 className="mt-1 font-display text-2xl font-extrabold text-primary sm:text-3xl">
-        {copy.title}
+        {t(`confirmation.successCopy.${status}.title`)}
       </h1>
-      <p className="mt-2 text-sm text-muted-foreground">{copy.subtitle}</p>
+      <p className="mt-2 text-sm text-muted-foreground">
+        {t(`confirmation.successCopy.${status}.subtitle`)}
+      </p>
     </div>
   );
 }

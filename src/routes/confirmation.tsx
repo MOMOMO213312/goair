@@ -9,6 +9,10 @@ import { ConfirmationPageSkeleton } from "@/components/goair/confirmation/confir
 import { ConfirmationSuccessHeader } from "@/components/goair/confirmation/confirmation-success-header";
 import { ConfirmationTicketCard } from "@/components/goair/confirmation/confirmation-ticket-card";
 import { fetchTrips, getBookingByTicket } from "@/lib/goair";
+import { useTranslation } from "@/lib/i18n/language-context";
+import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
+
+const pageMeta = translations[DEFAULT_LANGUAGE].confirmation.meta;
 
 export const Route = createFileRoute("/confirmation")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -16,19 +20,20 @@ export const Route = createFileRoute("/confirmation")({
   }),
   head: () => ({
     meta: [
-      { title: "تذكرتك — GoAir" },
+      { title: pageMeta.title },
       {
         name: "description",
-        content: "تذكرة GoAir الرقمية مع كود QR وتفاصيل رحلتك.",
+        content: pageMeta.description,
       },
-      { property: "og:title", content: "تذكرتك — GoAir" },
-      { property: "og:description", content: "احتفظ برقم الحجز ورمز QR للرجوع إليهما عند الحاجة." },
+      { property: "og:title", content: pageMeta.title },
+      { property: "og:description", content: pageMeta.ogDescription },
     ],
   }),
   component: ConfirmationPage,
 });
 
 function ConfirmationPage() {
+  const { t } = useTranslation();
   const { ticket } = Route.useSearch();
 
   const bookingQuery = useQuery({
@@ -67,9 +72,11 @@ function ConfirmationPage() {
     return (
       <div className="bg-mist/30 py-16">
         <div className="mx-auto max-w-md px-4 text-center">
-          <h1 className="font-display text-xl font-bold text-primary">تعذّر تحميل التذكرة</h1>
+          <h1 className="font-display text-xl font-bold text-primary">
+            {t("confirmation.loadError.title")}
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            حاول تحديث الصفحة. إذا استمرت المشكلة، تواصل مع فريق GoAir.
+            {t("confirmation.loadError.description")}
           </p>
         </div>
       </div>

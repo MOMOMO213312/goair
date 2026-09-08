@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { BookingRecord, Trip } from "@/lib/goair";
 import { formatTime, formatUsd } from "@/lib/goair";
+import { useTranslation } from "@/lib/i18n/language-context";
 import { useDestinationPhoto } from "@/hooks/use-destination-photo";
 import {
   getDedicatedRouteImageFromTripOrFallback,
@@ -35,6 +36,7 @@ export function ConfirmationTicketCard({
   ticket,
   className,
 }: ConfirmationTicketCardProps) {
+  const { t } = useTranslation();
   const travelDate = bookingField(booking, ["travel_date"]);
   const departureRaw = extractDepartureTime(booking);
   const seats = Number(booking.seats_count ?? 1);
@@ -80,7 +82,7 @@ export function ConfirmationTicketCard({
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] opacity-80">GoAir</p>
-              <p className="mt-1 text-xs opacity-80">رقم الحجز</p>
+              <p className="mt-1 text-xs opacity-80">{t("confirmation.ticketCard.bookingNumber")}</p>
               <div className="mt-1 flex items-center gap-2">
                 <p className="font-display text-2xl font-extrabold tracking-[0.15em] sm:text-3xl">
                   {ticket}
@@ -90,10 +92,10 @@ export function ConfirmationTicketCard({
                   variant="ghost"
                   size="icon"
                   className="size-8 shrink-0 text-primary-foreground hover:bg-primary-foreground/10"
-                  aria-label="نسخ رقم الحجز"
+                  aria-label={t("confirmation.ticketCard.copyAria")}
                   onClick={() => {
                     void navigator.clipboard.writeText(ticket);
-                    toast.success("تم نسخ رقم الحجز");
+                    toast.success(t("confirmation.ticketCard.copiedToast"));
                   }}
                 >
                   <Copy className="size-4" />
@@ -116,7 +118,9 @@ export function ConfirmationTicketCard({
       <div className="bg-card px-5 py-6 sm:px-6">
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0 text-center">
-            <p className="text-[10px] font-bold uppercase text-muted-foreground">من</p>
+            <p className="text-[10px] font-bold uppercase text-muted-foreground">
+              {t("confirmation.ticketCard.from")}
+            </p>
             <p className="mt-1 font-display text-lg font-extrabold text-primary">
               {airportCode || "—"}
             </p>
@@ -128,7 +132,9 @@ export function ConfirmationTicketCard({
           </div>
 
           <div className="min-w-0 text-center">
-            <p className="text-[10px] font-bold uppercase text-muted-foreground">إلى</p>
+            <p className="text-[10px] font-bold uppercase text-muted-foreground">
+              {t("confirmation.ticketCard.to")}
+            </p>
             <p className="mt-1 truncate font-display text-lg font-extrabold text-primary">
               {destLabel || "—"}
             </p>
@@ -144,21 +150,30 @@ export function ConfirmationTicketCard({
 
         {/* Trip grid */}
         <div className="mt-6 grid grid-cols-2 gap-4 border-y border-border py-5">
-          <TicketCell label="التاريخ" value={travelDate ? formatSearchDate(travelDate) : "—"} />
           <TicketCell
-            label="موعد المغادرة"
+            label={t("confirmation.ticketCard.date")}
+            value={travelDate ? formatSearchDate(travelDate) : "—"}
+          />
+          <TicketCell
+            label={t("confirmation.ticketCard.departureTime")}
             value={departureRaw ? formatTime(departureRaw) || departureRaw : "—"}
           />
           <TicketCell
-            label="المسافرون"
-            value={`${seats} ${seats === 1 ? "مقعد" : "مقاعد"}`}
+            label={t("confirmation.ticketCard.passengers")}
+            value={`${seats} ${
+              seats === 1
+                ? t("confirmation.ticketCard.seatSingular")
+                : t("confirmation.ticketCard.seatPlural")
+            }`}
           />
-          <TicketCell label="الإجمالي" value={total} highlight />
+          <TicketCell label={t("confirmation.ticketCard.totalLabel")} value={total} highlight />
         </div>
 
         {passengerName ? (
           <div className="mt-4 rounded-lg bg-secondary/40 px-4 py-3">
-            <p className="text-[10px] font-bold text-muted-foreground">اسم المسافر</p>
+            <p className="text-[10px] font-bold text-muted-foreground">
+              {t("confirmation.ticketCard.passengerName")}
+            </p>
             <p className="mt-1 font-display font-bold text-primary">{passengerName}</p>
           </div>
         ) : null}
@@ -168,12 +183,12 @@ export function ConfirmationTicketCard({
           <div
             className="rounded-xl bg-white p-4 ring-1 ring-border"
             role="img"
-            aria-label={`رمز QR للحجز ${ticket}`}
+            aria-label={t("confirmation.ticketCard.qrAria", { ticket })}
           >
             <QRCode value={ticket || "GOAIR"} size={160} />
           </div>
           <p className="mt-3 max-w-xs text-center text-xs text-muted-foreground">
-            اعرض هذا الرمز عند الحاجة إلى إثبات الحجز
+            {t("confirmation.ticketCard.qrHint")}
           </p>
         </div>
       </div>
