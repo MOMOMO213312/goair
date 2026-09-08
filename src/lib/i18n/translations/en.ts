@@ -589,6 +589,76 @@ const en = {
         "The driver's name and vehicle number will appear here as soon as the GoAir team assigns them — this page refreshes automatically.",
     },
   },
+  heroTrustStrip: {
+    fixedPrice: { title: "Fixed price from the start", text: "The price you see is what you pay — no haggling, no surprises." },
+    freeCancellation: { title: "Free cancellation up to 24 hours", text: "Changed your mind? Cancel or edit for free up to a day before your trip." },
+    namedPickup: { title: "Pickup with a sign bearing your name", text: "A GoAir rep waits for you at arrivals with a sign bearing your name." },
+  },
+  howItWorks: {
+    sectionTitle: "How to book with GoAir",
+    sectionDescription: "From search to pickup in 4 simple steps.",
+    imageAlt: "Airport runway",
+    stepLabel: "Step {{number}}",
+    search: { title: "Search", text: "Pick the airport, destination, and date, and see all available schedules and prices." },
+    choose: { title: "Choose", text: "Compare schedules and pick shared or private transport based on your group." },
+    book: { title: "Book", text: "Enter passenger details and confirm payment — your ticket is ready instantly." },
+    pickup: { title: "Pickup", text: "A GoAir rep waits for you at arrivals with a sign bearing your name." },
+  },
+  beforeYouLand: {
+    sectionTitle: "Before you land, everything's ready",
+    sectionDescription: "From the moment your plane touches down, we're a step ahead of you.",
+    flightTracking: {
+      title: "We track your flight live",
+      text: "We monitor your plane's actual landing time, not just the schedule — if your flight is delayed, your driver still waits.",
+    },
+    namedPickup: {
+      title: "Pickup with a sign bearing your name",
+      text: "Walk out of arrivals and find a GoAir rep standing with a sign bearing your name — no searching, no calling anyone.",
+    },
+    safeVehicle: {
+      title: "Safe, inspected vehicle",
+      text: "Every vehicle in our fleet is inspected and insured, and the driver has your booking details before you arrive.",
+    },
+  },
+  serviceHighlights: {
+    flightTracking: { title: "Flight tracking", text: "We track your plane's landing time live" },
+    freeWaiting: { title: "Free waiting time", text: "Up to 60 minutes after actual landing" },
+    support: { title: "Round-the-clock support", text: "Our team is here for any emergency" },
+    quickBooking: { title: "Quick, easy booking", text: "Just two steps and your ticket is ready" },
+  },
+  businessPromoBanner: {
+    title: "For travel agencies & airlines",
+    description: "Offer airport transfer service to your customers and earn a commission on every booking.",
+    agencyCta: "For travel agencies",
+    partnerCta: "For airlines",
+  },
+  dealsTeaser: {
+    sectionTitle: "GoAir deals",
+    sectionDescription: "Extra add-ons you can attach to your booking — at a fixed price.",
+    seeAll: "See all packages",
+  },
+  coverageCountries: {
+    sectionTitle: "Countries we currently cover ({{count}})",
+    sectionDescription: "GoAir currently operates in these destinations, and is gradually expanding to new countries.",
+  },
+  countryExploreCard: {
+    activeRouteSingular: "active route",
+    activeRoutePlural: "active routes",
+    exploreCta: "Explore trips",
+  },
+  destinationCard: {
+    viewCta: "View",
+  },
+  priceCard: {
+    startingFrom: "Starting from",
+  },
+  exploreRoutesSection: {
+    sectionTitle: "Explore your trips",
+    sectionDescription: "Pick your airport and see the destinations available at a fixed price per seat.",
+    allAirports: "All airports",
+    emptyTitle: "No destinations available right now",
+    emptyDescription: "Try another airport or contact us with your question.",
+  },
 } as const;
 
 export default en;

@@ -589,6 +589,76 @@ const ar = {
         "هيظهر هنا اسم السائق ورقم العربية أول ما فريق GoAir يخصصهم لرحلتك — الصفحة بتتحدث تلقائيًا.",
     },
   },
+  heroTrustStrip: {
+    fixedPrice: { title: "سعر ثابت من أول لحظة", text: "السعر اللي تشوفه هو اللي هتدفعه — بدون مزايدة أو مفاجآت." },
+    freeCancellation: { title: "إلغاء مجاني حتى 24 ساعة", text: "غيّرت رأيك؟ تقدر تلغي أو تعدّل مجانًا قبل الرحلة بيوم." },
+    namedPickup: { title: "استقبال بلافتة باسمك", text: "مندوب GoAir مستنيك في صالة الوصول بلافتة عليها اسمك." },
+  },
+  howItWorks: {
+    sectionTitle: "إزاي تحجز مع GoAir",
+    sectionDescription: "من البحث للاستقبال في 4 خطوات بسيطة.",
+    imageAlt: "مدرج مطار",
+    stepLabel: "الخطوة {{number}}",
+    search: { title: "ابحث", text: "اختار المطار والوجهة والتاريخ، وشوف كل المواعيد والأسعار المتاحة." },
+    choose: { title: "اختار", text: "قارن بين المواعيد، وحدد نقل مشترك أو خاص حسب مجموعتك." },
+    book: { title: "احجز", text: "أدخل بيانات المسافرين وأكّد الدفع — تذكرتك جاهزة فورًا." },
+    pickup: { title: "استقبال", text: "مندوب GoAir مستنيك في صالة الوصول بلافتة عليها اسمك." },
+  },
+  beforeYouLand: {
+    sectionTitle: "قبل ما تنزل، كل حاجة جاهزة",
+    sectionDescription: "من لحظة ما الطيارة تلمس المدرج، إحنا خطوة قبلك.",
+    flightTracking: {
+      title: "بنتابع رحلتك أول بأول",
+      text: "بنراقب موعد هبوط طيارتك الفعلي، مش الجدول بس — لو الرحلة اتأخرت، السائق مستنيك برضو.",
+    },
+    namedPickup: {
+      title: "استقبال بلافتة باسمك",
+      text: "تخرج من صالة الوصول تلاقي مندوب GoAir واقف بلافتة عليها اسمك — من غير ما تدوّر أو تتصل بحد.",
+    },
+    safeVehicle: {
+      title: "عربية آمنة ومفحوصة",
+      text: "كل عربية في أسطولنا متفحوصة ومؤمّنة، والسائق معاه بيانات حجزك من قبل ما توصل.",
+    },
+  },
+  serviceHighlights: {
+    flightTracking: { title: "متابعة رحلتك", text: "بنتابع موعد هبوط طيارتك أول بأول" },
+    freeWaiting: { title: "وقت انتظار مجاني", text: "لحد 60 دقيقة بعد الهبوط الفعلي" },
+    support: { title: "دعم على مدار الساعة", text: "فريقنا موجود لأي طارئ" },
+    quickBooking: { title: "حجز سهل وسريع", text: "خطوتين بس وتذكرتك جاهزة" },
+  },
+  businessPromoBanner: {
+    title: "لشركات السياحة والطيران",
+    description: "قدّم خدمة النقل من وإلى المطار لعملائك واكسب عمولة على كل حجز.",
+    agencyCta: "لشركات السياحة",
+    partnerCta: "لشركات الطيران",
+  },
+  dealsTeaser: {
+    sectionTitle: "عروض GoAir",
+    sectionDescription: "باقات إضافية تقدر تضيفها لحجزك — بسعر ثابت.",
+    seeAll: "شوف كل الباقات",
+  },
+  coverageCountries: {
+    sectionTitle: "الدول اللي بنغطيها دلوقتي ({{count}})",
+    sectionDescription: "GoAir شغالة في الوجهات دي حاليًا، وبتوسّع تدريجيًا لدول جديدة.",
+  },
+  countryExploreCard: {
+    activeRouteSingular: "خط نشط",
+    activeRoutePlural: "خطوط نشطة",
+    exploreCta: "استكشف الرحلات",
+  },
+  destinationCard: {
+    viewCta: "عرض",
+  },
+  priceCard: {
+    startingFrom: "ابتداءً من",
+  },
+  exploreRoutesSection: {
+    sectionTitle: "استكشف رحلاتك",
+    sectionDescription: "اختر مطارك وشوف الوجهات المتاحة بسعر ثابت لكل مقعد.",
+    allAirports: "كل المطارات",
+    emptyTitle: "لا توجد وجهات متاحة حاليًا",
+    emptyDescription: "جرّب مطار تاني أو تواصل معنا للاستفسار.",
+  },
 } as const;
 
 export default ar;

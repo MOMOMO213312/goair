@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 
 import { Card } from "@/components/ui/card";
+import { useTranslation } from "@/lib/i18n/language-context";
 import type { CountrySummary } from "@/lib/trip-stats";
 import { getCountryImage } from "@/lib/trip-media";
 import { cn } from "@/lib/utils";
@@ -18,6 +19,7 @@ export function CountryExploreCard({
   sampleAirport,
   className,
 }: CountryExploreCardProps) {
+  const { t } = useTranslation();
   const searchDate = new Date().toISOString().slice(0, 10);
 
   return (
@@ -43,7 +45,10 @@ export function CountryExploreCard({
             {summary.country}
           </h3>
           <p className="mt-1 text-sm text-primary-foreground/85">
-            {summary.routeCount} {summary.routeCount === 1 ? "خط نشط" : "خطوط نشطة"}
+            {summary.routeCount}{" "}
+            {summary.routeCount === 1
+              ? t("countryExploreCard.activeRouteSingular")
+              : t("countryExploreCard.activeRoutePlural")}
           </p>
         </div>
         <Link
@@ -57,7 +62,7 @@ export function CountryExploreCard({
           }}
           className="inline-flex items-center justify-center rounded-lg bg-accent px-5 py-2.5 text-sm font-bold text-accent-foreground transition-colors hover:bg-accent/90"
         >
-          استكشف الرحلات
+          {t("countryExploreCard.exploreCta")}
         </Link>
       </div>
     </Card>

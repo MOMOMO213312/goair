@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowLeft, Sparkles } from "lucide-react";
 
 import { SectionHeader } from "@/components/goair/section-header";
+import { useTranslation } from "@/lib/i18n/language-context";
 import { fetchActivePackages, formatUsd } from "@/lib/goair";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,7 @@ const CARD_THEMES = [
 
 /** Homepage teaser for the real packages/add-ons page — not a separate promise. */
 export function DealsTeaser() {
+  const { t } = useTranslation();
   const { data: packages } = useQuery({
     queryKey: ["goair", "packages"],
     queryFn: fetchActivePackages,
@@ -26,13 +28,16 @@ export function DealsTeaser() {
     <section className="bg-mist/60 py-14 sm:py-16">
       <div className="mx-auto max-w-6xl px-4">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <SectionHeader title="عروض GoAir" description="باقات إضافية تقدر تضيفها لحجزك — بسعر ثابت." />
+          <SectionHeader
+            title={t("dealsTeaser.sectionTitle")}
+            description={t("dealsTeaser.sectionDescription")}
+          />
           <Link
             to="/explore"
             search={{ tab: "packages" }}
             className="inline-flex items-center gap-1.5 text-sm font-bold text-accent hover:underline"
           >
-            شوف كل الباقات
+            {t("dealsTeaser.seeAll")}
             <ArrowLeft className="size-4" aria-hidden />
           </Link>
         </div>

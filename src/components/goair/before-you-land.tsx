@@ -1,13 +1,13 @@
 import { PlaneLanding, ShieldCheck, UserRound } from "lucide-react";
 
 import { SectionHeader } from "@/components/goair/section-header";
+import { useTranslation } from "@/lib/i18n/language-context";
 import { useTopicPhoto } from "@/use-topic-photo";
 import { cn } from "@/lib/utils";
 
 type Card = {
   icon: typeof PlaneLanding;
-  title: string;
-  text: string;
+  key: "flightTracking" | "namedPickup" | "safeVehicle";
   /** Real, freely-licensed hotlinked photo (curated) OR a Wikipedia topic to fetch a real photo for at runtime. Pass exactly one. */
   photo?: string;
   topic?: string;
@@ -16,22 +16,19 @@ type Card = {
 const CARDS: Card[] = [
   {
     icon: PlaneLanding,
-    title: "بنتابع رحلتك أول بأول",
-    text: "بنراقب موعد هبوط طيارتك الفعلي، مش الجدول بس — لو الرحلة اتأخرت، السائق مستنيك برضو.",
+    key: "flightTracking",
     topic: "Flight information display system",
   },
   {
     icon: UserRound,
-    title: "استقبال بلافتة باسمك",
-    text: "تخرج من صالة الوصول تلاقي مندوب GoAir واقف بلافتة عليها اسمك — من غير ما تدوّر أو تتصل بحد.",
+    key: "namedPickup",
     // Traveler waiting at the terminal with luggage (Pexels, free license) —
     // curated and reliable, unlike the runtime Wikipedia topic fetch above.
     photo: "https://images.pexels.com/photos/32176145/pexels-photo-32176145.jpeg?auto=compress&cs=tinysrgb&w=800",
   },
   {
     icon: ShieldCheck,
-    title: "عربية آمنة ومفحوصة",
-    text: "كل عربية في أسطولنا متفحوصة ومؤمّنة، والسائق معاه بيانات حجزك من قبل ما توصل.",
+    key: "safeVehicle",
     // Replaces vehicle-sedan.jpg, which read as a lookalike of a real car
     // grille (brand risk) — this is a generic private-ride photo instead
     // (Pexels, free license), matching the "safe, checked private car" idea
@@ -40,7 +37,7 @@ const CARDS: Card[] = [
   },
 ];
 
-function CardImage({ card }: { card: Card }) {
+function CardImage({ card, alt }: { card: Card; alt: string }) {
   const fetched = useTopicPhoto(card.topic ?? "");
   const src = card.photo ?? fetched;
 
@@ -53,7 +50,7 @@ function CardImage({ card }: { card: Card }) {
   return (
     <img
       src={src}
-      alt={card.title}
+      alt={alt}
       loading="lazy"
       className="aspect-[4/3] w-full rounded-t-2xl object-cover"
     />
@@ -65,30 +62,36 @@ function CardImage({ card }: { card: Card }) {
  * real photos instead of just icons, right before the vehicle-choice section.
  */
 export function BeforeYouLand() {
+  const { t } = useTranslation();
   return (
     <section className="py-14 sm:py-16">
       <div className="mx-auto max-w-6xl px-4">
         <SectionHeader
-          title="قبل ما تنزل، كل حاجة جاهزة"
-          description="من لحظة ما الطيارة تلمس المدرج، إحنا خطوة قبلك."
+          title={t("beforeYouLand.sectionTitle")}
+          description={t("beforeYouLand.sectionDescription")}
         />
 
         <div className="mt-8 grid gap-6 sm:grid-cols-3">
-          {CARDS.map((card) => (
-            <div
-              key={card.title}
-              className={cn(
-                "flex flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-sm",
-              )}
-            >
-              <CardImage card={card} />
-              <div className="flex flex-1 flex-col p-5">
-                <card.icon className="size-6 text-accent" aria-hidden />
-                <h3 className="mt-3 font-display text-base font-bold text-primary">{card.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{card.text}</p>
+          {CARDS.map((card) => {
+            const title = t(`beforeYouLand.${card.key}.title`);
+            return (
+              <div
+                key={card.key}
+                className={cn(
+                  "flex flex-col overflow-hidden rounded-2xl border border-border bg-background shadow-sm",
+                )}
+              >
+                <CardImage card={card} alt={title} />
+                <div className="flex flex-1 flex-col p-5">
+                  <card.icon className="size-6 text-accent" aria-hidden />
+                  <h3 className="mt-3 font-display text-base font-bold text-primary">{title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                    {t(`beforeYouLand.${card.key}.text`)}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

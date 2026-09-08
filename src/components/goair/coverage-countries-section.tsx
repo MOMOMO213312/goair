@@ -1,5 +1,6 @@
 import { CountryExploreCard } from "@/components/goair/country-explore-card";
 import { SectionHeader } from "@/components/goair/section-header";
+import { useTranslation } from "@/lib/i18n/language-context";
 import type { Trip } from "@/lib/goair";
 import { filterPublicTrips, getCountrySummaries } from "@/lib/trip-stats";
 
@@ -15,6 +16,7 @@ type CoverageCountriesSectionProps = {
  * as `countries` grows — nothing here is hardcoded.
  */
 export function CoverageCountriesSection({ trips, countries }: CoverageCountriesSectionProps) {
+  const { t } = useTranslation();
   const publicTrips = filterPublicTrips(trips, countries);
   const summaries = getCountrySummaries(publicTrips, countries).filter(
     (summary) => summary.routeCount > 0,
@@ -26,8 +28,8 @@ export function CoverageCountriesSection({ trips, countries }: CoverageCountries
     <section className="bg-mist/60 py-14 sm:py-16">
       <div className="mx-auto max-w-6xl px-4">
         <SectionHeader
-          title={`الدول اللي بنغطيها دلوقتي (${summaries.length})`}
-          description="GoAir شغالة في الوجهات دي حاليًا، وبتوسّع تدريجيًا لدول جديدة."
+          title={t("coverageCountries.sectionTitle", { count: summaries.length })}
+          description={t("coverageCountries.sectionDescription")}
         />
 
         <div className="mt-8 grid gap-5 sm:grid-cols-2">

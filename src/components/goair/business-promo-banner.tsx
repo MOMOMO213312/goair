@@ -2,9 +2,11 @@ import { Link } from "@tanstack/react-router";
 
 import heroImage from "@/assets/hero-airport.jpg";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n/language-context";
 
 /** CTA banner routing agencies/airlines to the existing partner portal. */
 export function BusinessPromoBanner() {
+  const { t } = useTranslation();
   return (
     <section id="business" className="scroll-mt-20 py-14 sm:py-16">
       <div className="mx-auto max-w-6xl px-4">
@@ -21,17 +23,17 @@ export function BusinessPromoBanner() {
 
           <div className="max-w-lg px-6 py-10 sm:px-10 sm:py-14">
             <h2 className="font-display text-2xl font-extrabold text-primary-foreground sm:text-3xl">
-              لشركات السياحة والطيران
+              {t("businessPromoBanner.title")}
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-primary-foreground/85 sm:text-base">
-              قدّم خدمة النقل من وإلى المطار لعملائك واكسب عمولة على كل حجز.
+              {t("businessPromoBanner.description")}
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild size="lg">
-                <Link to="/agency">لشركات السياحة</Link>
+                <Link to="/agency">{t("businessPromoBanner.agencyCta")}</Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10">
-                <Link to="/partner">لشركات الطيران</Link>
+                <Link to="/partner">{t("businessPromoBanner.partnerCta")}</Link>
               </Button>
             </div>
           </div>

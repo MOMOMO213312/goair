@@ -2,51 +2,37 @@ import { CalendarSearch, MousePointerClick, Ticket, UserRound } from "lucide-rea
 
 import stepsImage from "@/assets/hero-airport.jpg";
 import { SectionHeader } from "@/components/goair/section-header";
+import { useTranslation } from "@/lib/i18n/language-context";
 
 const STEPS = [
-  {
-    icon: CalendarSearch,
-    title: "ابحث",
-    text: "اختار المطار والوجهة والتاريخ، وشوف كل المواعيد والأسعار المتاحة.",
-  },
-  {
-    icon: MousePointerClick,
-    title: "اختار",
-    text: "قارن بين المواعيد، وحدد نقل مشترك أو خاص حسب مجموعتك.",
-  },
-  {
-    icon: Ticket,
-    title: "احجز",
-    text: "أدخل بيانات المسافرين وأكّد الدفع — تذكرتك جاهزة فورًا.",
-  },
-  {
-    icon: UserRound,
-    title: "استقبال",
-    text: "مندوب GoAir مستنيك في صالة الوصول بلافتة عليها اسمك.",
-  },
-] as const;
+  { icon: CalendarSearch, key: "search" as const },
+  { icon: MousePointerClick, key: "choose" as const },
+  { icon: Ticket, key: "book" as const },
+  { icon: UserRound, key: "pickup" as const },
+];
 
 /** Simple 4-step "how it works" strip — sits right after the core homepage sections. */
 export function HowItWorks() {
+  const { t } = useTranslation();
   return (
     <section className="bg-mist/60 py-14 sm:py-16">
       <div className="mx-auto max-w-6xl px-4">
         <SectionHeader
-          title="إزاي تحجز مع GoAir"
-          description="من البحث للاستقبال في 4 خطوات بسيطة."
+          title={t("howItWorks.sectionTitle")}
+          description={t("howItWorks.sectionDescription")}
         />
 
         <div className="mt-10 grid gap-10 lg:grid-cols-[1.1fr_1.4fr] lg:items-center lg:gap-14">
           <img
             src={stepsImage}
-            alt="مدرج مطار"
+            alt={t("howItWorks.imageAlt")}
             loading="lazy"
             className="hidden aspect-[4/3] w-full rounded-2xl object-cover lg:block"
           />
 
           <div className="grid gap-8 sm:grid-cols-2">
             {STEPS.map((step, index) => (
-              <div key={step.title} className="relative flex flex-col items-start">
+              <div key={step.key} className="relative flex flex-col items-start">
                 {index < STEPS.length - 1 ? (
                   <span
                     className="absolute top-6 start-full hidden h-px w-8 -translate-y-1/2 bg-accent/40 lg:block"
@@ -56,11 +42,15 @@ export function HowItWorks() {
                 <span className="relative z-10 flex size-12 items-center justify-center rounded-full border-2 border-accent bg-background text-accent">
                   <step.icon className="size-5" aria-hidden />
                 </span>
-                <p className="mt-4 text-xs font-bold text-accent">الخطوة {index + 1}</p>
+                <p className="mt-4 text-xs font-bold text-accent">
+                  {t("howItWorks.stepLabel", { number: index + 1 })}
+                </p>
                 <h3 className="mt-1 font-display text-lg font-extrabold text-primary">
-                  {step.title}
+                  {t(`howItWorks.${step.key}.title`)}
                 </h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{step.text}</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                  {t(`howItWorks.${step.key}.text`)}
+                </p>
               </div>
             ))}
           </div>

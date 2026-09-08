@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { PriceCard } from "@/components/goair/price-card";
 import { DestinationPlaceholder } from "@/components/goair/destination-placeholder";
 import { Card } from "@/components/ui/card";
+import { useTranslation } from "@/lib/i18n/language-context";
 import { useDestinationPhoto } from "@/hooks/use-destination-photo";
 import type { DestinationSummary } from "@/lib/trip-stats";
 import { getDedicatedDestinationImage, getDestinationCardImage } from "@/lib/trip-media";
@@ -14,6 +15,7 @@ type DestinationCardProps = {
 };
 
 export function DestinationCard({ destination, className }: DestinationCardProps) {
+  const { t } = useTranslation();
   const dedicatedImage = getDedicatedDestinationImage(destination.name);
   const poolFallback = getDestinationCardImage(destination.name, destination.country);
   const image = useDestinationPhoto(
@@ -60,7 +62,7 @@ export function DestinationCard({ destination, className }: DestinationCardProps
             }}
             className="text-xs font-bold text-accent hover:underline"
           >
-            عرض
+            {t("destinationCard.viewCta")}
           </Link>
         </div>
       </div>

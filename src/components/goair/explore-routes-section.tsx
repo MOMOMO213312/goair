@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { DestinationCard } from "@/components/goair/destination-card";
 import { EmptyState } from "@/components/goair/empty-state";
 import { SectionHeader } from "@/components/goair/section-header";
+import { useTranslation } from "@/lib/i18n/language-context";
 import type { Trip } from "@/lib/goair";
 import {
   getAirportSummaries,
@@ -25,6 +26,7 @@ type ExploreRoutesSectionProps = {
  * filterable by departure airport.
  */
 export function ExploreRoutesSection({ trips, countries }: ExploreRoutesSectionProps) {
+  const { t } = useTranslation();
   const publicTrips = useMemo(
     () => trips.filter((trip) => countries.includes(trip.country)),
     [trips, countries],
@@ -69,8 +71,8 @@ export function ExploreRoutesSection({ trips, countries }: ExploreRoutesSectionP
     <section id="stations" className="scroll-mt-24 py-14 sm:py-16">
       <div className="mx-auto max-w-6xl px-4">
         <SectionHeader
-          title="استكشف رحلاتك"
-          description="اختر مطارك وشوف الوجهات المتاحة بسعر ثابت لكل مقعد."
+          title={t("exploreRoutesSection.sectionTitle")}
+          description={t("exploreRoutesSection.sectionDescription")}
         />
 
         {airports.length > 1 ? (
@@ -85,7 +87,7 @@ export function ExploreRoutesSection({ trips, countries }: ExploreRoutesSectionP
                   : "border-border bg-background text-muted-foreground hover:bg-secondary/60",
               )}
             >
-              كل المطارات
+              {t("exploreRoutesSection.allAirports")}
             </button>
             {airports.map((airport) => (
               <button
@@ -117,8 +119,8 @@ export function ExploreRoutesSection({ trips, countries }: ExploreRoutesSectionP
         ) : (
           <EmptyState
             className="mt-8"
-            title="لا توجد وجهات متاحة حاليًا"
-            description="جرّب مطار تاني أو تواصل معنا للاستفسار."
+            title={t("exploreRoutesSection.emptyTitle")}
+            description={t("exploreRoutesSection.emptyDescription")}
           />
         )}
       </div>
