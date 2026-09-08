@@ -76,7 +76,7 @@ function Home() {
       <AnnouncementTicker />
 
       {/* Hero + Search */}
-      <section className="relative isolate overflow-hidden lg:min-h-[640px]">
+      <section className="relative isolate overflow-hidden lg:overflow-visible lg:min-h-[720px]">
         <HeroBackgroundCarousel
           images={[heroImage, heroAirportImage, routeEgyptImage, routeLebanonImage]}
         />
@@ -125,7 +125,7 @@ function Home() {
         {/* Desktop: compact search card floats over the left side of the hero
             photo (the side the headline text doesn't occupy in RTL), instead
             of a full-width bar stretching across it. */}
-        <div className="pointer-events-none absolute inset-y-10 left-6 z-10 hidden w-[340px] items-center lg:flex xl:left-10 xl:w-[360px]">
+        <div className="pointer-events-none absolute left-6 top-10 z-10 hidden w-[340px] lg:flex xl:left-10 xl:w-[360px]">
           <div className="pointer-events-auto w-full">
             <SearchWidget trips={trips} countries={countries} compact />
           </div>

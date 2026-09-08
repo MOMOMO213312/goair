@@ -428,7 +428,7 @@ export function SearchWidget({
       )}
     </form>
 
-    {quickRoutes.length > 0 ? (
+    {quickRoutes.length > 0 && !compact ? (
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <span className="text-xs font-bold text-muted-foreground">جرّب:</span>
         {quickRoutes.map((trip) => (
