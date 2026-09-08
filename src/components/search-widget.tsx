@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTranslation } from "@/lib/i18n/language-context";
 import type { Trip } from "@/lib/goair";
 import {
   getAirportsForCountry,
@@ -61,6 +62,7 @@ export function SearchWidget({
   className?: string;
 }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [direction, setDirection] = useState<Direction>(initial?.direction ?? "from_airport");
   const [country, setCountry] = useState(initial?.country ?? countries[0] ?? "");
   const [airport, setAirport] = useState(initial?.airport ?? "");
@@ -165,7 +167,9 @@ export function SearchWidget({
   function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!country || !destination || !airport) {
-      toast.error(isDeparting ? "اختار مدينتك والمطار الأول." : "اختار المطار ووجهتك الأول.");
+      toast.error(
+        isDeparting ? t("searchWidget.errorToAirport") : t("searchWidget.errorFromAirport"),
+      );
       return;
     }
     navigate({
@@ -209,10 +213,10 @@ export function SearchWidget({
         </span>
         <span>
           <span className="block font-display text-base font-extrabold text-primary sm:text-lg">
-            أنا مسافر
+            {t("searchWidget.directionToAirport.title")}
           </span>
           <span className="mt-0.5 block text-xs text-muted-foreground sm:text-sm">
-            من موقعي إلى المطار
+            {t("searchWidget.directionToAirport.subtitle")}
           </span>
         </span>
       </button>
@@ -238,10 +242,10 @@ export function SearchWidget({
         </span>
         <span>
           <span className="block font-display text-base font-extrabold text-primary sm:text-lg">
-            أنا واصل
+            {t("searchWidget.directionFromAirport.title")}
           </span>
           <span className="mt-0.5 block text-xs text-muted-foreground sm:text-sm">
-            من المطار إلى وجهتي
+            {t("searchWidget.directionFromAirport.subtitle")}
           </span>
         </span>
       </button>
@@ -256,14 +260,16 @@ export function SearchWidget({
     >
       <p className="mb-3 flex items-center gap-2 font-display text-sm font-bold text-primary">
         <Search className="size-4 text-accent" />
-        {isDeparting ? "تفاصيل رحلتك للمطار" : "تفاصيل رحلتك من المطار"}
+        {isDeparting
+          ? t("searchWidget.formTitleToAirport")
+          : t("searchWidget.formTitleFromAirport")}
       </p>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div className="space-y-2">
           <Label className="flex items-center gap-1.5">
             <Globe2 className="size-3.5 text-muted-foreground" />
-            الدولة
+            {t("searchWidget.countryLabel")}
           </Label>
           <Select
             value={country}
@@ -274,7 +280,7 @@ export function SearchWidget({
             }}
           >
             <SelectTrigger className="h-11">
-              <SelectValue placeholder="اختار الدولة" />
+              <SelectValue placeholder={t("searchWidget.countryPlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               {countries.map((item) => (
@@ -289,9 +295,9 @@ export function SearchWidget({
         {isDeparting ? (
           <>
             <SearchCombobox
-              label="هتتحرك منين؟"
-              placeholder="اكتب اسم منطقتك"
-              emptyText="اختار الدولة أولاً."
+              label={t("searchWidget.departureLocationLabel")}
+              placeholder={t("searchWidget.departureLocationPlaceholder")}
+              emptyText={t("searchWidget.departureLocationEmpty")}
               options={destinationOptions}
               value={destination}
               onChange={(value) => {
@@ -302,9 +308,9 @@ export function SearchWidget({
             />
 
             <SearchCombobox
-              label="هتسافر من مطار إيه؟"
-              placeholder="اختار المطار"
-              emptyText="اختار منطقتك أولاً."
+              label={t("searchWidget.departureAirportLabel")}
+              placeholder={t("searchWidget.departureAirportPlaceholder")}
+              emptyText={t("searchWidget.departureAirportEmpty")}
               options={airportOptions}
               value={airport}
               onChange={setAirport}
@@ -314,9 +320,9 @@ export function SearchWidget({
         ) : (
           <>
             <SearchCombobox
-              label="هتنزل مطار إيه؟"
-              placeholder="اختار المطار"
-              emptyText="لا يوجد مطار في هذه الدولة."
+              label={t("searchWidget.arrivalAirportLabel")}
+              placeholder={t("searchWidget.arrivalAirportPlaceholder")}
+              emptyText={t("searchWidget.arrivalAirportEmpty")}
               options={airportOptions}
               value={airport}
               onChange={(value) => {
@@ -327,9 +333,9 @@ export function SearchWidget({
             />
 
             <SearchCombobox
-              label="وجهتك بعد الوصول"
-              placeholder="رايح فين؟"
-              emptyText="اختار المطار أولاً."
+              label={t("searchWidget.arrivalDestinationLabel")}
+              placeholder={t("searchWidget.arrivalDestinationPlaceholder")}
+              emptyText={t("searchWidget.arrivalDestinationEmpty")}
               options={destinationOptions}
               value={destination}
               onChange={setDestination}
@@ -341,7 +347,9 @@ export function SearchWidget({
         <div className="space-y-2">
           <Label htmlFor="goair-date" className="flex items-center gap-1.5">
             <CalendarDays className="size-3.5 text-muted-foreground" />
-            {isDeparting ? "تاريخ الرحلة" : "تاريخ الوصول"}
+            {isDeparting
+              ? t("searchWidget.dateLabelToAirport")
+              : t("searchWidget.dateLabelFromAirport")}
           </Label>
           <Input
             id="goair-date"
@@ -356,7 +364,7 @@ export function SearchWidget({
         <div className="space-y-2">
           <Label htmlFor="goair-seats" className="flex items-center gap-1.5">
             <Users className="size-3.5 text-muted-foreground" />
-            عدد المسافرين
+            {t("searchWidget.seatsLabel")}
           </Label>
           <Input
             id="goair-seats"
@@ -376,7 +384,7 @@ export function SearchWidget({
             className="h-11 w-full bg-accent text-base font-bold text-accent-foreground hover:bg-accent/90"
           >
             <Plane className={cn("size-5", isDeparting ? "rotate-45" : "-rotate-45")} aria-hidden />
-            ابحث عن الرحلات
+            {t("searchWidget.submit")}
           </Button>
         </div>
       </div>
@@ -387,12 +395,15 @@ export function SearchWidget({
         <div className="mt-3 space-y-2">
           <Label htmlFor="goair-flight" className="flex items-center gap-1.5">
             <PlaneTakeoff className="size-3.5 text-muted-foreground" />
-            رقم الرحلة <span className="font-normal text-muted-foreground">(اختياري)</span>
+            {t("searchWidget.flightNumberLabel")}{" "}
+            <span className="font-normal text-muted-foreground">
+              {t("searchWidget.flightNumberOptional")}
+            </span>
           </Label>
           <Input
             id="goair-flight"
             type="text"
-            placeholder="مثال: MS777"
+            placeholder={t("searchWidget.flightNumberPlaceholder")}
             value={flight}
             onChange={(event) => setFlight(event.target.value)}
             className="h-11"
@@ -406,14 +417,16 @@ export function SearchWidget({
           className="mt-3 flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-accent"
         >
           <PlaneTakeoff className="size-3.5" />
-          + إضافة رقم الرحلة (اختياري)
+          {t("searchWidget.addFlightNumber")}
         </button>
       )}
     </form>
 
     {quickRoutes.length > 0 ? (
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <span className="text-xs font-bold text-muted-foreground">جرّب:</span>
+        <span className="text-xs font-bold text-muted-foreground">
+          {t("searchWidget.tryLabel")}
+        </span>
         {quickRoutes.map((trip) => (
           <button
             key={trip.id}
