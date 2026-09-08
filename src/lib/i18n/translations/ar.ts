@@ -675,6 +675,7 @@ const ar = {
     packagesLoading: "جاري تحميل الباقات...",
     noPackagesAvailable: "مفيش باقات متاحة دلوقتي.",
     packagesFootnote: "الباقات دي إضافية فوق سعر المقعد الأساسي، وبتتضاف لإجمالي حجزك تلقائيًا.",
+    packagesSectionDescription: "باقات إضافية فوق سعر المقعد الأساسي، بتتضاف تلقائيًا لحجزك.",
     choosePackageAndSearch: "اختار الباقة دي وابحث عن رحلتك",
     nextStepPackage: "الخطوة الجاية: اختار رحلتك جوه فلو الباقة",
     membershipBadge: "عضوية GoAir",

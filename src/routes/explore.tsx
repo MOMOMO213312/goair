@@ -116,17 +116,18 @@ function ExploreHero({ tab }: { tab: ExploreTab }) {
 const ICONS: Record<string, LucideIcon> = { Sparkles, Clock, UserRound, Crown, Award, Gem };
 
 function PackagesBlock() {
+  const { t } = useTranslation();
   const { data: packages, isPending } = useQuery({ queryKey: ["goair", "packages"], queryFn: fetchActivePackages });
 
   return (
     <section className="goair-section">
       <div className="goair-container">
-        <SectionHeader title="باقات الرحلة" description="باقات إضافية فوق سعر المقعد الأساسي، بتتضاف تلقائيًا لحجزك." />
+        <SectionHeader title={t("explorePage.packagesHeroTitle")} description={t("explorePage.packagesSectionDescription")} />
 
         {isPending ? (
-          <p className="mt-10 text-center text-sm text-muted-foreground">جاري تحميل الباقات...</p>
+          <p className="mt-10 text-center text-sm text-muted-foreground">{t("explorePage.packagesLoading")}</p>
         ) : !packages || packages.length === 0 ? (
-          <p className="mt-10 text-center text-sm text-muted-foreground">مفيش باقات متاحة دلوقتي.</p>
+          <p className="mt-10 text-center text-sm text-muted-foreground">{t("explorePage.noPackagesAvailable")}</p>
         ) : (
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {packages.map((pkg) => (
@@ -137,7 +138,7 @@ function PackagesBlock() {
 
         <div className="mt-10 flex items-center justify-center gap-2 rounded-xl border border-border bg-mist/60 px-4 py-3 text-center text-sm text-muted-foreground">
           <Luggage className="size-4 shrink-0" />
-          الباقات دي إضافية فوق سعر المقعد الأساسي، وبتتضاف لإجمالي حجزك تلقائيًا.
+          {t("explorePage.packagesFootnote")}
         </div>
       </div>
     </section>
@@ -145,6 +146,7 @@ function PackagesBlock() {
 }
 
 function PackageCard({ pkg }: { pkg: PackageTier }) {
+  const { t } = useTranslation();
   const Icon = ICONS[pkg.iconName] ?? Sparkles;
   const photo = useStockPhoto("packages", pkg.id, pkg.imageUrl);
   return (
@@ -163,7 +165,7 @@ function PackageCard({ pkg }: { pkg: PackageTier }) {
       <div className="flex flex-1 flex-col p-6">
       {pkg.isHighlighted ? (
         <span className="mb-3 inline-flex w-fit items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-foreground">
-          الأكثر طلبًا
+          {t("explorePage.mostRequested")}
         </span>
       ) : null}
 
@@ -178,7 +180,7 @@ function PackageCard({ pkg }: { pkg: PackageTier }) {
 
       <p className="mt-5 flex items-baseline gap-1">
         <span className="font-display text-3xl font-extrabold">${pkg.priceUsd}</span>
-        <span className={cn("text-sm", pkg.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>لكل مسافر</span>
+        <span className={cn("text-sm", pkg.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>{t("explorePage.perTraveler")}</span>
       </p>
 
       <ul className="mt-6 flex-1 space-y-3 text-sm">
@@ -196,11 +198,11 @@ function PackageCard({ pkg }: { pkg: PackageTier }) {
         className={cn("mt-6 w-full font-bold", pkg.isHighlighted ? "bg-accent text-accent-foreground hover:bg-accent/90" : "bg-primary text-primary-foreground hover:bg-primary/90")}
       >
         <Link to="/package" search={{ packageId: pkg.id }}>
-          اختار الباقة دي وابحث عن رحلتك
+          {t("explorePage.choosePackageAndSearch")}
         </Link>
       </Button>
       <p className={cn("mt-2 text-center text-xs", pkg.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>
-        الخطوة الجاية: اختار رحلتك جوه فلو الباقة
+        {t("explorePage.nextStepPackage")}
       </p>
       </div>
     </div>
@@ -210,7 +212,6 @@ function PackageCard({ pkg }: { pkg: PackageTier }) {
 /* ---------------------------------- الاشتراكات ---------------------------------- */
 
 const SUB_COUNTRIES = ["مصر", "لبنان"];
-const DURATION_LABEL: Record<string, string> = { semi_annual: "6 شهور", annual: "سنوي" };
 
 /** Group plans by tier so each tier shows once with its duration as a switch, not 6 flat cards. */
 function groupPlansByTier(plans: SubscriptionPlan[]): { tier: string; byDuration: Record<string, SubscriptionPlan> }[] {
@@ -227,6 +228,7 @@ function groupPlansByTier(plans: SubscriptionPlan[]): { tier: string; byDuration
 }
 
 function SubscriptionsBlock() {
+  const { t } = useTranslation();
   const [subCountry, setSubCountry] = useState<string>(SUB_COUNTRIES[0] ?? "مصر");
   const [duration, setDuration] = useState<string>("annual");
   const { data: plans, isPending } = useQuery({
@@ -236,6 +238,10 @@ function SubscriptionsBlock() {
 
   const tiers = plans ? groupPlansByTier(plans) : [];
   const availableDurations = plans ? Array.from(new Set(plans.map((p) => p.duration))) : [];
+  const durationLabel: Record<string, string> = {
+    semi_annual: t("explorePage.durationSemiAnnual"),
+    annual: t("explorePage.durationAnnual"),
+  };
 
   return (
     <>
@@ -253,13 +259,13 @@ function SubscriptionsBlock() {
         <div className="goair-container -mt-20 relative pb-4 sm:-mt-24">
           <div className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-primary/80 px-3 py-1 text-xs font-bold text-primary-foreground backdrop-blur">
             <Crown className="size-3.5 text-accent" aria-hidden />
-            عضوية GoAir
+            {t("explorePage.membershipBadge")}
           </div>
           <h2 className="mt-3 max-w-lg font-display text-2xl font-extrabold text-primary-foreground sm:text-3xl">
-            رحلاتك، بخصم دائم وأولوية دايمة
+            {t("explorePage.membershipHeroTitle")}
           </h2>
           <p className="mt-2 max-w-lg text-sm leading-relaxed text-primary-foreground/85">
-            اشترك مرة واستفاد كل رحلة — خصم ثابت، حقائب إضافية، ومقعد مضمون وقت الزحمة.
+            {t("explorePage.membershipHeroDescription")}
           </p>
         </div>
       </section>
@@ -267,7 +273,7 @@ function SubscriptionsBlock() {
       <section className="goair-section pt-6 sm:pt-8">
         <div className="goair-container">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <SectionHeader title="اختار خطتك" description="نفس المزايا، بمدة اشتراك حسب اللي يناسبك." />
+            <SectionHeader title={t("explorePage.choosePlanTitle")} description={t("explorePage.choosePlanDescription")} />
             <div className="flex flex-wrap items-center gap-2">
               {availableDurations.length > 1 ? (
                 <div className="flex rounded-full border border-border bg-mist/60 p-1">
@@ -283,7 +289,7 @@ function SubscriptionsBlock() {
                           duration === d ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground",
                         )}
                       >
-                        {DURATION_LABEL[d] ?? d}
+                        {durationLabel[d] ?? d}
                       </button>
                     ))}
                 </div>
@@ -304,22 +310,22 @@ function SubscriptionsBlock() {
           </div>
 
           {isPending ? (
-            <p className="mt-10 text-center text-sm text-muted-foreground">جاري تحميل الاشتراكات...</p>
+            <p className="mt-10 text-center text-sm text-muted-foreground">{t("explorePage.subscriptionsLoading")}</p>
           ) : tiers.length === 0 ? (
-            <p className="mt-10 text-center text-sm text-muted-foreground">مفيش اشتراكات متاحة في الدولة دي دلوقتي.</p>
+            <p className="mt-10 text-center text-sm text-muted-foreground">{t("explorePage.noSubscriptionsInCountry")}</p>
           ) : (
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {tiers.map(({ tier, byDuration }) => {
                 const plan = byDuration[duration] ?? Object.values(byDuration)[0];
                 if (!plan) return null;
-                return <SubscriptionPlanCard key={tier} plan={plan} />;
+                return <SubscriptionPlanCard key={tier} plan={plan} durationLabel={durationLabel} />;
               })}
             </div>
           )}
 
           <div className="mt-10 flex items-center justify-center gap-2 rounded-xl border border-border bg-mist/60 px-4 py-3 text-center text-sm text-muted-foreground">
             <Award className="size-4 shrink-0" />
-            الاشتراك عضوية منفصلة عن الحجز — بعد الاشتراك هتاخد كود تتبع من صفحة "حجزي" (تبويب اشتراك).
+            {t("explorePage.subscriptionFootnote")}
           </div>
         </div>
       </section>
@@ -327,7 +333,8 @@ function SubscriptionsBlock() {
   );
 }
 
-function SubscriptionPlanCard({ plan }: { plan: SubscriptionPlan }) {
+function SubscriptionPlanCard({ plan, durationLabel }: { plan: SubscriptionPlan; durationLabel: Record<string, string> }) {
+  const { t } = useTranslation();
   const Icon = ICONS[plan.iconName] ?? Sparkles;
   const photo = useStockPhoto("subscription_plans", plan.id, plan.imageUrl);
 
@@ -350,7 +357,7 @@ function SubscriptionPlanCard({ plan }: { plan: SubscriptionPlan }) {
 
         {plan.isHighlighted ? (
           <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-foreground">
-            الأكثر توفيرًا
+            {t("explorePage.mostSavings")}
           </span>
         ) : null}
 
@@ -368,35 +375,35 @@ function SubscriptionPlanCard({ plan }: { plan: SubscriptionPlan }) {
         <p className="flex items-baseline gap-1">
           <span className="font-display text-3xl font-extrabold">${plan.priceUsd}</span>
           <span className={cn("text-sm", plan.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>
-            / {DURATION_LABEL[plan.duration] ?? plan.duration}
+            / {durationLabel[plan.duration] ?? plan.duration}
           </span>
         </p>
 
         <ul className="mt-5 flex-1 space-y-3 text-sm">
           <li className="flex items-start gap-2">
             <Check className={cn("mt-0.5 size-4 shrink-0", plan.isHighlighted ? "text-accent" : "text-primary")} />
-            <span>خصم {plan.discountPercent}% على كل رحلاتك</span>
+            <span>{t("explorePage.discountOnAllTrips", { percent: plan.discountPercent })}</span>
           </li>
           {plan.freeRideCredits > 0 ? (
             <li className="flex items-start gap-2">
               <Check className={cn("mt-0.5 size-4 shrink-0", plan.isHighlighted ? "text-accent" : "text-primary")} />
-              <span>{plan.freeRideCredits} رحلة مجانية</span>
+              <span>{plan.freeRideCredits} {t("explorePage.freeRideSingular")}</span>
             </li>
           ) : null}
           <li className="flex items-start gap-2">
             <Check className={cn("mt-0.5 size-4 shrink-0", plan.isHighlighted ? "text-accent" : "text-primary")} />
-            <span>{plan.extraLuggagePieces} حقيبة إضافية لكل رحلة</span>
+            <span>{plan.extraLuggagePieces} {t("explorePage.extraLuggagePerTrip")}</span>
           </li>
           {plan.guaranteedSeat ? (
             <li className="flex items-start gap-2">
               <Check className={cn("mt-0.5 size-4 shrink-0", plan.isHighlighted ? "text-accent" : "text-primary")} />
-              <span>مقعد مضمون حتى في أوقات الزحمة</span>
+              <span>{t("explorePage.guaranteedSeat")}</span>
             </li>
           ) : null}
           {plan.prioritySupport ? (
             <li className="flex items-start gap-2">
               <Check className={cn("mt-0.5 size-4 shrink-0", plan.isHighlighted ? "text-accent" : "text-primary")} />
-              <span>دعم عملاء بأولوية</span>
+              <span>{t("explorePage.prioritySupport")}</span>
             </li>
           ) : null}
           {plan.features.map((feature) => (
@@ -412,7 +419,7 @@ function SubscriptionPlanCard({ plan }: { plan: SubscriptionPlan }) {
           className={cn("mt-6 w-full font-bold", plan.isHighlighted ? "bg-accent text-accent-foreground hover:bg-accent/90" : "bg-primary text-primary-foreground hover:bg-primary/90")}
         >
           <Link to="/subscribe" search={{ planId: plan.id }}>
-            اشترك الآن
+            {t("explorePage.subscribeNow")}
           </Link>
         </Button>
       </div>

@@ -675,6 +675,7 @@ const en = {
     packagesLoading: "Loading packages...",
     noPackagesAvailable: "No packages available right now.",
     packagesFootnote: "These packages are on top of the base seat price, and are added to your booking total automatically.",
+    packagesSectionDescription: "Extra packages on top of the base seat price, added to your booking automatically.",
     choosePackageAndSearch: "Choose this package and find your trip",
     nextStepPackage: "Next step: choose your trip inside the package flow",
     membershipBadge: "GoAir Membership",
