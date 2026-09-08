@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useStockPhoto } from "@/hooks/use-stock-photo";
 import { EXPLORE_TAB_VALUES, type ExploreTab } from "@/lib/explore-tabs";
 import {
   fetchActivePackages,
@@ -142,15 +143,21 @@ function PackagesBlock() {
 
 function PackageCard({ pkg }: { pkg: PackageTier }) {
   const Icon = ICONS[pkg.iconName] ?? Sparkles;
+  const photo = useStockPhoto("packages", pkg.id, pkg.imageUrl);
   return (
     <div
       className={cn(
-        "flex flex-col rounded-2xl border p-6 shadow-sm",
+        "flex flex-col overflow-hidden rounded-2xl border shadow-sm",
         pkg.isHighlighted
           ? "border-accent bg-primary text-primary-foreground shadow-lg ring-2 ring-accent"
           : "border-border bg-card text-card-foreground",
       )}
     >
+      {photo ? (
+        <img src={photo} alt="" loading="lazy" className="aspect-[16/9] w-full object-cover" />
+      ) : null}
+
+      <div className="flex flex-1 flex-col p-6">
       {pkg.isHighlighted ? (
         <span className="mb-3 inline-flex w-fit items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-foreground">
           الأكثر طلبًا
@@ -192,6 +199,7 @@ function PackageCard({ pkg }: { pkg: PackageTier }) {
       <p className={cn("mt-2 text-center text-xs", pkg.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>
         الخطوة الجاية: اختار رحلتك جوه فلو الباقة
       </p>
+      </div>
     </div>
   );
 }
