@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/accordion";
 import { fetchTrips, fetchVisibleCountries } from "@/lib/goair";
 import { filterPublicTrips } from "@/lib/trip-stats";
+import { useTranslation } from "@/lib/i18n/language-context";
+import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
 
 const marketsQuery = queryOptions({
   queryKey: ["goair", "markets"],
@@ -35,35 +37,45 @@ const marketsQuery = queryOptions({
   },
 });
 
+// head() runs before the LanguageProvider mounts (it feeds <HeadContent /> in the
+// shell), so it can't call useTranslation(). It always renders the default-language
+// meta tags; that's an accepted v1 tradeoff (see MIGRATION_GUIDE.md → "SSR meta tags").
+const homeMeta = translations[DEFAULT_LANGUAGE].home.meta;
+
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "GoAir — نقل مشترك من وإلى المطار في مصر ولبنان" },
+      { title: homeMeta.title },
       {
         name: "description",
-        content:
-          "احجز مقعدك في نقل مشترك من وإلى مطارات مصر ولبنان: سعر ثابت لكل مقعد، مواعيد ثابتة، واستقبال خارج المطار.",
+        content: homeMeta.description,
       },
-      { property: "og:title", content: "GoAir — نقل مشترك من وإلى المطار" },
+      { property: "og:title", content: homeMeta.title },
       {
         property: "og:description",
-        content: "سعر ثابت، مواعيد معروفة، واستقبال خارج المطار بدون مفاوضات.",
+        content: homeMeta.ogDescription,
       },
     ],
   }),
   loader: ({ context }) => context.queryClient.ensureQueryData(marketsQuery),
   component: Home,
-  errorComponent: () => (
-    <div className="mx-auto max-w-md px-4 py-24 text-center">
-      <h1 className="font-display text-xl font-bold">مش قادرين نحمّل الخطوط دلوقتي</h1>
-      <p className="mt-2 text-sm text-muted-foreground">جرّب تحديث الصفحة بعد لحظات.</p>
-    </div>
-  ),
+  errorComponent: HomeErrorComponent,
 });
+
+function HomeErrorComponent() {
+  const { t } = useTranslation();
+  return (
+    <div className="mx-auto max-w-md px-4 py-24 text-center">
+      <h1 className="font-display text-xl font-bold">{t("home.errorLoadingTrips.title")}</h1>
+      <p className="mt-2 text-sm text-muted-foreground">{t("home.errorLoadingTrips.body")}</p>
+    </div>
+  );
+}
 
 function Home() {
   const { data } = useSuspenseQuery(marketsQuery);
   const { trips, countries } = data;
+  const { t } = useTranslation();
 
   const publicTrips = useMemo(() => filterPublicTrips(trips, countries), [trips, countries]);
 
@@ -75,7 +87,7 @@ function Home() {
       <section className="relative isolate overflow-hidden">
         <img
           src={heroImage}
-          alt="مدرج مطار وقت الغروب"
+          alt={t("home.hero.imageAlt")}
           width={1920}
           height={1088}
           fetchPriority="high"
@@ -89,23 +101,26 @@ function Home() {
           <div className="max-w-2xl">
             <p className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1 text-xs font-bold text-primary-foreground">
               <Sparkles className="size-3.5 text-accent" />
-              مصر ولبنان — متاح الآن
+              {t("home.hero.badge")}
             </p>
             <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.1] text-primary-foreground sm:text-6xl">
-              رحلتك تبدأ من هنا
+              {t("home.hero.title")}
             </h1>
             <p className="mt-4 max-w-md text-base leading-relaxed text-primary-foreground/90 sm:text-lg">
-              حلول سفر متكاملة مصممة لكل رحلة
+              {t("home.hero.subtitle")}
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4 border-t border-primary-foreground/15 pt-6">
               {[
-                { value: `+${publicTrips.length}`, label: "خط رحلة نشط" },
+                { value: `+${publicTrips.length}`, label: t("home.hero.statActiveRoutes") },
                 {
                   value: String(countries.length),
-                  label: countries.length === 1 ? "دولة متاحة الآن" : "دول متاحة الآن",
+                  label:
+                    countries.length === 1
+                      ? t("home.hero.statCountrySingular")
+                      : t("home.hero.statCountryPlural"),
                 },
-                { value: "24/7", label: "دعم متواصل" },
+                { value: "24/7", label: t("home.hero.statSupport") },
               ].map((stat) => (
                 <div key={stat.label}>
                   <p className="font-display text-2xl font-extrabold text-primary-foreground sm:text-3xl">
@@ -156,25 +171,19 @@ function Home() {
 
       {/* FAQ */}
       <section className="mx-auto max-w-3xl px-4 py-14 sm:py-16">
-        <SectionHeader title="أسئلة سريعة" />
+        <SectionHeader title={t("home.faq.title")} />
         <Accordion type="single" collapsible className="mt-6">
           <AccordionItem value="a">
-            <AccordionTrigger>هأقابل السائق فين؟</AccordionTrigger>
-            <AccordionContent>
-              نقطة التقاء واضحة خارج المطار — التفاصيل تظهر في تذكرتك بعد تأكيد الحجز.
-            </AccordionContent>
+            <AccordionTrigger>{t("home.faq.q1")}</AccordionTrigger>
+            <AccordionContent>{t("home.faq.a1")}</AccordionContent>
           </AccordionItem>
           <AccordionItem value="b">
-            <AccordionTrigger>السعر بيتغير؟</AccordionTrigger>
-            <AccordionContent>
-              السعر المعروض لكل مقعد ثابت — ما تشوفش سعر مختلف عند الدفع.
-            </AccordionContent>
+            <AccordionTrigger>{t("home.faq.q2")}</AccordionTrigger>
+            <AccordionContent>{t("home.faq.a2")}</AccordionContent>
           </AccordionItem>
           <AccordionItem value="c">
-            <AccordionTrigger>ازاي أتابع حجزي؟</AccordionTrigger>
-            <AccordionContent>
-              من صفحة «حجوزاتي» — اكتب كود التذكرة اللي استلمته بعد الحجز.
-            </AccordionContent>
+            <AccordionTrigger>{t("home.faq.q3")}</AccordionTrigger>
+            <AccordionContent>{t("home.faq.a3")}</AccordionContent>
           </AccordionItem>
         </Accordion>
       </section>

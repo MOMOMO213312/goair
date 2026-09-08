@@ -15,22 +15,25 @@ import { captureReferralFromUrl } from "@/lib/referral";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Toaster } from "@/components/ui/sonner";
+import { LanguageProvider } from "@/lib/i18n/language-context";
+import { useTranslation } from "@/lib/i18n/language-context";
 
 function NotFoundComponent() {
+  const { t } = useTranslation();
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="font-display text-7xl font-extrabold text-primary">404</h1>
-        <h2 className="mt-4 font-display text-xl font-bold text-foreground">الصفحة غير موجودة</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          الصفحة اللي بتدور عليها مش موجودة أو اتنقلت لمكان تاني.
-        </p>
+        <h2 className="mt-4 font-display text-xl font-bold text-foreground">
+          {t("notFound.title")}
+        </h2>
+        <p className="mt-2 text-sm text-muted-foreground">{t("notFound.body")}</p>
         <div className="mt-6">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            الرجوع للرئيسية
+            {t("notFound.backHome")}
           </Link>
         </div>
       </div>
@@ -41,6 +44,7 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const { t } = useTranslation();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
@@ -49,11 +53,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="font-display text-xl font-bold tracking-tight text-foreground">
-          الصفحة دي متحملتش
+          {t("errorPage.title")}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          حصل خطأ من عندنا. جرّب تحدّث الصفحة أو ارجع للرئيسية.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">{t("errorPage.body")}</p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -62,13 +64,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            حاول تاني
+            {t("errorPage.retry")}
           </button>
           <a
             href="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-bold text-foreground transition-colors hover:bg-accent"
           >
-            الرئيسية
+            {t("errorPage.home")}
           </a>
         </div>
       </div>
@@ -157,15 +159,17 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="flex min-h-screen flex-col">
-        <SiteHeader />
-        <main className="flex-1">
-          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-          <Outlet />
-        </main>
-        <SiteFooter />
-      </div>
-      <Toaster position="top-center" richColors />
+      <LanguageProvider>
+        <div className="flex min-h-screen flex-col">
+          <SiteHeader />
+          <main className="flex-1">
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+          </main>
+          <SiteFooter />
+        </div>
+        <Toaster position="top-center" richColors />
+      </LanguageProvider>
     </QueryClientProvider>
   );
 }
