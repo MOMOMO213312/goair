@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import { Label } from "@/components/ui/label";
 import { uploadPaymentProof } from "@/lib/goair";
+import { useTranslation } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/utils";
 
 const MAX_SIZE_BYTES = 8 * 1024 * 1024; // 8MB
@@ -26,17 +27,18 @@ type PaymentProofUploadProps = {
  * using the reference number field alone (never blocks the booking).
  */
 export function PaymentProofUpload({ ticket, onUploaded, onCleared, className }: PaymentProofUploadProps) {
+  const { t } = useTranslation();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
 
   async function handleFile(file: File) {
     if (!ACCEPTED.split(",").includes(file.type)) {
-      toast.error("الملف لازم يكون صورة (JPG/PNG/WebP) أو PDF.");
+      toast.error(t("payment.proofUpload.invalidType"));
       return;
     }
     if (file.size > MAX_SIZE_BYTES) {
-      toast.error("حجم الملف أكبر من 8 ميجا. جرّب صورة أصغر.");
+      toast.error(t("payment.proofUpload.tooLarge"));
       return;
     }
     setBusy(true);
@@ -44,9 +46,9 @@ export function PaymentProofUpload({ ticket, onUploaded, onCleared, className }:
       const url = await uploadPaymentProof(ticket, file);
       setFileName(file.name);
       onUploaded(url);
-      toast.success("تم رفع إثبات الدفع.");
+      toast.success(t("payment.proofUpload.uploadSuccess"));
     } catch {
-      toast.error("لم نتمكن من رفع الملف — تقدر تكمل وتكتب رقم العملية بس بدالها.");
+      toast.error(t("payment.proofUpload.uploadFailed"));
       setFileName(null);
     } finally {
       setBusy(false);
@@ -56,7 +58,7 @@ export function PaymentProofUpload({ ticket, onUploaded, onCleared, className }:
   return (
     <div className={cn("space-y-2", className)}>
       <Label className="font-medium">
-        صورة إثبات الدفع <span className="text-xs text-muted-foreground">(اختياري — بيسرّع مراجعة حجزك)</span>
+        {t("payment.proofUpload.label")} <span className="text-xs text-muted-foreground">{t("payment.proofUpload.optionalHint")}</span>
       </Label>
 
       <input
@@ -84,7 +86,7 @@ export function PaymentProofUpload({ ticket, onUploaded, onCleared, className }:
               if (inputRef.current) inputRef.current.value = "";
             }}
             className="shrink-0 text-muted-foreground transition-colors hover:text-destructive"
-            aria-label="إلغاء الملف"
+            aria-label={t("payment.proofUpload.cancelAria")}
           >
             <X className="size-4" aria-hidden />
           </button>
@@ -102,12 +104,12 @@ export function PaymentProofUpload({ ticket, onUploaded, onCleared, className }:
           {busy ? (
             <>
               <Loader2 className="size-4 animate-spin" aria-hidden />
-              جاري الرفع...
+              {t("payment.proofUpload.uploading")}
             </>
           ) : (
             <>
               <Upload className="size-4" aria-hidden />
-              اختر صورة أو PDF
+              {t("payment.proofUpload.chooseFile")}
             </>
           )}
         </button>

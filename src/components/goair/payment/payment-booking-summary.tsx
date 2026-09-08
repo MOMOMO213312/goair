@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import type { BookingRecord, Trip } from "@/lib/goair";
 import { formatTime, formatUsd } from "@/lib/goair";
 import { useDestinationPhoto } from "@/hooks/use-destination-photo";
+import { useTranslation } from "@/lib/i18n/language-context";
 import {
   getDedicatedRouteImageFromTripOrFallback,
   getRouteImageFromTripOrFallback,
@@ -44,6 +45,7 @@ export function PaymentBookingSummary({
   ticket,
   className,
 }: PaymentBookingSummaryProps) {
+  const { t } = useTranslation();
   const total = Number(booking.expected_total_usd ?? 0);
   const seats = Number(booking.seats_count ?? 1);
   const travelDate = bookingField(booking, ["travel_date"]);
@@ -88,7 +90,7 @@ export function PaymentBookingSummary({
       ) : null}
 
       <div className="p-5 sm:p-6">
-        <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">رحلتك</p>
+        <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{t("payment.bookingSummary.tripLabel")}</p>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="font-display text-base font-extrabold text-primary">
@@ -114,33 +116,33 @@ export function PaymentBookingSummary({
         <dl className="mt-4 space-y-2.5 text-sm">
           {travelDate ? (
             <div className="flex justify-between gap-3">
-              <dt className="text-muted-foreground">التاريخ</dt>
+              <dt className="text-muted-foreground">{t("payment.bookingSummary.date")}</dt>
               <dd className="font-bold text-primary">{formatSearchDate(travelDate)}</dd>
             </div>
           ) : null}
           {departureRaw ? (
             <div className="flex justify-between gap-3">
-              <dt className="text-muted-foreground">موعد المغادرة</dt>
+              <dt className="text-muted-foreground">{t("payment.bookingSummary.departureTime")}</dt>
               <dd className="font-bold text-primary">
                 {formatTime(departureRaw) || departureRaw}
               </dd>
             </div>
           ) : null}
           <div className="flex justify-between gap-3">
-            <dt className="text-muted-foreground">المقاعد</dt>
+            <dt className="text-muted-foreground">{t("payment.bookingSummary.seats")}</dt>
             <dd className="font-bold text-primary">
-              {seats} {seats === 1 ? "مقعد" : "مقاعد"}
+              {seats} {seats === 1 ? t("payment.bookingSummary.seatSingular") : t("payment.bookingSummary.seatPlural")}
             </dd>
           </div>
         </dl>
 
         <div className="mt-5 rounded-lg bg-secondary/50 px-4 py-3">
-          <p className="text-xs font-bold text-muted-foreground">المبلغ المطلوب</p>
+          <p className="text-xs font-bold text-muted-foreground">{t("payment.bookingSummary.amountDue")}</p>
           <p className="mt-1 font-display text-2xl font-extrabold text-accent">{formatUsd(total)}</p>
         </div>
 
         <div className="mt-4 border-t border-border pt-4">
-          <p className="text-xs font-bold text-muted-foreground">كود التذكرة</p>
+          <p className="text-xs font-bold text-muted-foreground">{t("payment.bookingSummary.ticketCode")}</p>
           <div className="mt-1 flex items-center gap-2">
             <span className="font-display text-lg font-extrabold tracking-widest text-primary">
               {ticket}
@@ -150,10 +152,10 @@ export function PaymentBookingSummary({
               variant="ghost"
               size="icon"
               className="size-8 shrink-0"
-              aria-label="نسخ كود التذكرة"
+              aria-label={t("payment.bookingSummary.copyAria")}
               onClick={() => {
                 void navigator.clipboard.writeText(ticket);
-                toast.success("تم نسخ الكود.");
+                toast.success(t("payment.bookingSummary.copiedToast"));
               }}
             >
               <Copy className="size-4" />

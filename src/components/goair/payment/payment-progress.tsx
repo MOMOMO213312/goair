@@ -1,19 +1,20 @@
+import { useTranslation } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/utils";
-
-const STEPS = [
-  { id: 1, label: "الرحلة" },
-  { id: 2, label: "بيانات المسافر" },
-  { id: 3, label: "الدفع" },
-] as const;
 
 type PaymentProgressProps = {
   className?: string;
 };
 
 export function PaymentProgress({ className }: PaymentProgressProps) {
+  const { t } = useTranslation();
+  const STEPS = [
+    { id: 1 as const, label: t("payment.progress.trip") },
+    { id: 2 as const, label: t("payment.progress.passengerDetails") },
+    { id: 3 as const, label: t("payment.progress.payment") },
+  ];
   return (
     <nav
-      aria-label="خطوات الحجز"
+      aria-label={t("payment.progress.ariaLabel")}
       className={cn(
         "flex flex-wrap items-center justify-center gap-2 text-xs sm:gap-3 sm:text-sm",
         className,

@@ -14,6 +14,8 @@ import { PaymentMobileCta } from "@/components/goair/payment/payment-mobile-cta"
 import { PaymentNotFound } from "@/components/goair/payment/payment-not-found";
 import { PaymentPageSkeleton } from "@/components/goair/payment/payment-page-skeleton";
 import { Card } from "@/components/ui/card";
+import { useTranslation } from "@/lib/i18n/language-context";
+import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
 import {
   fetchPaymentMethods,
   fetchTrips,
@@ -24,6 +26,7 @@ import {
 } from "@/lib/goair";
 
 const FORM_ID = "goair-payment-form";
+const pageMeta = translations[DEFAULT_LANGUAGE].paymentPage.meta;
 
 export const Route = createFileRoute("/payment")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -31,15 +34,15 @@ export const Route = createFileRoute("/payment")({
   }),
   head: () => ({
     meta: [
-      { title: "إتمام الدفع — GoAir" },
+      { title: pageMeta.title },
       {
         name: "description",
-        content: "راجع تفاصيل رحلتك واختر طريقة الدفع المناسبة لإتمام حجزك.",
+        content: pageMeta.description,
       },
-      { property: "og:title", content: "إتمام الدفع — GoAir" },
+      { property: "og:title", content: pageMeta.title },
       {
         property: "og:description",
-        content: "تحويل بنكي أو محفظة إلكترونية — وتأكيد بعد المراجعة.",
+        content: pageMeta.ogDescription,
       },
     ],
   }),
@@ -55,6 +58,7 @@ function bookingField(booking: Record<string, unknown>, keys: string[]): string 
 }
 
 function PaymentPage() {
+  const { t } = useTranslation();
   const { ticket } = Route.useSearch();
   const navigate = useNavigate();
   const [method, setMethod] = useState("");
@@ -88,11 +92,11 @@ function PaymentPage() {
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!method) {
-      toast.error("اختار طريقة الدفع.");
+      toast.error(t("paymentPage.selectMethodError"));
       return;
     }
     if (!booking?.["id"]) {
-      toast.error("مش لاقيين الحجز — راجع كود التذكرة.");
+      toast.error(t("paymentPage.bookingNotFoundError"));
       return;
     }
     setBusy(true);
@@ -104,11 +108,11 @@ function PaymentPage() {
         referenceNumber: reference.trim() || null,
         proofUrl,
       });
-      toast.success("استلمنا بيانات الدفع — بنراجعها الآن.");
+      toast.success(t("paymentPage.paymentReceivedToast"));
       navigate({ to: "/confirmation", search: { ticket } });
     } catch (error) {
       toast.error(
-        friendlyErrorMessage(error, "لم نتمكن من تسجيل الدفع. حاول مرة أخرى أو تواصل مع الدعم."),
+        friendlyErrorMessage(error, t("paymentPage.paymentSubmitError")),
       );
     } finally {
       setBusy(false);
@@ -131,9 +135,9 @@ function PaymentPage() {
     return (
       <div className="bg-mist/30 py-16">
         <div className="mx-auto max-w-md px-4 text-center">
-          <h1 className="font-display text-xl font-bold text-primary">تعذّر تحميل الحجز</h1>
+          <h1 className="font-display text-xl font-bold text-primary">{t("paymentPage.loadError.title")}</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            حاول تحديث الصفحة. إذا استمرت المشكلة، راجع كود التذكرة أو تواصل مع الدعم.
+            {t("paymentPage.loadError.description")}
           </p>
         </div>
       </div>
@@ -187,7 +191,7 @@ function PaymentPage() {
               <PaymentBookingSummary booking={booking} trip={trip} ticket={ticket} />
 
               <Card className="border-accent/20 p-5 shadow-[var(--shadow-card)]">
-                <p className="text-xs font-bold text-muted-foreground">الإجمالي</p>
+                <p className="text-xs font-bold text-muted-foreground">{t("paymentPage.total")}</p>
                 <p className="mt-1 font-display text-3xl font-extrabold text-accent">
                   {formatUsd(total)}
                 </p>
@@ -204,10 +208,10 @@ function PaymentPage() {
                 {busy ? (
                   <>
                     <Loader2 className="size-5 animate-spin" aria-hidden />
-                    جاري تأكيد الدفع...
+                    {t("paymentPage.confirming")}
                   </>
                 ) : (
-                  "أرسلت الدفع"
+                  t("paymentPage.submitButton")
                 )}
               </button>
             </div>

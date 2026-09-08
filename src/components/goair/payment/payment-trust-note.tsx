@@ -1,5 +1,6 @@
 import { Lock } from "lucide-react";
 
+import { useTranslation } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/utils";
 
 type PaymentTrustNoteProps = {
@@ -7,6 +8,7 @@ type PaymentTrustNoteProps = {
 };
 
 export function PaymentTrustNote({ className }: PaymentTrustNoteProps) {
+  const { t } = useTranslation();
   return (
     <p
       className={cn(
@@ -15,7 +17,7 @@ export function PaymentTrustNote({ className }: PaymentTrustNoteProps) {
       )}
     >
       <Lock className="mt-0.5 size-3.5 shrink-0 text-accent" aria-hidden />
-      <span>بيانات الدفع تُستخدم لمعالجة حجزك فقط</span>
+      <span>{t("payment.trustNote")}</span>
     </p>
   );
 }

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { PaymentMethod } from "@/lib/goair";
+import { useTranslation } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/utils";
 
 type PaymentMethodsFormProps = {
@@ -44,29 +45,30 @@ export function PaymentMethodsForm({
   showSubmitButton = true,
   className,
 }: PaymentMethodsFormProps) {
+  const { t } = useTranslation();
   const selected = methods.find((item) => item.method === selectedMethod);
 
   return (
     <Card className={cn("border-border/80 p-5 shadow-[var(--shadow-card)] sm:p-6", className)}>
-      <h2 className="font-display text-lg font-extrabold text-primary">طريقة الدفع</h2>
-      <p className="mt-1 text-sm text-muted-foreground">اختار الطريقة المناسبة ليك وأكمل التحويل.</p>
+      <h2 className="font-display text-lg font-extrabold text-primary">{t("payment.methodsForm.title")}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{t("payment.methodsForm.subtitle")}</p>
 
       <form id={formId} onSubmit={onSubmit} className="mt-6 space-y-6">
         <div className="space-y-3">
           {methodsLoading ? (
             <div className="flex items-center justify-center py-8 text-muted-foreground">
-              <Loader2 className="size-5 animate-spin" aria-label="جاري تحميل طرق الدفع" />
+              <Loader2 className="size-5 animate-spin" aria-label={t("payment.methodsForm.loadingAria")} />
             </div>
           ) : methods.length === 0 ? (
             <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-              لا توجد طرق دفع متاحة حاليًا. تواصل مع الدعم.
+              {t("payment.methodsForm.noMethods")}
             </p>
           ) : (
             <RadioGroup
               value={selectedMethod}
               onValueChange={onMethodChange}
               className="gap-3"
-              aria-label="اختر طريقة الدفع"
+              aria-label={t("payment.methodsForm.chooseMethodAria")}
             >
               {methods.map((item) => (
                 <label
@@ -99,7 +101,7 @@ export function PaymentMethodsForm({
 
         {selected?.details ? (
           <div className="rounded-xl border border-accent/30 bg-accent/5 p-4">
-            <p className="font-display text-sm font-bold text-primary">تعليمات الدفع</p>
+            <p className="font-display text-sm font-bold text-primary">{t("payment.methodsForm.instructionsTitle")}</p>
             <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
               {selected.details}
             </p>
@@ -108,14 +110,14 @@ export function PaymentMethodsForm({
 
         <div className="space-y-2">
           <Label htmlFor="reference" className="font-medium">
-            مرجع التحويل / آخر 4 أرقام{" "}
-            <span className="text-xs text-muted-foreground">(اختياري)</span>
+            {t("payment.methodsForm.referenceLabel")}{" "}
+            <span className="text-xs text-muted-foreground">{t("payment.methodsForm.optional")}</span>
           </Label>
           <Input
             id="reference"
             value={reference}
             onChange={(event) => onReferenceChange(event.target.value)}
-            placeholder="رقم العملية أو آخر 4 أرقام"
+            placeholder={t("payment.methodsForm.referencePlaceholder")}
             className="h-11"
             autoComplete="off"
           />
@@ -140,10 +142,10 @@ export function PaymentMethodsForm({
             {busy ? (
               <>
                 <Loader2 className="size-5 animate-spin" aria-hidden />
-                جاري تأكيد الدفع...
+                {t("payment.methodsForm.confirming")}
               </>
             ) : (
-              "أرسلت الدفع"
+              t("payment.methodsForm.submitButton")
             )}
           </Button>
         ) : null}

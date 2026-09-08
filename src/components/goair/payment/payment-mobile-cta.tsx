@@ -2,6 +2,7 @@ import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { formatUsd } from "@/lib/goair";
+import { useTranslation } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/utils";
 
 type PaymentMobileCtaProps = {
@@ -19,6 +20,7 @@ export function PaymentMobileCta({
   disabled = false,
   className,
 }: PaymentMobileCtaProps) {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -28,7 +30,7 @@ export function PaymentMobileCta({
     >
       <div className="mx-auto flex max-w-lg items-center gap-4">
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-muted-foreground">الإجمالي</p>
+          <p className="text-xs text-muted-foreground">{t("payment.mobileCta.total")}</p>
           <p className="font-display text-xl font-extrabold text-accent">{formatUsd(total)}</p>
         </div>
         <Button
@@ -41,10 +43,10 @@ export function PaymentMobileCta({
           {busy ? (
             <>
               <Loader2 className="size-5 animate-spin" aria-hidden />
-              جاري التأكيد...
+              {t("payment.mobileCta.confirming")}
             </>
           ) : (
-            "أرسلت الدفع"
+            t("payment.mobileCta.submitButton")
           )}
         </Button>
       </div>

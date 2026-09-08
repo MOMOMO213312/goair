@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 
 import type { BookingRecord } from "@/lib/goair";
+import { useTranslation } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/utils";
 
 function bookingField(booking: BookingRecord, keys: string[]): string {
@@ -31,6 +32,7 @@ type PaymentBackLinkProps = {
 };
 
 export function PaymentBackLink({ booking, className }: PaymentBackLinkProps) {
+  const { t } = useTranslation();
   const tripId = bookingField(booking, ["trip_id"]);
   const scheduleId = bookingField(booking, ["schedule_id"]);
   const tripOptionId = bookingField(booking, ["trip_option_id"]);
@@ -49,7 +51,7 @@ export function PaymentBackLink({ booking, className }: PaymentBackLinkProps) {
         )}
       >
         <ArrowRight className="size-4" aria-hidden />
-        العودة لبيانات الحجز
+        {t("payment.backLink.text")}
       </Link>
     );
   }
@@ -72,7 +74,7 @@ export function PaymentBackLink({ booking, className }: PaymentBackLinkProps) {
       )}
     >
       <ArrowRight className="size-4" aria-hidden />
-      العودة لبيانات الحجز
+      {t("payment.backLink.text")}
     </Link>
   );
 }

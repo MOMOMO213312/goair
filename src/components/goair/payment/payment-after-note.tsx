@@ -1,5 +1,6 @@
 import { Info } from "lucide-react";
 
+import { useTranslation } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/utils";
 
 type PaymentAfterNoteProps = {
@@ -7,6 +8,7 @@ type PaymentAfterNoteProps = {
 };
 
 export function PaymentAfterNote({ className }: PaymentAfterNoteProps) {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -16,7 +18,7 @@ export function PaymentAfterNote({ className }: PaymentAfterNoteProps) {
     >
       <Info className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
       <p>
-        بعد إرسال بيانات الدفع، سيقوم فريق GoAir بمراجعتها وتأكيد الحجز.
+        {t("payment.afterNote")}
       </p>
     </div>
   );
