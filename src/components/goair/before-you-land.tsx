@@ -1,6 +1,5 @@
 import { PlaneLanding, ShieldCheck, UserRound } from "lucide-react";
 
-import sedanImage from "@/assets/vehicle-sedan.jpg";
 import { SectionHeader } from "@/components/goair/section-header";
 import { useTopicPhoto } from "@/use-topic-photo";
 import { cn } from "@/lib/utils";
@@ -9,8 +8,8 @@ type Card = {
   icon: typeof PlaneLanding;
   title: string;
   text: string;
-  /** Local image (already GoAir's own asset) OR a Wikipedia topic to fetch a real photo for. Pass exactly one. */
-  localImage?: string;
+  /** Real, freely-licensed hotlinked photo (curated) OR a Wikipedia topic to fetch a real photo for at runtime. Pass exactly one. */
+  photo?: string;
   topic?: string;
 };
 
@@ -25,19 +24,25 @@ const CARDS: Card[] = [
     icon: UserRound,
     title: "استقبال بلافتة باسمك",
     text: "تخرج من صالة الوصول تلاقي مندوب GoAir واقف بلافتة عليها اسمك — من غير ما تدوّر أو تتصل بحد.",
-    topic: "Airport arrivals hall",
+    // Traveler waiting at the terminal with luggage (Pexels, free license) —
+    // curated and reliable, unlike the runtime Wikipedia topic fetch above.
+    photo: "https://images.pexels.com/photos/32176145/pexels-photo-32176145.jpeg?auto=compress&cs=tinysrgb&w=800",
   },
   {
     icon: ShieldCheck,
     title: "عربية آمنة ومفحوصة",
     text: "كل عربية في أسطولنا متفحوصة ومؤمّنة، والسائق معاه بيانات حجزك من قبل ما توصل.",
-    localImage: sedanImage,
+    // Replaces vehicle-sedan.jpg, which read as a lookalike of a real car
+    // grille (brand risk) — this is a generic private-ride photo instead
+    // (Pexels, free license), matching the "safe, checked private car" idea
+    // without implying a specific make.
+    photo: "https://images.pexels.com/photos/29112731/pexels-photo-29112731.jpeg?auto=compress&cs=tinysrgb&w=800",
   },
 ];
 
 function CardImage({ card }: { card: Card }) {
   const fetched = useTopicPhoto(card.topic ?? "");
-  const src = card.localImage ?? fetched;
+  const src = card.photo ?? fetched;
 
   if (!src) {
     return (

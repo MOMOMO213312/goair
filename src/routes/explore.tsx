@@ -83,6 +83,13 @@ function ExploreHero({ tab }: { tab: ExploreTab }) {
   const copy = TAB_HERO_COPY[tab];
   return (
     <section className="relative isolate overflow-hidden bg-gradient-to-b from-primary to-violet-deep py-14 sm:py-20">
+      <img
+        src="https://images.pexels.com/photos/32176066/pexels-photo-32176066.jpeg?auto=compress&cs=tinysrgb&w=1600"
+        alt=""
+        loading="eager"
+        className="absolute inset-0 -z-10 size-full object-cover opacity-25"
+      />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/90 to-violet-deep/90" />
       <FlightPath className="pointer-events-none absolute inset-x-0 top-6 h-16 w-full text-accent/25 sm:top-10 sm:h-24 [stroke-dasharray:1200] [stroke-dashoffset:1200] motion-safe:animate-[draw-route_1.8s_ease-out_forwards]" />
       <div className="goair-container relative">
         <p className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1 text-xs font-bold text-primary-foreground">
