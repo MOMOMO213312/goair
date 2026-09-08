@@ -658,6 +658,7 @@ export type SubscriptionPlan = {
   iconName: string;
   features: string[];
   isHighlighted: boolean;
+  imageUrl: string | null;
 };
 
 export async function fetchSubscriptionPlans(country?: string): Promise<SubscriptionPlan[]> {
@@ -681,6 +682,7 @@ export async function fetchSubscriptionPlans(country?: string): Promise<Subscrip
     iconName: String(pick(row, ["icon_name"]) ?? "Sparkles"),
     features: (pick<string[]>(row, ["features"]) ?? []) as string[],
     isHighlighted: pick<boolean>(row, ["is_highlighted"]) === true,
+    imageUrl: pick<string>(row, ["image_url"]),
   }));
 }
 
@@ -705,6 +707,7 @@ export async function fetchSubscriptionPlanById(id: string): Promise<Subscriptio
     iconName: String(pick(row, ["icon_name"]) ?? "Sparkles"),
     features: (pick<string[]>(row, ["features"]) ?? []) as string[],
     isHighlighted: pick<boolean>(row, ["is_highlighted"]) === true,
+    imageUrl: pick<string>(row, ["image_url"]),
   };
 }
 
