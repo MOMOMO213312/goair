@@ -180,18 +180,17 @@ function PackageCard({ pkg }: { pkg: PackageTier }) {
         ))}
       </ul>
 
-      {/* Carries the chosen package through search → book, where its
-          price replaces the per-seat price via create_booking_safe. */}
+      {/* Own dedicated flow — never threaded through the normal search/book pages. */}
       <Button
         asChild
         className={cn("mt-6 w-full font-bold", pkg.isHighlighted ? "bg-accent text-accent-foreground hover:bg-accent/90" : "bg-primary text-primary-foreground hover:bg-primary/90")}
       >
-        <Link to="/" search={{ packageId: pkg.id }} hash="find-your-ride">
+        <Link to="/package" search={{ packageId: pkg.id }}>
           اختار الباقة دي وابحث عن رحلتك
         </Link>
       </Button>
       <p className={cn("mt-2 text-center text-xs", pkg.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>
-        الخطوة الجاية: اختار رحلتك، والباقة هتتضاف تلقائيًا
+        الخطوة الجاية: اختار رحلتك جوه فلو الباقة
       </p>
     </div>
   );
