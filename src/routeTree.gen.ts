@@ -19,6 +19,7 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as MyBookingsRouteImport } from './routes/my-bookings'
 import { Route as OperatorRouteImport } from './routes/operator'
+import { Route as PackageRouteImport } from './routes/package'
 import { Route as PartnerRouteImport } from './routes/partner'
 import { Route as PaymentRouteImport } from './routes/payment'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -95,6 +96,11 @@ const MyBookingsRoute = MyBookingsRouteImport.update({
 const OperatorRoute = OperatorRouteImport.update({
   id: '/operator',
   path: '/operator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PackageRoute = PackageRouteImport.update({
+  id: '/package',
+  path: '/package',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PartnerRoute = PartnerRouteImport.update({
@@ -244,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/my-bookings': typeof MyBookingsRoute
   '/operator': typeof OperatorRouteWithChildren
+  '/package': typeof PackageRoute
   '/partner': typeof PartnerRouteWithChildren
   '/payment': typeof PaymentRoute
   '/privacy': typeof PrivacyRoute
@@ -280,6 +287,7 @@ export interface FileRoutesByTo {
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/my-bookings': typeof MyBookingsRoute
+  '/package': typeof PackageRoute
   '/payment': typeof PaymentRoute
   '/privacy': typeof PrivacyRoute
   '/search': typeof SearchRoute
@@ -319,6 +327,7 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/my-bookings': typeof MyBookingsRoute
   '/operator': typeof OperatorRouteWithChildren
+  '/package': typeof PackageRoute
   '/partner': typeof PartnerRouteWithChildren
   '/payment': typeof PaymentRoute
   '/privacy': typeof PrivacyRoute
@@ -360,6 +369,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/my-bookings'
     | '/operator'
+    | '/package'
     | '/partner'
     | '/payment'
     | '/privacy'
@@ -396,6 +406,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/faq'
     | '/my-bookings'
+    | '/package'
     | '/payment'
     | '/privacy'
     | '/search'
@@ -434,6 +445,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/my-bookings'
     | '/operator'
+    | '/package'
     | '/partner'
     | '/payment'
     | '/privacy'
@@ -474,6 +486,7 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   MyBookingsRoute: typeof MyBookingsRoute
   OperatorRoute: typeof OperatorRouteWithChildren
+  PackageRoute: typeof PackageRoute
   PartnerRoute: typeof PartnerRouteWithChildren
   PaymentRoute: typeof PaymentRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -552,6 +565,13 @@ declare module '@tanstack/react-router' {
       path: '/operator'
       fullPath: '/operator'
       preLoaderRoute: typeof OperatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/package': {
+      id: '/package'
+      path: '/package'
+      fullPath: '/package'
+      preLoaderRoute: typeof PackageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/partner': {
@@ -835,6 +855,7 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   MyBookingsRoute: MyBookingsRoute,
   OperatorRoute: OperatorRouteWithChildren,
+  PackageRoute: PackageRoute,
   PartnerRoute: PartnerRouteWithChildren,
   PaymentRoute: PaymentRoute,
   PrivacyRoute: PrivacyRoute,
