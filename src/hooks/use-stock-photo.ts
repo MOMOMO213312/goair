@@ -2,10 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 
 import { supabase } from "@/lib/supabase";
 
-type StockPhotoTable = "addon_services" | "packages";
+type StockPhotoTable = "addon_services" | "packages" | "subscription_plans";
 
 /**
- * Resolves a real stock photo for a catalog row (addon service / package).
+ * Resolves a real stock photo for a catalog row (addon service / package /
+ * subscription plan).
  *
  * If the row already carries `existingImageUrl` (cached in the DB by a
  * previous resolution, or set manually from the admin), that's returned
