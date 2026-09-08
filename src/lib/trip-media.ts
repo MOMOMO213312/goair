@@ -6,6 +6,7 @@ import destTripoli from "@/assets/dest-tripoli.jpg";
 import destZamalek from "@/assets/dest-zamalek.jpg";
 import vehicleBus from "@/assets/vehicle-bus.jpg";
 import vehicleHiace from "@/assets/vehicle-hiace.jpg";
+import vehicleSedan from "@/assets/vehicle-sedan.jpg";
 import vehicleVan from "@/assets/vehicle-van.jpg";
 import type { Trip } from "@/lib/goair";
 
@@ -316,4 +317,21 @@ export function getVehicleLabel(capacity: number | null | undefined): string {
   if (capacity == null || capacity <= 8) return "فان";
   if (capacity <= 14) return "هاي إيس";
   return "أوتوبيس";
+}
+
+/**
+ * CUSTOMER-FACING — for "حجز خاص" (private booking) cards, where GoAir DOES
+ * name and show the specific vehicle type to the customer (unlike the
+ * shared-ride card above, which deliberately hides it). Keyed by the
+ * `vehicle_code` values used in `vehicle_types`/private trip options.
+ */
+const VEHICLE_CODE_IMAGES: Record<string, string> = {
+  car: vehicleSedan,
+  van: vehicleVan,
+  hiace: vehicleHiace,
+  bus: vehicleBus,
+};
+
+export function getVehicleImageByCode(vehicleCode: string): string {
+  return VEHICLE_CODE_IMAGES[vehicleCode] ?? vehicleVan;
 }
