@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import type { LucideIcon } from "lucide-react";
+import { Award, Check, Clock, Crown, Gem, Sparkles, UserRound } from "lucide-react";
 import { toast } from "sonner";
 
 import { BookingAddonsStep } from "@/components/goair/booking/booking-addons-step";
@@ -21,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useStockPhoto } from "@/hooks/use-stock-photo";
 import {
   createBookingSafe,
   fetchAddonServices,
@@ -31,9 +34,12 @@ import {
   formatTime,
   formatUsd,
   friendlyErrorMessage,
+  type PackageTier,
 } from "@/lib/goair";
 import { filterPublicTrips, getAirportsForCountry, getDestinationsForAirport } from "@/lib/trip-stats";
 import { cn } from "@/lib/utils";
+
+const ICONS: Record<string, LucideIcon> = { Sparkles, Clock, UserRound, Crown, Award, Gem };
 
 type PackageSearch = { packageId: string };
 
@@ -244,49 +250,27 @@ function PackagePage() {
   }
 
   return (
-    <div className="bg-mist/30 pb-16 pt-8 md:pb-16 md:pt-10">
+    <div className="bg-mist/30 pb-16 md:pb-16">
+      <PackageHero pkg={pkg} isLoading={packageQuery.isLoading} />
+
       <div className="mx-auto max-w-6xl px-4">
         <Link
           to="/explore"
           search={{ tab: "packages" }}
-          className="text-sm font-bold text-accent hover:underline"
+          className="mt-6 inline-block text-sm font-bold text-accent hover:underline"
         >
           ← رجوع للباقات
         </Link>
 
-        <header className="mt-4 space-y-1">
-          <h1 className="font-display text-2xl font-extrabold text-primary sm:text-3xl">حجز باقة</h1>
-          <p className="text-sm text-muted-foreground">
-            دي خطوات حجز الباقة — منفصلة تمامًا عن حجز الرحلة العادي.
-          </p>
-        </header>
-
         <BookingStepper current={PHASE_TO_STEP[phase]} className="mt-6" />
 
-        <Card className="mt-6 border-accent/30 bg-accent/5 p-5">
-          {packageQuery.isLoading ? (
-            <p className="text-sm text-muted-foreground">جارِ تحميل بيانات الباقة...</p>
-          ) : pkg ? (
-            <>
-              <p className="font-display text-lg font-extrabold text-primary">{pkg.name}</p>
-              {pkg.tagline ? <p className="mt-1 text-sm text-muted-foreground">{pkg.tagline}</p> : null}
-              {pkg.features.length > 0 ? (
-                <ul className="mt-3 grid gap-1.5 sm:grid-cols-2">
-                  {pkg.features.map((feature) => (
-                    <li key={feature} className="text-sm text-primary">
-                      • {feature}
-                    </li>
-                  ))}
-                </ul>
-              ) : null}
-              <p className="mt-3 font-display text-xl font-extrabold text-accent">
-                {formatUsd(pkg.priceUsd)} / راكب
-              </p>
-            </>
-          ) : (
+        {!packageQuery.isLoading && !pkg ? (
+          <Card className="mt-6 border-destructive/30 bg-destructive/5 p-5">
             <p className="text-sm text-destructive">تعذّر إيجاد هذه الباقة — ممكن تكون اتشالت.</p>
-          )}
-        </Card>
+          </Card>
+        ) : null}
+
+        {pkg && pkg.features.length > 0 ? <PackageServiceCards features={pkg.features} /> : null}
 
         <div className="mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1fr)_340px]">
           <div className="min-w-0 space-y-6">
@@ -511,6 +495,78 @@ function PackagePage() {
             </div>
           </aside>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/** Big premium visual banner for the package's own details — mirrors the hero
+ * treatment used on the packages/subscriptions explore tabs, scaled up since
+ * this page IS the single package rather than a grid of many. */
+function PackageHero({ pkg, isLoading }: { pkg: PackageTier | null | undefined; isLoading: boolean }) {
+  const photo = useStockPhoto("packages", pkg?.id ?? "", pkg?.imageUrl ?? null);
+  const Icon = ICONS[pkg?.iconName ?? ""] ?? Sparkles;
+
+  return (
+    <section className="relative isolate overflow-hidden">
+      <div className="relative h-56 w-full overflow-hidden sm:h-72 md:h-80">
+        {photo ? (
+          <img src={photo} alt="" loading="eager" className="size-full object-cover" />
+        ) : (
+          <div className="size-full bg-gradient-to-b from-primary to-violet-deep" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/55 to-primary/10" />
+      </div>
+
+      <div className="goair-container -mt-16 relative pb-4 sm:-mt-20">
+        <span className="flex size-11 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
+          <Icon className="size-5 text-accent" aria-hidden />
+        </span>
+
+        {isLoading ? (
+          <div className="mt-4 h-8 w-48 animate-pulse rounded bg-primary-foreground/20" />
+        ) : pkg ? (
+          <>
+            <h1 className="mt-3 max-w-lg font-display text-2xl font-extrabold text-primary-foreground sm:text-4xl">
+              {pkg.name}
+            </h1>
+            {pkg.tagline ? (
+              <p className="mt-2 max-w-lg text-sm leading-relaxed text-primary-foreground/85 sm:text-base">
+                {pkg.tagline}
+              </p>
+            ) : null}
+            <p className="mt-4 inline-flex items-baseline gap-1.5 rounded-full bg-accent px-4 py-1.5 text-accent-foreground">
+              <span className="font-display text-lg font-extrabold">{formatUsd(pkg.priceUsd)}</span>
+              <span className="text-xs font-bold">/ راكب</span>
+            </p>
+          </>
+        ) : (
+          <h1 className="mt-3 font-display text-2xl font-extrabold text-primary-foreground">حجز باقة</h1>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/** Features as visual service cards instead of a plain bullet list — each
+ * item gets its own card so the package's included services read like a
+ * lineup of perks, not fine print. */
+function PackageServiceCards({ features }: { features: string[] }) {
+  return (
+    <div className="mt-6">
+      <h2 className="font-display text-base font-extrabold text-primary">مزايا الباقة</h2>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {features.map((feature) => (
+          <div
+            key={feature}
+            className="flex items-start gap-3 rounded-xl border border-accent/20 bg-accent/5 p-4"
+          >
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent/15">
+              <Check className="size-4 text-accent" aria-hidden />
+            </span>
+            <span className="text-sm font-bold text-primary">{feature}</span>
+          </div>
+        ))}
       </div>
     </div>
   );

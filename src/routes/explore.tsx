@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-import { FlightPath } from "@/components/flight-path";
 import { SectionHeader } from "@/components/goair/section-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -60,51 +59,9 @@ function ExplorePage() {
 
   return (
     <div>
-      {activeTab === "packages" ? <ExploreHero tab={activeTab} /> : null}
       {activeTab === "packages" ? <PackagesBlock /> : null}
       {activeTab === "subscriptions" ? <SubscriptionsBlock /> : null}
     </div>
-  );
-}
-
-const TAB_HERO_COPY: Record<ExploreTab, { eyebrow: string; title: string; description: string }> = {
-  packages: {
-    eyebrow: "كل خدمة وكل عرض، في مكان واحد",
-    title: "باقات الرحلة",
-    description: "باقات جاهزة بتضم أكتر من خدمة مع بعض، بسعر أوفر من اختيارها لوحدها.",
-  },
-  subscriptions: {
-    eyebrow: "كل خدمة وكل عرض، في مكان واحد",
-    title: "الاشتراكات",
-    description: "عضوية بخصم دائم على كل رحلاتك — اشترك مرة واستفاد كل رحلة.",
-  },
-};
-
-function ExploreHero({ tab }: { tab: ExploreTab }) {
-  const copy = TAB_HERO_COPY[tab];
-  return (
-    <section className="relative isolate overflow-hidden bg-gradient-to-b from-primary to-violet-deep py-14 sm:py-20">
-      <img
-        src="https://images.pexels.com/photos/32176066/pexels-photo-32176066.jpeg?auto=compress&cs=tinysrgb&w=1600"
-        alt=""
-        loading="eager"
-        className="absolute inset-0 -z-10 size-full object-cover opacity-25"
-      />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/90 to-violet-deep/90" />
-      <FlightPath className="pointer-events-none absolute inset-x-0 top-6 h-16 w-full text-accent/25 sm:top-10 sm:h-24 [stroke-dasharray:1200] [stroke-dashoffset:1200] motion-safe:animate-[draw-route_1.8s_ease-out_forwards]" />
-      <div className="goair-container relative">
-        <p className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1 text-xs font-bold text-primary-foreground">
-          <Compass className="size-3.5 text-accent" aria-hidden />
-          {copy.eyebrow}
-        </p>
-        <h1 className="mt-5 max-w-xl font-display text-3xl font-extrabold leading-[1.15] text-primary-foreground sm:text-5xl">
-          {copy.title}
-        </h1>
-        <p className="mt-4 max-w-lg text-sm leading-relaxed text-primary-foreground/85 sm:text-base">
-          {copy.description}
-        </p>
-      </div>
-    </section>
   );
 }
 
@@ -116,28 +73,55 @@ function PackagesBlock() {
   const { data: packages, isPending } = useQuery({ queryKey: ["goair", "packages"], queryFn: fetchActivePackages });
 
   return (
-    <section className="goair-section">
-      <div className="goair-container">
-        <SectionHeader title="باقات الرحلة" description="باقات إضافية فوق سعر المقعد الأساسي، بتتضاف تلقائيًا لحجزك." />
-
-        {isPending ? (
-          <p className="mt-10 text-center text-sm text-muted-foreground">جاري تحميل الباقات...</p>
-        ) : !packages || packages.length === 0 ? (
-          <p className="mt-10 text-center text-sm text-muted-foreground">مفيش باقات متاحة دلوقتي.</p>
-        ) : (
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {packages.map((pkg) => (
-              <PackageCard key={pkg.id} pkg={pkg} />
-            ))}
-          </div>
-        )}
-
-        <div className="mt-10 flex items-center justify-center gap-2 rounded-xl border border-border bg-mist/60 px-4 py-3 text-center text-sm text-muted-foreground">
-          <Luggage className="size-4 shrink-0" />
-          الباقات دي إضافية فوق سعر المقعد الأساسي، وبتتضاف لإجمالي حجزك تلقائيًا.
+    <>
+      {/* Packages hero — same premium treatment as the subscriptions tab, not a generic gradient banner. */}
+      <section className="relative isolate overflow-hidden">
+        <div className="relative h-64 w-full overflow-hidden sm:h-80">
+          <img
+            src="https://images.pexels.com/photos/32176066/pexels-photo-32176066.jpeg?auto=compress&cs=tinysrgb&w=1920"
+            alt=""
+            loading="eager"
+            className="size-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/60 to-primary/20" />
         </div>
-      </div>
-    </section>
+        <div className="goair-container -mt-20 relative pb-4 sm:-mt-24">
+          <div className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-primary/80 px-3 py-1 text-xs font-bold text-primary-foreground backdrop-blur">
+            <Compass className="size-3.5 text-accent" aria-hidden />
+            كل خدمة وكل عرض، في مكان واحد
+          </div>
+          <h2 className="mt-3 max-w-lg font-display text-2xl font-extrabold text-primary-foreground sm:text-3xl">
+            باقات جاهزة، برحلة أسهل
+          </h2>
+          <p className="mt-2 max-w-lg text-sm leading-relaxed text-primary-foreground/85">
+            كل باقة بتضم أكتر من خدمة مع بعض، بسعر أوفر من اختيارها لوحدها — تضاف تلقائيًا لحجزك.
+          </p>
+        </div>
+      </section>
+
+      <section className="goair-section pt-6 sm:pt-8">
+        <div className="goair-container">
+          <SectionHeader title="اختار باقتك" description="نفس الرحلة، بمزايا إضافية حسب اللي يناسبك." />
+
+          {isPending ? (
+            <p className="mt-10 text-center text-sm text-muted-foreground">جاري تحميل الباقات...</p>
+          ) : !packages || packages.length === 0 ? (
+            <p className="mt-10 text-center text-sm text-muted-foreground">مفيش باقات متاحة دلوقتي.</p>
+          ) : (
+            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {packages.map((pkg) => (
+                <PackageCard key={pkg.id} pkg={pkg} />
+              ))}
+            </div>
+          )}
+
+          <div className="mt-10 flex items-center justify-center gap-2 rounded-xl border border-border bg-mist/60 px-4 py-3 text-center text-sm text-muted-foreground">
+            <Luggage className="size-4 shrink-0" />
+            الباقات دي إضافية فوق سعر المقعد الأساسي، وبتتضاف لإجمالي حجزك تلقائيًا.
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
 
@@ -153,52 +137,57 @@ function PackageCard({ pkg }: { pkg: PackageTier }) {
           : "border-border bg-card text-card-foreground",
       )}
     >
-      {photo ? (
-        <img src={photo} alt="" loading="lazy" className="aspect-[16/9] w-full object-cover" />
-      ) : null}
+      <div className="relative aspect-[16/10] w-full overflow-hidden">
+        {photo ? (
+          <img src={photo} alt="" loading="lazy" className="size-full object-cover" />
+        ) : (
+          <div className={cn("size-full", pkg.isHighlighted ? "bg-primary-foreground/10" : "bg-secondary")} />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/5 to-transparent" />
+
+        {pkg.isHighlighted ? (
+          <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-foreground">
+            الأكثر طلبًا
+          </span>
+        ) : null}
+
+        <span className="absolute left-3 top-3 flex size-9 items-center justify-center rounded-lg bg-white/15 backdrop-blur">
+          <Icon className="size-4.5 text-white" />
+        </span>
+
+        <div className="absolute inset-x-0 bottom-0 p-4">
+          <h3 className="font-display text-lg font-extrabold text-white">{pkg.name}</h3>
+          {pkg.tagline ? <p className="mt-0.5 text-xs text-white/80">{pkg.tagline}</p> : null}
+        </div>
+      </div>
 
       <div className="flex flex-1 flex-col p-6">
-      {pkg.isHighlighted ? (
-        <span className="mb-3 inline-flex w-fit items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-bold text-accent-foreground">
-          الأكثر طلبًا
-        </span>
-      ) : null}
+        <p className="flex items-baseline gap-1">
+          <span className="font-display text-3xl font-extrabold">${pkg.priceUsd}</span>
+          <span className={cn("text-sm", pkg.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>لكل مسافر</span>
+        </p>
 
-      <span className={cn("flex size-11 items-center justify-center rounded-xl", pkg.isHighlighted ? "bg-primary-foreground/15" : "bg-secondary")}>
-        <Icon className={cn("size-5", pkg.isHighlighted ? "text-accent" : "text-primary")} />
-      </span>
+        <ul className="mt-5 flex-1 space-y-3 text-sm">
+          {pkg.features.map((feature) => (
+            <li key={feature} className="flex items-start gap-2">
+              <Check className={cn("mt-0.5 size-4 shrink-0", pkg.isHighlighted ? "text-accent" : "text-primary")} />
+              <span className={pkg.isHighlighted ? "text-primary-foreground/90" : "text-foreground/90"}>{feature}</span>
+            </li>
+          ))}
+        </ul>
 
-      <h3 className="mt-4 font-display text-lg font-extrabold">{pkg.name}</h3>
-      {pkg.tagline ? (
-        <p className={cn("mt-1 text-sm", pkg.isHighlighted ? "text-primary-foreground/80" : "text-muted-foreground")}>{pkg.tagline}</p>
-      ) : null}
-
-      <p className="mt-5 flex items-baseline gap-1">
-        <span className="font-display text-3xl font-extrabold">${pkg.priceUsd}</span>
-        <span className={cn("text-sm", pkg.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>لكل مسافر</span>
-      </p>
-
-      <ul className="mt-6 flex-1 space-y-3 text-sm">
-        {pkg.features.map((feature) => (
-          <li key={feature} className="flex items-start gap-2">
-            <Check className={cn("mt-0.5 size-4 shrink-0", pkg.isHighlighted ? "text-accent" : "text-primary")} />
-            <span className={pkg.isHighlighted ? "text-primary-foreground/90" : "text-foreground/90"}>{feature}</span>
-          </li>
-        ))}
-      </ul>
-
-      {/* Own dedicated flow — never threaded through the normal search/book pages. */}
-      <Button
-        asChild
-        className={cn("mt-6 w-full font-bold", pkg.isHighlighted ? "bg-accent text-accent-foreground hover:bg-accent/90" : "bg-primary text-primary-foreground hover:bg-primary/90")}
-      >
-        <Link to="/package" search={{ packageId: pkg.id }}>
-          اختار الباقة دي وابحث عن رحلتك
-        </Link>
-      </Button>
-      <p className={cn("mt-2 text-center text-xs", pkg.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>
-        الخطوة الجاية: اختار رحلتك جوه فلو الباقة
-      </p>
+        {/* Own dedicated flow — never threaded through the normal search/book pages. */}
+        <Button
+          asChild
+          className={cn("mt-6 w-full font-bold", pkg.isHighlighted ? "bg-accent text-accent-foreground hover:bg-accent/90" : "bg-primary text-primary-foreground hover:bg-primary/90")}
+        >
+          <Link to="/package" search={{ packageId: pkg.id }}>
+            اختار الباقة دي وابحث عن رحلتك
+          </Link>
+        </Button>
+        <p className={cn("mt-2 text-center text-xs", pkg.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>
+          الخطوة الجاية: اختار رحلتك جوه فلو الباقة
+        </p>
       </div>
     </div>
   );
