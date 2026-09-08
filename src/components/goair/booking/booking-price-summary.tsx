@@ -8,6 +8,7 @@ type BookingPriceSummaryProps = {
   total: number;
   className?: string;
   compact?: boolean;
+  packageName?: string;
   /** Private/charter booking — whole vehicle, flat price (not per seat). */
   isPrivate?: boolean;
   /** Flat total for selected `addon_services` — not multiplied by seats. */
@@ -20,6 +21,7 @@ export function BookingPriceSummary({
   total,
   className,
   compact = false,
+  packageName,
   isPrivate = false,
   addonsTotal = 0,
 }: BookingPriceSummaryProps) {
@@ -37,6 +39,12 @@ export function BookingPriceSummary({
           حجز خاص — العربية كلها لمجموعتك
         </span>
       ) : null}
+      {packageName ? (
+        <span className="mt-1 inline-block rounded-md bg-accent/10 px-2 py-0.5 text-[11px] font-bold text-accent">
+          باقة {packageName} — شاملة النقل
+        </span>
+      ) : null}
+
       <dl className={cn("mt-4 space-y-3", compact && "mt-3 space-y-2 text-sm")}>
         <div className="flex items-center justify-between gap-3">
           <dt className="text-muted-foreground">{isPrivate ? "عدد الركاب" : "عدد المقاعد"}</dt>
@@ -44,7 +52,11 @@ export function BookingPriceSummary({
         </div>
         <div className="flex items-center justify-between gap-3">
           <dt className="text-muted-foreground">
-            {isPrivate ? "السعر الكامل للعربية" : "سعر المقعد"}
+            {isPrivate
+              ? "السعر الكامل للعربية"
+              : packageName
+                ? "سعر المقعد (شامل الباقة)"
+                : "سعر المقعد"}
           </dt>
           <dd className="font-bold text-primary">{formatUsd(pricePerSeat)}</dd>
         </div>

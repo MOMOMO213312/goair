@@ -46,10 +46,12 @@ export function SearchWidget({
   trips,
   countries,
   initial,
+  packageId,
   className,
 }: {
   trips: Trip[];
   countries: string[];
+  packageId?: string;
   initial?: {
     country?: string;
     airport?: string;
@@ -178,12 +180,19 @@ export function SearchWidget({
         seats,
         direction,
         ...(flight.trim() ? { flight: flight.trim() } : {}),
+        ...(packageId ? { packageId } : {}),
       },
     });
   }
 
   return (
     <>
+    {packageId ? (
+      <div className="mb-3 rounded-xl border border-accent/40 bg-accent/10 px-4 py-2.5 text-sm font-bold text-primary">
+        ✓ اخترت باقة إضافية — هتتضاف تلقائيًا لإجمالي حجزك
+      </div>
+    ) : null}
+
     {/* Direction — the first decision, as two big visual cards instead of a
         cramped One-way/Round-trip tab bar (GoAir only ever sells a
         single-direction airport transfer, so this is the real fork). */}
@@ -428,6 +437,7 @@ export function SearchWidget({
                   date,
                   seats,
                   direction: "from_airport",
+                  ...(packageId ? { packageId } : {}),
                 },
               })
             }

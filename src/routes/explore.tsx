@@ -173,18 +173,18 @@ function PackageCard({ pkg }: { pkg: PackageTier }) {
         ))}
       </ul>
 
-      {/* Booking flow no longer carries package selection end-to-end, so
-          route interested customers to contact instead of a dead param. */}
+      {/* Carries the chosen package through search → book, where its
+          price replaces the per-seat price via create_booking_safe. */}
       <Button
         asChild
         className={cn("mt-6 w-full font-bold", pkg.isHighlighted ? "bg-accent text-accent-foreground hover:bg-accent/90" : "bg-primary text-primary-foreground hover:bg-primary/90")}
       >
-        <Link to="/contact" search={{ package: pkg.name }}>
-          اطلب الباقة دي
+        <Link to="/" search={{ packageId: pkg.id }} hash="find-your-ride">
+          اختار الباقة دي وابحث عن رحلتك
         </Link>
       </Button>
       <p className={cn("mt-2 text-center text-xs", pkg.isHighlighted ? "text-primary-foreground/70" : "text-muted-foreground")}>
-        هيتواصل معاك فريقنا لتفاصيل الرحلة وتأكيد الحجز
+        الخطوة الجاية: اختار رحلتك، والباقة هتتضاف تلقائيًا
       </p>
     </div>
   );

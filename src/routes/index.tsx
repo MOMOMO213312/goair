@@ -35,6 +35,9 @@ const marketsQuery = queryOptions({
 });
 
 export const Route = createFileRoute("/")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    packageId: typeof search["packageId"] === "string" ? search["packageId"] : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "GoAir — نقل مشترك من وإلى المطار في مصر ولبنان" },
@@ -63,6 +66,7 @@ export const Route = createFileRoute("/")({
 function Home() {
   const { data } = useSuspenseQuery(marketsQuery);
   const { trips, countries } = data;
+  const { packageId } = Route.useSearch();
 
   const publicTrips = useMemo(() => filterPublicTrips(trips, countries), [trips, countries]);
 
@@ -124,7 +128,7 @@ function Home() {
           search box, not a wall that covers the photo. */}
       <div className="relative z-10 mx-auto -mt-6 max-w-3xl px-4 sm:-mt-8">
         <div id="find-your-ride" className="scroll-mt-24">
-          <SearchWidget trips={trips} countries={countries} />
+          <SearchWidget trips={trips} countries={countries} packageId={packageId} />
         </div>
       </div>
 

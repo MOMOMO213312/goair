@@ -16,6 +16,7 @@ import { BookingTrustPanel } from "@/components/goair/booking/booking-trust-pane
 import {
   createBookingSafe,
   createPrivateBookingSafe,
+  fetchActivePackages,
   fetchAddonServices,
   fetchTrips,
   friendlyErrorMessage,
@@ -29,6 +30,8 @@ type BookSearch = {
   seats: number;
   time: string;
   price: number;
+  /** Selected on /explore before entering the booking flow — carried through search. */
+  packageId?: string;
   /** 'private' = whole-vehicle charter (flat price); default 'shared' = per-seat, unchanged. */
   bookingType: "shared" | "private";
   /** Required when bookingType === 'private' — which vehicle tier was picked. */
@@ -55,6 +58,7 @@ export const Route = createFileRoute("/book")({
     seats: Math.max(1, Number(search["seats"]) || 1),
     time: String(search["time"] ?? ""),
     price: Number(search["price"]) || 0,
+    packageId: typeof search["packageId"] === "string" ? search["packageId"] : undefined,
     bookingType: search["bookingType"] === "private" ? "private" : "shared",
     vehicleTypeId: typeof search["vehicleTypeId"] === "string" ? search["vehicleTypeId"] : undefined,
     flight: typeof search["flight"] === "string" && search["flight"] ? search["flight"] : undefined,
@@ -89,6 +93,9 @@ function BookPage() {
   const tripsQuery = useQuery({ queryKey: ["goair", "trips"], queryFn: fetchTrips });
   const trip = tripsQuery.data?.find((item) => item.id === search.tripId);
 
+  const packagesQuery = useQuery({ queryKey: ["goair", "packages"], queryFn: fetchActivePackages });
+  const selectedPackage = packagesQuery.data?.find((p) => p.id === search.packageId);
+
   const addonsQuery = useQuery({ queryKey: ["goair", "addon-services"], queryFn: fetchAddonServices });
   const selectedAddons = (addonsQuery.data ?? []).filter((a) => selectedAddonIds.includes(a.id));
   const addonsTotal = selectedAddons.reduce((sum, a) => sum + a.priceUsd, 0);
@@ -100,7 +107,18 @@ function BookPage() {
   }
 
   const isPrivate = search.bookingType === "private";
-  const rideOrPackageTotal = isPrivate ? search.price : search.price * search.seats;
+  const packagePricePerSeat = selectedPackage?.priceUsd ?? 0;
+  // A package's price already includes the transport — it's a complete
+  // product, not an add-on stacked on top of the trip's seat price. So when
+  // one is selected, it REPLACES the per-seat price rather than adding to
+  // it. (Add-ons that genuinely stack on top of a chosen trip belong to the
+  // separate `addon_services` concept, not `packages`.)
+  const effectivePricePerSeat = search.packageId ? packagePricePerSeat : search.price;
+  const rideOrPackageTotal = isPrivate
+    ? search.packageId
+      ? packagePricePerSeat * search.seats
+      : search.price
+    : effectivePricePerSeat * search.seats;
   const total = rideOrPackageTotal + addonsTotal;
 
   async function onConfirm() {
@@ -132,6 +150,7 @@ function BookPage() {
             phoneNumber: phone.trim(),
             flightNumber: flight.trim() || null,
             luggageCount: luggage,
+            packageId: search.packageId || null,
             addonIds: selectedAddonIds,
           })
         : await createBookingSafe({
@@ -146,6 +165,7 @@ function BookPage() {
             phoneNumber: phone.trim(),
             flightNumber: flight.trim() || null,
             luggageCount: luggage,
+            packageId: search.packageId || null,
             addonIds: selectedAddonIds,
           });
       toast.success(isPrivate ? "تم تثبيت الحجز الخاص — باقي الدفع." : "تم تثبيت مقعدك — باقي الدفع.");
@@ -237,6 +257,7 @@ function BookPage() {
                 flight={flight}
                 luggage={luggage}
                 notes={extrasNotes}
+                {...(selectedPackage?.name ? { packageName: selectedPackage.name } : {})}
                 addonNames={selectedAddons.map((a) => a.name)}
                 onEditExtras={() => setPhase("extras")}
                 onEditPassengers={() => setPhase("passengers")}
@@ -249,8 +270,9 @@ function BookPage() {
             <div className="lg:hidden">
               <BookingPriceSummary
                 seats={search.seats}
-                pricePerSeat={search.price}
+                pricePerSeat={effectivePricePerSeat}
                 total={total}
+                {...(selectedPackage?.name ? { packageName: selectedPackage.name } : {})}
                 isPrivate={isPrivate}
                 addonsTotal={addonsTotal}
               />
@@ -269,8 +291,9 @@ function BookPage() {
               />
               <BookingPriceSummary
                 seats={search.seats}
-                pricePerSeat={search.price}
+                pricePerSeat={effectivePricePerSeat}
                 total={total}
+                {...(selectedPackage?.name ? { packageName: selectedPackage.name } : {})}
                 isPrivate={isPrivate}
                 addonsTotal={addonsTotal}
               />

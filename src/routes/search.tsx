@@ -28,6 +28,7 @@ export const Route = createFileRoute("/search")({
     destination: String(search["destination"] ?? ""),
     date: String(search["date"] ?? new Date().toISOString().slice(0, 10)),
     seats: Math.max(1, Number(search["seats"]) || 1),
+    packageId: typeof search["packageId"] === "string" ? search["packageId"] : undefined,
     flight: typeof search["flight"] === "string" && search["flight"] ? search["flight"] : undefined,
     focus: search["focus"] === "private" ? "private" : undefined,
     direction: search["direction"] === "to_airport" ? "to_airport" : "from_airport",
@@ -272,6 +273,7 @@ function SearchPage() {
                     options={visibleOptions}
                     seats={params.seats}
                     travelDate={params.date}
+                    packageId={params.packageId}
                     flight={params.flight}
                     vehicleTypesById={vehicleTypesById}
                     cheapestPrice={cheapestPrice}
