@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Briefcase, Lock, Sparkle, Users } from "lucide-react";
 
-import type { Trip } from "@/lib/goair";
+import { useStockPhoto } from "@/hooks/use-stock-photo";
+import type { PrivateOption, Trip } from "@/lib/goair";
 import { fetchPrivateTripOptions, formatUsd } from "@/lib/goair";
 import { getVehicleImageByCode } from "@/lib/trip-media";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,103 @@ type PrivateBookingSectionProps = {
   className?: string;
   id?: string;
 };
+
+function PrivateOptionCard({
+  option,
+  isRecommended,
+  destination,
+  trip,
+  date,
+  seats,
+}: {
+  option: PrivateOption;
+  isRecommended: boolean;
+  destination: string;
+  trip: Trip;
+  date: string;
+  seats: number;
+}) {
+  const dotCount = Math.min(option.capacity, 6);
+  // Real photo priority: cached DB image (once resolved, shared by every
+  // card for this vehicle tier across the whole site) -> live Pexels
+  // resolution via resolve-stock-photo (cached back for next time) ->
+  // local static asset while that resolves or if it's ever unavailable.
+  const photo = useStockPhoto("vehicle_types", option.vehicleTypeId, null) ?? getVehicleImageByCode(option.vehicleCode);
+
+  return (
+    <div
+      className={cn(
+        "flex flex-col overflow-hidden rounded-2xl border bg-card shadow-[var(--shadow-card)] transition-shadow",
+        isRecommended ? "border-2 border-accent shadow-[var(--shadow-float)]" : "border-border/80",
+      )}
+    >
+      <div className="relative aspect-[4/3] w-full overflow-hidden">
+        <img src={photo} alt="" loading="lazy" className="size-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent" />
+        {isRecommended ? (
+          <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-accent-foreground">
+            <Sparkle className="size-3" aria-hidden />
+            الأنسب لمجموعتك
+          </span>
+        ) : null}
+        <h3 className="absolute inset-x-0 bottom-0 p-4 font-display text-base font-extrabold text-white">
+          {option.vehicleLabelAr}
+        </h3>
+      </div>
+
+      <div className="flex flex-1 flex-col p-5">
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          {VEHICLE_BLURB[option.vehicleCode] ?? `لغاية ${option.capacity} راكب.`}
+        </p>
+
+        <div className="mt-3 flex items-center gap-2">
+          <div className="flex items-center -space-x-1 space-x-reverse">
+            {Array.from({ length: dotCount }).map((_, i) => (
+              <Users key={i} className="size-3.5 text-accent" aria-hidden />
+            ))}
+            {option.capacity > dotCount ? (
+              <span className="ms-1 text-xs font-bold text-accent">+{option.capacity - dotCount}</span>
+            ) : null}
+          </div>
+          {option.maxLuggage != null ? (
+            <span className="flex items-center gap-1 text-xs font-bold text-muted-foreground">
+              <Briefcase className="size-3.5 text-muted-foreground/70" aria-hidden />
+              حتى {option.maxLuggage} حقيبة
+            </span>
+          ) : null}
+        </div>
+
+        <div className="mt-4 flex items-baseline justify-between border-t border-border pt-4">
+          <span className="text-xs font-bold text-muted-foreground">السعر الكامل للعربية</span>
+          <span className="font-display text-xl font-extrabold text-accent">{formatUsd(option.priceUsd)}</span>
+        </div>
+
+        <Link
+          to="/book"
+          search={{
+            tripId: trip.id,
+            scheduleId: "",
+            tripOptionId: option.tripOptionId,
+            date,
+            seats: Math.min(seats, option.capacity),
+            time: "",
+            price: option.priceUsd,
+            bookingType: "private",
+            vehicleTypeId: option.vehicleTypeId,
+          }}
+          className={cn(
+            "mt-5 inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-bold transition-colors",
+            isRecommended
+              ? "bg-accent text-accent-foreground hover:bg-accent/90"
+              : "bg-primary text-primary-foreground hover:bg-primary/90",
+          )}
+        >
+          احجز خاص لـ {destination}
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 /**
  * "حجز خاص" — book the whole vehicle for one group instead of a shared seat.
@@ -61,95 +159,17 @@ export function PrivateBookingSection({ trip, destination, date, seats, classNam
       </div>
 
       <div className="mt-4 grid gap-5 sm:grid-cols-3">
-        {options.map((option) => {
-          const isRecommended = option.tripOptionId === recommendedId;
-          const dotCount = Math.min(option.capacity, 6);
-          const vehicleImage = getVehicleImageByCode(option.vehicleCode);
-
-          return (
-            <div
-              key={option.tripOptionId}
-              className={cn(
-                "flex flex-col overflow-hidden rounded-2xl border bg-card shadow-[var(--shadow-card)] transition-shadow",
-                isRecommended
-                  ? "border-2 border-accent shadow-[var(--shadow-float)]"
-                  : "border-border/80",
-              )}
-            >
-              <div className="relative aspect-[4/3] w-full overflow-hidden">
-                <img
-                  src={vehicleImage}
-                  alt=""
-                  loading="lazy"
-                  className="size-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent" />
-                {isRecommended ? (
-                  <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-accent-foreground">
-                    <Sparkle className="size-3" aria-hidden />
-                    الأنسب لمجموعتك
-                  </span>
-                ) : null}
-                <h3 className="absolute inset-x-0 bottom-0 p-4 font-display text-base font-extrabold text-white">
-                  {option.vehicleLabelAr}
-                </h3>
-              </div>
-
-              <div className="flex flex-1 flex-col p-5">
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {VEHICLE_BLURB[option.vehicleCode] ?? `لغاية ${option.capacity} راكب.`}
-                </p>
-
-                <div className="mt-3 flex items-center gap-2">
-                  <div className="flex items-center -space-x-1 space-x-reverse">
-                    {Array.from({ length: dotCount }).map((_, i) => (
-                      <Users key={i} className="size-3.5 text-accent" aria-hidden />
-                    ))}
-                    {option.capacity > dotCount ? (
-                      <span className="ms-1 text-xs font-bold text-accent">+{option.capacity - dotCount}</span>
-                    ) : null}
-                  </div>
-                  {option.maxLuggage != null ? (
-                    <span className="flex items-center gap-1 text-xs font-bold text-muted-foreground">
-                      <Briefcase className="size-3.5 text-muted-foreground/70" aria-hidden />
-                      حتى {option.maxLuggage} حقيبة
-                    </span>
-                  ) : null}
-                </div>
-
-                <div className="mt-4 flex items-baseline justify-between border-t border-border pt-4">
-                  <span className="text-xs font-bold text-muted-foreground">السعر الكامل للعربية</span>
-                  <span className="font-display text-xl font-extrabold text-accent">
-                    {formatUsd(option.priceUsd)}
-                  </span>
-                </div>
-
-                <Link
-                  to="/book"
-                  search={{
-                    tripId: trip.id,
-                    scheduleId: "",
-                    tripOptionId: option.tripOptionId,
-                    date,
-                    seats: Math.min(seats, option.capacity),
-                    time: "",
-                    price: option.priceUsd,
-                    bookingType: "private",
-                    vehicleTypeId: option.vehicleTypeId,
-                  }}
-                  className={cn(
-                    "mt-5 inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-bold transition-colors",
-                    isRecommended
-                      ? "bg-accent text-accent-foreground hover:bg-accent/90"
-                      : "bg-primary text-primary-foreground hover:bg-primary/90",
-                  )}
-                >
-                  احجز خاص لـ {destination}
-                </Link>
-              </div>
-            </div>
-          );
-        })}
+        {options.map((option) => (
+          <PrivateOptionCard
+            key={option.tripOptionId}
+            option={option}
+            isRecommended={option.tripOptionId === recommendedId}
+            destination={destination}
+            trip={trip}
+            date={date}
+            seats={seats}
+          />
+        ))}
       </div>
     </section>
   );
