@@ -79,16 +79,6 @@ function SearchPage() {
 
   const allOptions = optionsQuery.data ?? [];
 
-  const cheapestPrice = allOptions.length
-    ? Math.min(...allOptions.map((option) => option.pricePerSeat))
-    : null;
-
-  const earliestTime = allOptions.length
-    ? allOptions.reduce((earliest, option) =>
-        option.departureTime.localeCompare(earliest.departureTime) < 0 ? option : earliest,
-      ).departureTime
-    : null;
-
   const priceCeiling = allOptions.length
     ? Math.ceil(Math.max(...allOptions.map((option) => option.pricePerSeat)))
     : 0;
@@ -274,8 +264,6 @@ function SearchPage() {
                     travelDate={params.date}
                     flight={params.flight}
                     vehicleTypesById={vehicleTypesById}
-                    cheapestPrice={cheapestPrice}
-                    earliestTime={earliestTime}
                   />
                 ) : (
                   <Card className="border-dashed p-8 text-center">

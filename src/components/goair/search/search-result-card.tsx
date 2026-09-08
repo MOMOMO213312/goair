@@ -1,10 +1,19 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, BadgeCheck, Briefcase, CalendarX2, Clock, Info, MapPin, UserRound, Zap } from "lucide-react";
+import { ArrowLeft, Briefcase, CalendarX2, Info, MapPin, UserRound } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { DestinationPlaceholder } from "@/components/goair/destination-placeholder";
 import { FlightPath } from "@/components/flight-path";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { ScheduleOption, Trip, VehicleType } from "@/lib/goair";
 import { formatTime, formatUsd, isGeneratedScheduleId } from "@/lib/goair";
 import { getTripCityLocation, getTripRouteImage } from "@/lib/trip-media";
@@ -16,17 +25,13 @@ export function isFallbackSchedule(scheduleId: string) {
 
 type SearchResultCardProps = {
   trip: Trip;
-  /** Every departure time available for this one route — rendered as rows in a single card. */
+  /** Every departure time available for this one route — the customer picks ONE via a single dropdown, never a list of rows. */
   options: ScheduleOption[];
   seats: number;
   travelDate: string;
   className?: string;
   /** Group-size tier per departure — used only for capacity/luggage info, never shown as a vehicle name. */
   vehicleTypesById?: Map<string, VehicleType>;
-  /** Price of the cheapest departure across the whole search — shown as a badge on the matching row. */
-  cheapestPrice?: number | null;
-  /** Time of the earliest departure across the whole search — shown as a badge on the matching row. */
-  earliestTime?: string | null;
   /** Carried over from the hero search — prefills the booking form, nothing more (no live tracking yet). */
   flight?: string;
 };
@@ -63,8 +68,6 @@ export function SearchResultCard({
   travelDate,
   className,
   vehicleTypesById,
-  cheapestPrice = null,
-  earliestTime = null,
   flight,
 }: SearchResultCardProps) {
   const cityLabel = getTripCityLocation(trip);
@@ -75,6 +78,31 @@ export function SearchResultCard({
     if (vehicle?.maxLuggage == null) return max;
     return max === null ? vehicle.maxLuggage : Math.max(max, vehicle.maxLuggage);
   }, null);
+
+  // The trip may run at many points across the day, but the customer never
+  // sees "16 available departures" as a stacked list — just one compact
+  // "pick your time" control, same as picking a pickup time on any transfer
+  // site. Default to the earliest still-available slot.
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string | undefined>(undefined);
+
+  const defaultScheduleId = useMemo(
+    () => (options.find((option) => option.isAvailable) ?? options[0])?.scheduleId,
+    [options],
+  );
+
+  useEffect(() => {
+    setSelectedScheduleId(defaultScheduleId);
+  }, [defaultScheduleId]);
+
+  const selectedOption =
+    options.find((option) => option.scheduleId === selectedScheduleId) ??
+    options.find((option) => option.isAvailable) ??
+    options[0];
+
+  const notEnough =
+    selectedOption && !isFallbackSchedule(selectedOption.scheduleId)
+      ? selectedOption.remainingSeats !== null && selectedOption.remainingSeats < seats
+      : false;
 
   return (
     <Card
@@ -94,7 +122,7 @@ export function SearchResultCard({
 
         {/* Main content */}
         <div className="flex min-w-0 flex-1 flex-col p-5 sm:p-6">
-          {/* Route header — shown once for every departure below */}
+          {/* Route header */}
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -102,11 +130,6 @@ export function SearchResultCard({
                   {trip.airport_code}
                 </span>
                 <span>{trip.country}</span>
-                {hasFallback ? (
-                  <span className="rounded-md border border-border bg-background px-2 py-0.5 text-[10px] font-medium">
-                    مواعيد مرجعية
-                  </span>
-                ) : null}
               </div>
               <h3 className="mt-2 font-display text-lg font-extrabold leading-snug text-primary sm:text-xl">
                 {trip.origin}
@@ -133,7 +156,7 @@ export function SearchResultCard({
             </div>
           </div>
 
-          {/* Details row — shown once */}
+          {/* Details row */}
           <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
             <div className="flex items-center gap-2">
               <span className="flex size-9 items-center justify-center rounded-lg bg-secondary text-primary">
@@ -174,7 +197,7 @@ export function SearchResultCard({
             ) : null}
           </div>
 
-          {/* Included perks — shown once */}
+          {/* Included perks */}
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <CalendarX2 className="size-3.5 text-accent" aria-hidden />
@@ -186,102 +209,58 @@ export function SearchResultCard({
             </span>
           </div>
 
-          {/* One row per available departure time */}
-          <div className="mt-4 divide-y divide-border border-t border-border">
-            {options.map((option) => (
-              <ScheduleRow
-                key={option.scheduleId}
+          {/* Single time picker — not a row per departure */}
+          <div className="mt-5 rounded-xl border border-border/80 bg-mist/20 p-4">
+            <Label className="text-xs font-bold text-primary">اختار ميعاد رحلتك</Label>
+            <Select value={selectedScheduleId} onValueChange={setSelectedScheduleId}>
+              <SelectTrigger className="mt-1.5 bg-card">
+                <SelectValue placeholder="اختار الميعاد المناسب" />
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((option) => (
+                  <SelectItem
+                    key={option.scheduleId}
+                    value={option.scheduleId}
+                    disabled={!option.isAvailable}
+                  >
+                    {formatTime(option.departureTime) || option.departureTime.slice(0, 5)}
+                    {!option.isAvailable ? " — مقاعد كاملة" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {notEnough ? (
+              <p className="mt-2 flex items-center gap-1 text-xs font-medium text-destructive">
+                <Info className="size-3 shrink-0" aria-hidden />
+                المقاعد المتبقية في الميعاد ده مش كفاية لعدد المسافرين.
+              </p>
+            ) : hasFallback ? (
+              <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+                <Info className="size-3 shrink-0" aria-hidden />
+                يُؤكَّد توفر المقعد عند إتمام الحجز.
+              </p>
+            ) : null}
+
+            <div className="mt-4 flex items-center justify-between gap-4">
+              <PriceBlock
+                pricePerSeat={selectedOption?.pricePerSeat ?? 0}
+                total={(selectedOption?.pricePerSeat ?? 0) * seats}
+                seats={seats}
+              />
+              <BookButton
                 trip={trip}
-                option={option}
+                option={selectedOption}
                 seats={seats}
                 travelDate={travelDate}
+                disabled={!selectedOption || notEnough}
                 flight={flight}
-                isBestPrice={options.length > 1 && cheapestPrice !== null && option.pricePerSeat === cheapestPrice}
-                isFastest={
-                  options.length > 1 &&
-                  earliestTime !== null &&
-                  option.departureTime === earliestTime &&
-                  option.pricePerSeat !== cheapestPrice
-                }
               />
-            ))}
+            </div>
           </div>
         </div>
       </div>
     </Card>
-  );
-}
-
-function ScheduleRow({
-  trip,
-  option,
-  seats,
-  travelDate,
-  flight,
-  isBestPrice,
-  isFastest,
-}: {
-  trip: Trip;
-  option: ScheduleOption;
-  seats: number;
-  travelDate: string;
-  flight?: string;
-  isBestPrice: boolean;
-  isFastest: boolean;
-}) {
-  const fallback = isFallbackSchedule(option.scheduleId);
-  const total = option.pricePerSeat * seats;
-  const notEnough = !fallback && option.remainingSeats !== null && option.remainingSeats < seats;
-
-  const seatMessage = fallback
-    ? "يُؤكَّد توفر المقعد عند إتمام الحجز"
-    : option.remainingSeats === null
-      ? "يُؤكَّد توفر المقعد عند إتمام الحجز"
-      : `${option.remainingSeats} مقعد متبقي`;
-
-  return (
-    <div className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent">
-          <Clock className="size-4" aria-hidden />
-        </span>
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="font-display text-base font-extrabold text-primary">
-              {formatTime(option.departureTime) || option.departureTime.slice(0, 5)}
-            </p>
-            {isBestPrice ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold text-accent">
-                <BadgeCheck className="size-3" aria-hidden />
-                أفضل سعر
-              </span>
-            ) : null}
-            {isFastest ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-                <Zap className="size-3" aria-hidden />
-                الأسرع
-              </span>
-            ) : null}
-          </div>
-          <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-            <Info className="size-3 shrink-0" aria-hidden />
-            {seatMessage}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between gap-4 sm:justify-end">
-        <PriceBlock pricePerSeat={option.pricePerSeat} total={total} seats={seats} />
-        <BookButton
-          trip={trip}
-          option={option}
-          seats={seats}
-          travelDate={travelDate}
-          disabled={notEnough}
-          flight={flight}
-        />
-      </div>
-    </div>
   );
 }
 
@@ -317,14 +296,14 @@ function BookButton({
   className,
 }: {
   trip: Trip;
-  option: ScheduleOption;
+  option: ScheduleOption | undefined;
   seats: number;
   travelDate: string;
   disabled: boolean;
   flight?: string;
   className?: string;
 }) {
-  if (disabled) {
+  if (disabled || !option) {
     return (
       <Button disabled className={cn("h-11 shrink-0 font-bold", className)}>
         لا توجد مقاعد كافية
