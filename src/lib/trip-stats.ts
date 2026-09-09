@@ -3,12 +3,14 @@ import type { Trip } from "@/lib/goair";
 export type AirportSummary = {
   code: string;
   name: string;
+  nameEn: string | null;
   country: string;
   routeCount: number;
 };
 
 export type DestinationSummary = {
   name: string;
+  nameEn: string | null;
   country: string;
   airportCode: string;
   minPriceUsd: number | null;
@@ -36,6 +38,7 @@ export function getAirportSummaries(trips: Trip[], country?: string): AirportSum
       map.set(trip.airport_code, {
         code: trip.airport_code,
         name: trip.airport_name,
+        nameEn: trip.airport_name_en ?? null,
         country: trip.country,
         routeCount: 1,
       });
@@ -68,6 +71,7 @@ export function getDestinationSummaries(trips: Trip[], countries: string[]): Des
     } else {
       map.set(key, {
         name: trip.destination,
+        nameEn: trip.destination_en ?? null,
         country: trip.country,
         airportCode: trip.airport_code,
         minPriceUsd: price,
@@ -80,11 +84,11 @@ export function getDestinationSummaries(trips: Trip[], countries: string[]): Des
 }
 
 export function getAirportsForCountry(trips: Trip[], country: string) {
-  const map = new Map<string, string>();
+  const map = new Map<string, { name: string; nameEn: string | null }>();
   trips
     .filter((trip) => trip.country === country)
-    .forEach((trip) => map.set(trip.airport_code, trip.airport_name));
-  return Array.from(map, ([code, name]) => ({ code, name }));
+    .forEach((trip) => map.set(trip.airport_code, { name: trip.airport_name, nameEn: trip.airport_name_en ?? null }));
+  return Array.from(map, ([code, info]) => ({ code, name: info.name, nameEn: info.nameEn }));
 }
 
 /**
@@ -112,6 +116,7 @@ export function getDestinationSummariesForAirport(
     } else {
       map.set(trip.destination, {
         name: trip.destination,
+        nameEn: trip.destination_en ?? null,
         country: trip.country,
         airportCode: trip.airport_code,
         minPriceUsd: price,
@@ -139,11 +144,11 @@ export function getDestinationsForAirport(trips: Trip[], country: string, airpor
  * flow where the customer picks their city before narrowing to an airport.
  */
 export function getAirportsForDestination(trips: Trip[], country: string, destination: string) {
-  const map = new Map<string, string>();
+  const map = new Map<string, { name: string; nameEn: string | null }>();
   trips
     .filter((trip) => trip.country === country && trip.destination === destination)
-    .forEach((trip) => map.set(trip.airport_code, trip.airport_name));
-  return Array.from(map, ([code, name]) => ({ code, name }));
+    .forEach((trip) => map.set(trip.airport_code, { name: trip.airport_name, nameEn: trip.airport_name_en ?? null }));
+  return Array.from(map, ([code, info]) => ({ code, name: info.name, nameEn: info.nameEn }));
 }
 
 /** Featured routes: lowest price first, capped for homepage display. */

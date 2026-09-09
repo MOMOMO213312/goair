@@ -1,6 +1,12 @@
 import { supabase } from "./supabase";
 
-export type Announcement = { id: string; message: string; linkUrl: string | null };
+export type Announcement = {
+  id: string;
+  message: string;
+  /** English display translation — use `localize()` to pick. */
+  messageEn: string | null;
+  linkUrl: string | null;
+};
 
 /** Public, no token — same pattern as launch_markets (safe marketing text). */
 export async function fetchActiveAnnouncements(): Promise<Announcement[]> {
@@ -12,6 +18,7 @@ export async function fetchActiveAnnouncements(): Promise<Announcement[]> {
   return (data ?? []).map((r: Record<string, unknown>) => ({
     id: String(r["id"]),
     message: String(r["message"] ?? ""),
+    messageEn: (r["message_en"] as string | null) ?? null,
     linkUrl: (r["link_url"] as string | null) ?? null,
   }));
 }

@@ -14,6 +14,10 @@ export type Trip = {
   airport_code: string;
   origin: string;
   destination: string;
+  /** English display translations — display-only, never used for filtering/matching. Nullable until backfilled. */
+  airport_name_en?: string | null;
+  origin_en?: string | null;
+  destination_en?: string | null;
   distance_km: number | null;
   price_usd: number | null;
   is_active: boolean | null;
@@ -57,6 +61,10 @@ export type PackageTier = {
   id: string;
   name: string;
   tagline: string | null;
+  /** English display translations — use `localize()`/`localizeList()` to pick. */
+  nameEn: string | null;
+  taglineEn: string | null;
+  featuresEn: string[];
   priceUsd: number;
   iconName: string;
   features: string[];
@@ -72,6 +80,9 @@ export type AddonService = {
   category: AddonServiceCategory;
   name: string;
   description: string | null;
+  /** English display translations — use `localize()` to pick, never as a filter/match key. */
+  nameEn: string | null;
+  descriptionEn: string | null;
   priceUsd: number;
   iconName: string;
   isHighlighted: boolean;
@@ -91,6 +102,8 @@ export async function fetchAddonServices(): Promise<AddonService[]> {
     category: String(pick(row, ["category"])) as AddonServiceCategory,
     name: String(pick(row, ["name_ar"]) ?? ""),
     description: pick<string>(row, ["description_ar"]),
+    nameEn: pick<string>(row, ["name_en"]),
+    descriptionEn: pick<string>(row, ["description_en"]),
     priceUsd: Number(pick(row, ["price_usd"]) ?? 0),
     iconName: String(pick(row, ["icon_name"]) ?? "Sparkles"),
     isHighlighted: pick<boolean>(row, ["is_highlighted"]) === true,
@@ -109,6 +122,9 @@ export async function fetchActivePackages(): Promise<PackageTier[]> {
     id: String(pick(row, ["id"])),
     name: String(pick(row, ["name"]) ?? ""),
     tagline: pick<string>(row, ["tagline"]),
+    nameEn: pick<string>(row, ["name_en"]),
+    taglineEn: pick<string>(row, ["tagline_en"]),
+    featuresEn: (pick<string[]>(row, ["features_en"]) ?? []) as string[],
     priceUsd: Number(pick(row, ["price_usd"]) ?? 0),
     iconName: String(pick(row, ["icon_name"]) ?? "Sparkles"),
     features: (pick<string[]>(row, ["features"]) ?? []) as string[],
@@ -282,6 +298,9 @@ export type PaymentMethod = {
   method: string;
   label: string;
   details: string | null;
+  /** English display translations — use `localize()` to pick. Raw column names from `payment_settings`. */
+  label_en?: string | null;
+  details_en?: string | null;
   country: string | null;
 };
 
@@ -649,6 +668,10 @@ export type SubscriptionPlan = {
   duration: "semi_annual" | "annual" | string;
   name: string;
   tagline: string | null;
+  /** English display translations — use `localize()`/`localizeList()` to pick. */
+  nameEn: string | null;
+  taglineEn: string | null;
+  featuresEn: string[];
   priceUsd: number;
   discountPercent: number;
   freeRideCredits: number;
@@ -673,6 +696,9 @@ export async function fetchSubscriptionPlans(country?: string): Promise<Subscrip
     duration: String(pick(row, ["duration"]) ?? ""),
     name: String(pick(row, ["name"]) ?? ""),
     tagline: pick<string>(row, ["tagline"]),
+    nameEn: pick<string>(row, ["name_en"]),
+    taglineEn: pick<string>(row, ["tagline_en"]),
+    featuresEn: (pick<string[]>(row, ["features_en"]) ?? []) as string[],
     priceUsd: Number(pick(row, ["price_usd"]) ?? 0),
     discountPercent: Number(pick(row, ["discount_percent"]) ?? 0),
     freeRideCredits: Number(pick(row, ["free_ride_credits"]) ?? 0),
@@ -698,6 +724,9 @@ export async function fetchSubscriptionPlanById(id: string): Promise<Subscriptio
     duration: String(pick(row, ["duration"]) ?? ""),
     name: String(pick(row, ["name"]) ?? ""),
     tagline: pick<string>(row, ["tagline"]),
+    nameEn: pick<string>(row, ["name_en"]),
+    taglineEn: pick<string>(row, ["tagline_en"]),
+    featuresEn: (pick<string[]>(row, ["features_en"]) ?? []) as string[],
     priceUsd: Number(pick(row, ["price_usd"]) ?? 0),
     discountPercent: Number(pick(row, ["discount_percent"]) ?? 0),
     freeRideCredits: Number(pick(row, ["free_ride_credits"]) ?? 0),
