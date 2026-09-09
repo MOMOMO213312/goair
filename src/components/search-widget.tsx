@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "@/lib/i18n/language-context";
+import { localize } from "@/lib/i18n/localize";
 import type { Trip } from "@/lib/goair";
 import {
   getAirportsForCountry,
@@ -62,7 +63,7 @@ export function SearchWidget({
   className?: string;
 }) {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [direction, setDirection] = useState<Direction>(initial?.direction ?? "from_airport");
   const [country, setCountry] = useState(initial?.country ?? countries[0] ?? "");
   const [airport, setAirport] = useState(initial?.airport ?? "");
@@ -132,13 +133,28 @@ export function SearchWidget({
   }, [isDeparting, destination, airport, airportsForDestination]);
 
   const airportOptions = useMemo(
-    () => airportChoices.map((item) => ({ value: item.code, label: item.name, hint: item.code })),
-    [airportChoices],
+    () => airportChoices.map((item) => ({ value: item.code, label: localize(item.name, item.nameEn ?? null, language), hint: item.code })),
+    [airportChoices, language],
   );
 
+  // Arabic destination string -> English translation, built from the raw
+  // trip rows (allDestinationsInCountry/destinationsForAirport are plain
+  // Arabic strings used as-is for filtering — this only affects the label).
+  const destinationEnByName = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const trip of visibleTrips) {
+      if (trip.destination_en) map.set(trip.destination, trip.destination_en);
+    }
+    return map;
+  }, [visibleTrips]);
+
   const destinationOptions = useMemo(
-    () => destinations.map((item) => ({ value: item, label: item })),
-    [destinations],
+    () =>
+      destinations.map((item) => ({
+        value: item,
+        label: localize(item, destinationEnByName.get(item) ?? null, language),
+      })),
+    [destinations, destinationEnByName, language],
   );
 
   const quickRoutes = useMemo(() => {
@@ -446,7 +462,7 @@ export function SearchWidget({
             }
             className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:border-accent hover:text-accent"
           >
-            {trip.origin} ← {trip.destination}
+            {localize(trip.origin, trip.origin_en, language)} ← {localize(trip.destination, trip.destination_en, language)}
           </button>
         ))}
       </div>
