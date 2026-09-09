@@ -36,7 +36,7 @@ export function BookingConfirmStep({
   busy,
   className,
 }: BookingConfirmStepProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   return (
     <Card className={cn("border-border/80 p-5 shadow-[var(--shadow-card)] sm:p-6", className)}>
       <h2 className="font-display text-lg font-extrabold text-primary">{t("booking.confirmStep.title")}</h2>
@@ -72,7 +72,7 @@ export function BookingConfirmStep({
           {addonNames && addonNames.length > 0 ? (
             <div className="flex items-start justify-between gap-3">
               <dt className="text-muted-foreground">{t("booking.confirmStep.extraServices")}</dt>
-              <dd className="max-w-[70%] text-end font-bold text-primary">{addonNames.join("، ")}</dd>
+              <dd className="max-w-[70%] text-end font-bold text-primary">{addonNames.join(language === "ar" ? "، " : ", ")}</dd>
             </div>
           ) : null}
           {notes ? (

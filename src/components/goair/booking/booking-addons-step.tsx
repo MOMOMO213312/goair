@@ -29,6 +29,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { useStockPhoto } from "@/hooks/use-stock-photo";
 import { useTranslation } from "@/lib/i18n/language-context";
+import { localize } from "@/lib/i18n/localize";
 import type { AddonService, AddonServiceCategory } from "@/lib/goair";
 import { formatUsd } from "@/lib/goair";
 import { cn } from "@/lib/utils";
@@ -94,7 +95,11 @@ function AddonButton({
   isSelected: boolean;
   onToggle: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const addonName = localize(addon.name, addon.nameEn, language);
+  const addonDescription = addon.description
+    ? localize(addon.description, addon.descriptionEn, language)
+    : null;
   const Icon = ADDON_ICONS[addon.iconName] ?? Sparkles;
   // Real photo priority: DB-cached / manually-set image_url → curated
   // hardcoded fallback for a couple of legacy items → live-resolved via
@@ -148,9 +153,9 @@ function AddonButton({
       </span>
 
       <span className="flex flex-1 flex-col gap-1 p-3">
-        <span className="truncate font-display text-sm font-bold text-primary">{addon.name}</span>
-        {addon.description ? (
-          <span className="line-clamp-2 text-xs text-muted-foreground">{addon.description}</span>
+        <span className="truncate font-display text-sm font-bold text-primary">{addonName}</span>
+        {addonDescription ? (
+          <span className="line-clamp-2 text-xs text-muted-foreground">{addonDescription}</span>
         ) : null}
 
         <span className="mt-auto flex items-center justify-between pt-2">

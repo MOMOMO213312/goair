@@ -6,6 +6,7 @@ import { FlightPath } from "@/components/flight-path";
 import { Card } from "@/components/ui/card";
 import { useDestinationPhoto } from "@/hooks/use-destination-photo";
 import { useTranslation } from "@/lib/i18n/language-context";
+import { localize } from "@/lib/i18n/localize";
 import type { Trip } from "@/lib/goair";
 import { formatTime, isGeneratedScheduleId } from "@/lib/goair";
 import {
@@ -36,14 +37,18 @@ export function BookingTripSummary({
   scheduleId,
   className,
 }: BookingTripSummaryProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const fallback = isFallbackSchedule(scheduleId);
   const cityLabel = trip ? getTripCityLocation(trip) : "";
   const dedicatedImage = trip ? getDedicatedRouteImage(trip) : null;
   const poolFallback = trip ? getTripRouteImage(trip) : null;
   const image = useDestinationPhoto(trip?.country ?? "", cityLabel, dedicatedImage, poolFallback);
-  const originLabel = trip?.airport_name ?? trip?.origin ?? t("booking.tripSummary.defaultAirport");
-  const destLabel = trip?.destination ?? t("booking.tripSummary.defaultDestination");
+  const originLabel = trip
+    ? localize(trip.airport_name ?? trip.origin, trip.airport_name_en ?? trip.origin_en, language)
+    : t("booking.tripSummary.defaultAirport");
+  const destLabel = trip
+    ? localize(trip.destination, trip.destination_en, language)
+    : t("booking.tripSummary.defaultDestination");
   const airportCode = trip?.airport_code ?? "";
 
   return (
