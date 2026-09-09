@@ -15,6 +15,7 @@ import { Card } from "@/components/ui/card";
 import type { BookingRecord, Trip } from "@/lib/goair";
 import { formatTime, formatUsd } from "@/lib/goair";
 import { useTranslation } from "@/lib/i18n/language-context";
+import { localize } from "@/lib/i18n/localize";
 import { useDestinationPhoto } from "@/hooks/use-destination-photo";
 import {
   getDedicatedRouteImageFromTripOrFallback,
@@ -36,15 +37,19 @@ export function ConfirmationTicketCard({
   ticket,
   className,
 }: ConfirmationTicketCardProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const travelDate = bookingField(booking, ["travel_date"]);
   const departureRaw = extractDepartureTime(booking);
   const seats = Number(booking.seats_count ?? 1);
   const total = booking.expected_total_usd ? formatUsd(Number(booking.expected_total_usd)) : "—";
   const passengerName = bookingField(booking, ["full_name"]);
 
-  const originLabel = trip?.airport_name ?? trip?.origin ?? bookingField(booking, ["origin", "airport_name"]);
-  const destLabel = trip?.destination ?? bookingField(booking, ["destination"]);
+  const rawOrigin = trip?.airport_name ?? trip?.origin ?? bookingField(booking, ["origin", "airport_name"]);
+  const rawDest = trip?.destination ?? bookingField(booking, ["destination"]);
+  const originLabel = trip
+    ? localize(rawOrigin, trip.airport_name_en ?? trip.origin_en, language)
+    : rawOrigin;
+  const destLabel = trip ? localize(rawDest, trip.destination_en, language) : rawDest;
   const airportCode = trip?.airport_code ?? bookingField(booking, ["airport_code"]);
   const country = trip?.country ?? bookingField(booking, ["country"]);
   const fallbackArgs = {
