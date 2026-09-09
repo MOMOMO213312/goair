@@ -4,6 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 
 import heroImage from "@/assets/hero-goair-van.png";
+import heroPromoImage from "@/assets/hero-goair-promo.jpg";
 import { AnnouncementTicker } from "@/components/goair/announcement-ticker";
 import { BeforeYouLand } from "@/components/goair/before-you-land";
 import { BusinessPromoBanner } from "@/components/goair/business-promo-banner";
@@ -11,6 +12,7 @@ import { CoverageCountriesSection } from "@/components/goair/coverage-countries-
 import { DealsTeaser } from "@/components/goair/deals-teaser";
 import { ExploreRoutesSection } from "@/components/goair/explore-routes-section";
 import { HeroTrustStrip } from "@/components/goair/hero-trust-strip";
+import { HeroImageCarousel } from "@/components/hero-image-carousel";
 import { HowItWorks } from "@/components/goair/how-it-works";
 import { SectionHeader } from "@/components/goair/section-header";
 import { ServiceHighlights } from "@/components/goair/service-highlights";
@@ -85,19 +87,25 @@ function Home() {
 
       {/* Hero + Search */}
       <section className="relative isolate overflow-hidden">
-        <img
-          src={heroImage}
-          alt={t("home.hero.imageAlt")}
-          width={1920}
-          height={1088}
-          fetchPriority="high"
-          decoding="async"
-          className="absolute inset-0 -z-10 size-full object-cover"
+        <HeroImageCarousel
+          slides={[
+            { src: heroImage, alt: t("home.hero.imageAlt") },
+            { src: heroPromoImage, alt: t("home.hero.imageAlt") },
+          ]}
         />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ink/85 via-ink/25 to-transparent sm:from-ink/80 sm:via-ink/10" />
         <FlightPath className="pointer-events-none absolute inset-x-0 top-10 -z-10 h-24 w-full text-accent/40 sm:top-16 sm:h-32 [stroke-dasharray:1200] [stroke-dashoffset:1200] motion-safe:animate-[draw-route_1.8s_ease-out_forwards]" />
 
-        <div className="mx-auto max-w-6xl px-4 pb-16 pt-14 sm:pb-20 sm:pt-20">
+        <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-6 sm:pb-20 sm:pt-8">
+          {/* Search dock — docked to the physical top-left corner of the hero
+              photo. `ms-auto` (margin-inline-start) pushes it away from the
+              RTL start edge (right) so it hugs the true left side, in normal
+              document flow — no absolute positioning, so it can never
+              overlap the title block below it. */}
+          <div id="find-your-ride" className="mb-8 w-full max-w-sm ms-auto scroll-mt-24 sm:max-w-md">
+            <SearchWidget trips={trips} countries={countries} />
+          </div>
+
           <div className="max-w-2xl">
             <p className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1 text-xs font-bold text-primary-foreground">
               <Sparkles className="size-3.5 text-accent" />
@@ -133,17 +141,6 @@ function Home() {
           </div>
         </div>
       </section>
-
-      {/* Search dock — sits right under the hero photo instead of overlapping it,
-          so the van/branding at the bottom of the image stays fully visible.
-          Pinned to the left (mr-auto) within the hero's max-w-6xl container,
-          so it lines up under the hero text and leaves the airport building
-          on the right of the photo fully visible instead of covering it. */}
-      <div className="relative z-10 mx-auto -mt-6 max-w-6xl px-4 sm:-mt-8">
-        <div id="find-your-ride" className="mr-auto max-w-3xl scroll-mt-24">
-          <SearchWidget trips={trips} countries={countries} />
-        </div>
-      </div>
 
       {/* Trust strip — directly under the hero, per Final Vision */}
       <div className="pt-10 sm:pt-8">
