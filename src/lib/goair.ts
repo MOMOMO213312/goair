@@ -613,6 +613,57 @@ export async function subscribeNewsletter(email: string) {
   return true;
 }
 
+export type RentalVehicleCategory = {
+  id: string;
+  code: string;
+  label_ar: string;
+  label_en: string | null;
+};
+
+export async function fetchRentalVehicleCategories(): Promise<RentalVehicleCategory[]> {
+  const { data, error } = await supabase
+    .from("rental_vehicle_categories")
+    .select("id, code, label_ar, label_en")
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+/**
+ * Public "become a rental partner" join request — NOT a login account.
+ * GoAir ops review these (verify license/car in person) and manually create
+ * the real rental_partners/rental_vehicles rows once approved. Same
+ * insert-only shape as sendContactMessage.
+ */
+export async function sendRentalPartnerApplication(params: {
+  fullName: string;
+  phone: string;
+  email: string;
+  country: string;
+  city: string;
+  carMakeModel: string;
+  carYear: string;
+  categoryId: string;
+  hasDriverLicense: boolean;
+  notes: string;
+}) {
+  const { error } = await supabase.from("rental_partner_applications").insert({
+    full_name: params.fullName,
+    phone_number: params.phone,
+    email: params.email || null,
+    country: params.country,
+    city: params.city || null,
+    car_make_model: params.carMakeModel,
+    car_year: params.carYear ? Number(params.carYear) : null,
+    category_id: params.categoryId || null,
+    has_driver_license: params.hasDriverLicense,
+    notes: params.notes || null,
+  });
+  if (error) throw new Error(error.message);
+  return true;
+}
+
 export async function sendContactMessage(params: {
   name: string;
   email: string;

@@ -72,6 +72,7 @@ export function SiteFooter() {
           <ul className="mt-4 space-y-2 text-sm text-primary-foreground/75">
             <li><Link to="/my-bookings" search={{ ticket: "" }}>{t("footer.myBookings")}</Link></li>
             <li><Link to="/partner">{t("footer.partnerPrograms")}</Link></li>
+            <li><Link to="/rent-your-car">{t("footer.rentYourCar")}</Link></li>
             <li><Link to="/contact" search={{ package: undefined }}>{t("footer.contactUs")}</Link></li>
           </ul>
         </div>
