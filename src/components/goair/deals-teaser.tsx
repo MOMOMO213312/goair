@@ -4,6 +4,7 @@ import { ArrowLeft, Sparkles } from "lucide-react";
 
 import { SectionHeader } from "@/components/goair/section-header";
 import { useTranslation } from "@/lib/i18n/language-context";
+import { localize } from "@/lib/i18n/localize";
 import { fetchActivePackages, formatUsd } from "@/lib/goair";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +17,7 @@ const CARD_THEMES = [
 
 /** Homepage teaser for the real packages/add-ons page — not a separate promise. */
 export function DealsTeaser() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { data: packages } = useQuery({
     queryKey: ["goair", "packages"],
     queryFn: fetchActivePackages,
@@ -57,7 +58,9 @@ export function DealsTeaser() {
                 )}
               >
                 <Sparkles className="size-5" aria-hidden />
-                <h3 className="mt-5 font-display text-base font-extrabold">{pkg.name}</h3>
+                <h3 className="mt-5 font-display text-base font-extrabold">
+                  {localize(pkg.name, pkg.nameEn, language)}
+                </h3>
                 {pkg.tagline ? (
                   <p
                     className={cn(
@@ -65,7 +68,7 @@ export function DealsTeaser() {
                       isTinted ? "opacity-80" : "text-muted-foreground",
                     )}
                   >
-                    {pkg.tagline}
+                    {localize(pkg.tagline, pkg.taglineEn, language)}
                   </p>
                 ) : null}
                 <p className="mt-4 font-display text-lg font-extrabold">

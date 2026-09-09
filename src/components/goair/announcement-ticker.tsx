@@ -1,9 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Megaphone } from "lucide-react";
 import { fetchActiveAnnouncements } from "@/lib/announcements";
+import { useTranslation } from "@/lib/i18n/language-context";
+import { localize } from "@/lib/i18n/localize";
 
 /** Scrolling ticker of active admin-managed announcements, top of homepage. */
 export function AnnouncementTicker() {
+  const { language } = useTranslation();
   const { data } = useQuery({
     queryKey: ["site-announcements"],
     queryFn: fetchActiveAnnouncements,
@@ -11,7 +14,7 @@ export function AnnouncementTicker() {
   });
 
   if (!data || data.length === 0) return null;
-  const text = data.map((a) => a.message).join("      •      ");
+  const text = data.map((a) => localize(a.message, a.messageEn, language)).join("      •      ");
 
   return (
     <div className="overflow-hidden border-b border-accent/30 bg-primary py-2 text-primary-foreground">

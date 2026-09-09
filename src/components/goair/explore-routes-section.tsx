@@ -4,6 +4,7 @@ import { DestinationCard } from "@/components/goair/destination-card";
 import { EmptyState } from "@/components/goair/empty-state";
 import { SectionHeader } from "@/components/goair/section-header";
 import { useTranslation } from "@/lib/i18n/language-context";
+import { localize } from "@/lib/i18n/localize";
 import type { Trip } from "@/lib/goair";
 import {
   getAirportSummaries,
@@ -26,7 +27,7 @@ type ExploreRoutesSectionProps = {
  * filterable by departure airport.
  */
 export function ExploreRoutesSection({ trips, countries }: ExploreRoutesSectionProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const publicTrips = useMemo(
     () => trips.filter((trip) => countries.includes(trip.country)),
     [trips, countries],
@@ -101,7 +102,7 @@ export function ExploreRoutesSection({ trips, countries }: ExploreRoutesSectionP
                     : "border-border bg-background text-muted-foreground hover:bg-secondary/60",
                 )}
               >
-                {airport.name}
+                {localize(airport.name, airport.nameEn, language)}
               </button>
             ))}
           </div>

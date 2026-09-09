@@ -3,7 +3,9 @@ import { Link } from "@tanstack/react-router";
 import { PriceCard } from "@/components/goair/price-card";
 import { DestinationPlaceholder } from "@/components/goair/destination-placeholder";
 import { Card } from "@/components/ui/card";
+import { getCountryLabel } from "@/lib/i18n/country-labels";
 import { useTranslation } from "@/lib/i18n/language-context";
+import { localize } from "@/lib/i18n/localize";
 import { useDestinationPhoto } from "@/hooks/use-destination-photo";
 import type { DestinationSummary } from "@/lib/trip-stats";
 import { getDedicatedDestinationImage, getDestinationCardImage } from "@/lib/trip-media";
@@ -15,7 +17,8 @@ type DestinationCardProps = {
 };
 
 export function DestinationCard({ destination, className }: DestinationCardProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const displayName = localize(destination.name, destination.nameEn, language);
   const dedicatedImage = getDedicatedDestinationImage(destination.name);
   const poolFallback = getDestinationCardImage(destination.name, destination.country);
   const image = useDestinationPhoto(
@@ -36,7 +39,7 @@ export function DestinationCard({ destination, className }: DestinationCardProps
       {image ? (
         <img
           src={image}
-          alt={destination.name}
+          alt={displayName}
           width={640}
           height={400}
           loading="lazy"
@@ -47,8 +50,8 @@ export function DestinationCard({ destination, className }: DestinationCardProps
       )}
 
       <div className="p-4">
-        <p className="text-xs font-medium text-muted-foreground">{destination.country}</p>
-        <h3 className="mt-1 font-display text-base font-bold text-primary">{destination.name}</h3>
+        <p className="text-xs font-medium text-muted-foreground">{getCountryLabel(destination.country, language)}</p>
+        <h3 className="mt-1 font-display text-base font-bold text-primary">{displayName}</h3>
         <div className="mt-3 flex items-end justify-between gap-2">
           <PriceCard amount={destination.minPriceUsd} size="sm" />
           <Link

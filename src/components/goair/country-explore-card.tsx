@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 
 import { Card } from "@/components/ui/card";
+import { getCountryLabel } from "@/lib/i18n/country-labels";
 import { useTranslation } from "@/lib/i18n/language-context";
 import type { CountrySummary } from "@/lib/trip-stats";
 import { getCountryImage } from "@/lib/trip-media";
@@ -19,8 +20,9 @@ export function CountryExploreCard({
   sampleAirport,
   className,
 }: CountryExploreCardProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const searchDate = new Date().toISOString().slice(0, 10);
+  const countryLabel = getCountryLabel(summary.country, language);
 
   return (
     <Card
@@ -31,7 +33,7 @@ export function CountryExploreCard({
     >
       <img
         src={getCountryImage(summary.country)}
-        alt={summary.country}
+        alt={countryLabel}
         width={1024}
         height={640}
         loading="lazy"
@@ -42,7 +44,7 @@ export function CountryExploreCard({
       <div className="absolute inset-x-0 bottom-0 flex flex-col gap-3 p-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h3 className="font-display text-2xl font-extrabold text-primary-foreground sm:text-3xl">
-            {summary.country}
+            {countryLabel}
           </h3>
           <p className="mt-1 text-sm text-primary-foreground/85">
             {summary.routeCount}{" "}
