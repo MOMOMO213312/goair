@@ -4,7 +4,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Sparkles } from "lucide-react";
 
 import heroImage from "@/assets/hero-goair-van.png";
-import heroPromoImage from "@/assets/hero-goair-promo.jpg";
 import { AnnouncementTicker } from "@/components/goair/announcement-ticker";
 import { BeforeYouLand } from "@/components/goair/before-you-land";
 import { BusinessPromoBanner } from "@/components/goair/business-promo-banner";
@@ -29,6 +28,16 @@ import { fetchTrips, fetchVisibleCountries } from "@/lib/goair";
 import { filterPublicTrips } from "@/lib/trip-stats";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
+
+// Real, freely-licensed (Unsplash) airport photos — same hotlinking pattern
+// used for destination/generic photos in trip-media.ts. These replaced a
+// promo graphic that had "goair — Move Beyond the Airport" baked into the
+// image itself, which any hero overlay (search widget, title) inevitably
+// covered no matter how it was positioned.
+const heroTerminalImage =
+  "https://images.unsplash.com/photo-1642035148715-7cc0c7538904?q=80&w=1920&auto=format&fit=crop";
+const heroCurbsideImage =
+  "https://images.unsplash.com/photo-1605407079290-c31423ab611a?q=80&w=1920&auto=format&fit=crop";
 
 const marketsQuery = queryOptions({
   queryKey: ["goair", "markets"],
@@ -90,7 +99,8 @@ function Home() {
         <HeroImageCarousel
           slides={[
             { src: heroImage, alt: t("home.hero.imageAlt") },
-            { src: heroPromoImage, alt: t("home.hero.imageAlt") },
+            { src: heroTerminalImage, alt: t("home.hero.imageAlt") },
+            { src: heroCurbsideImage, alt: t("home.hero.imageAlt") },
           ]}
         />
         <div className="absolute inset-0 -z-10 bg-gradient-to-t from-ink/85 via-ink/25 to-transparent sm:from-ink/80 sm:via-ink/10" />
