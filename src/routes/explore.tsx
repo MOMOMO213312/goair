@@ -178,9 +178,9 @@ function PackageCard({ pkg }: { pkg: PackageTier }) {
         <Icon className={cn("size-5", pkg.isHighlighted ? "text-accent" : "text-primary")} />
       </span>
 
-      <h3 className="mt-4 font-display text-lg font-extrabold">{pkg.name}</h3>
-      {pkg.tagline ? (
-        <p className={cn("mt-1 text-sm", pkg.isHighlighted ? "text-primary-foreground/80" : "text-muted-foreground")}>{pkg.tagline}</p>
+      <h3 className="mt-4 font-display text-lg font-extrabold">{name}</h3>
+      {tagline ? (
+        <p className={cn("mt-1 text-sm", pkg.isHighlighted ? "text-primary-foreground/80" : "text-muted-foreground")}>{tagline}</p>
       ) : null}
 
       <p className="mt-5 flex items-baseline gap-1">
@@ -189,7 +189,7 @@ function PackageCard({ pkg }: { pkg: PackageTier }) {
       </p>
 
       <ul className="mt-6 flex-1 space-y-3 text-sm">
-        {pkg.features.map((feature) => (
+        {features.map((feature) => (
           <li key={feature} className="flex items-start gap-2">
             <Check className={cn("mt-0.5 size-4 shrink-0", pkg.isHighlighted ? "text-accent" : "text-primary")} />
             <span className={pkg.isHighlighted ? "text-primary-foreground/90" : "text-foreground/90"}>{feature}</span>
