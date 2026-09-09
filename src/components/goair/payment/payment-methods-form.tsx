@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import type { PaymentMethod } from "@/lib/goair";
 import { useTranslation } from "@/lib/i18n/language-context";
+import { localize } from "@/lib/i18n/localize";
 import { cn } from "@/lib/utils";
 
 type PaymentMethodsFormProps = {
@@ -45,8 +46,9 @@ export function PaymentMethodsForm({
   showSubmitButton = true,
   className,
 }: PaymentMethodsFormProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const selected = methods.find((item) => item.method === selectedMethod);
+  const selectedDetails = selected?.details ? localize(selected.details, selected.details_en, language) : null;
 
   return (
     <Card className={cn("border-border/80 p-5 shadow-[var(--shadow-card)] sm:p-6", className)}>
@@ -70,40 +72,44 @@ export function PaymentMethodsForm({
               className="gap-3"
               aria-label={t("payment.methodsForm.chooseMethodAria")}
             >
-              {methods.map((item) => (
-                <label
-                  key={item.id}
-                  className={cn(
-                    "flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4 transition-colors",
-                    "hover:border-accent/40 hover:bg-accent/5",
-                    "has-[[data-state=checked]]:border-accent has-[[data-state=checked]]:bg-accent/5 has-[[data-state=checked]]:shadow-sm",
-                  )}
-                >
-                  <RadioGroupItem value={item.method} className="mt-0.5" id={`method-${item.id}`} />
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-2">
-                      <CreditCard className="size-4 shrink-0 text-accent" aria-hidden />
-                      <span className="block font-display text-sm font-bold text-primary">
-                        {item.label ?? item.method}
+              {methods.map((item) => {
+                const itemLabel = item.label ? localize(item.label, item.label_en, language) : item.method;
+                const itemDetails = item.details ? localize(item.details, item.details_en, language) : null;
+                return (
+                  <label
+                    key={item.id}
+                    className={cn(
+                      "flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4 transition-colors",
+                      "hover:border-accent/40 hover:bg-accent/5",
+                      "has-[[data-state=checked]]:border-accent has-[[data-state=checked]]:bg-accent/5 has-[[data-state=checked]]:shadow-sm",
+                    )}
+                  >
+                    <RadioGroupItem value={item.method} className="mt-0.5" id={`method-${item.id}`} />
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-2">
+                        <CreditCard className="size-4 shrink-0 text-accent" aria-hidden />
+                        <span className="block font-display text-sm font-bold text-primary">
+                          {itemLabel}
+                        </span>
                       </span>
+                      {itemDetails && selectedMethod !== item.method ? (
+                        <span className="mt-1.5 line-clamp-2 block text-xs text-muted-foreground">
+                          {itemDetails}
+                        </span>
+                      ) : null}
                     </span>
-                    {item.details && selectedMethod !== item.method ? (
-                      <span className="mt-1.5 line-clamp-2 block text-xs text-muted-foreground">
-                        {item.details}
-                      </span>
-                    ) : null}
-                  </span>
-                </label>
-              ))}
+                  </label>
+                );
+              })}
             </RadioGroup>
           )}
         </div>
 
-        {selected?.details ? (
+        {selectedDetails ? (
           <div className="rounded-xl border border-accent/30 bg-accent/5 p-4">
             <p className="font-display text-sm font-bold text-primary">{t("payment.methodsForm.instructionsTitle")}</p>
             <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
-              {selected.details}
+              {selectedDetails}
             </p>
           </div>
         ) : null}

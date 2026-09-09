@@ -10,6 +10,7 @@ import type { BookingRecord, Trip } from "@/lib/goair";
 import { formatTime, formatUsd } from "@/lib/goair";
 import { useDestinationPhoto } from "@/hooks/use-destination-photo";
 import { useTranslation } from "@/lib/i18n/language-context";
+import { localize } from "@/lib/i18n/localize";
 import {
   getDedicatedRouteImageFromTripOrFallback,
   getRouteImageFromTripOrFallback,
@@ -45,14 +46,18 @@ export function PaymentBookingSummary({
   ticket,
   className,
 }: PaymentBookingSummaryProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const total = Number(booking.expected_total_usd ?? 0);
   const seats = Number(booking.seats_count ?? 1);
   const travelDate = bookingField(booking, ["travel_date"]);
   const departureRaw = extractDepartureTime(booking);
 
-  const originLabel = trip?.airport_name ?? trip?.origin ?? bookingField(booking, ["origin", "airport_name"]);
-  const destLabel = trip?.destination ?? bookingField(booking, ["destination"]);
+  const rawOrigin = trip?.airport_name ?? trip?.origin ?? bookingField(booking, ["origin", "airport_name"]);
+  const rawDest = trip?.destination ?? bookingField(booking, ["destination"]);
+  const originLabel = trip
+    ? localize(rawOrigin, trip.airport_name_en ?? trip.origin_en, language)
+    : rawOrigin;
+  const destLabel = trip ? localize(rawDest, trip.destination_en, language) : rawDest;
   const airportCode = trip?.airport_code ?? bookingField(booking, ["airport_code"]);
   const country = trip?.country ?? bookingField(booking, ["country"]);
   const fallbackArgs = {
