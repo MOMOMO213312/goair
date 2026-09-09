@@ -17,14 +17,18 @@ const CARDS: Card[] = [
   {
     icon: PlaneLanding,
     key: "flightTracking",
-    topic: "Flight information display system",
+    // Modern departure-board terminal (Pexels, free license) — curated
+    // and reliable, unlike a runtime Wikipedia topic fetch which could
+    // surface an unrelated or off-brand board photo.
+    photo: "https://images.pexels.com/photos/12717154/pexels-photo-12717154.jpeg?auto=compress&cs=tinysrgb&w=800",
   },
   {
     icon: UserRound,
     key: "namedPickup",
-    // Traveler waiting at the terminal with luggage (Pexels, free license) —
-    // curated and reliable, unlike the runtime Wikipedia topic fetch above.
-    photo: "https://images.pexels.com/photos/32176145/pexels-photo-32176145.jpeg?auto=compress&cs=tinysrgb&w=800",
+    // Professional chauffeur beside a private vehicle (Pexels, free license) —
+    // reads as an international private-transfer service rather than a
+    // casual traveler photo.
+    photo: "https://images.pexels.com/photos/36377051/pexels-photo-36377051.jpeg?auto=compress&cs=tinysrgb&w=800",
   },
   {
     icon: ShieldCheck,
