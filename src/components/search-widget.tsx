@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getCountryLabel } from "@/lib/i18n/country-labels";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { localize } from "@/lib/i18n/localize";
 import type { Trip } from "@/lib/goair";
@@ -301,7 +302,7 @@ export function SearchWidget({
             <SelectContent>
               {countries.map((item) => (
                 <SelectItem key={item} value={item}>
-                  {item}
+                  {getCountryLabel(item, language)}
                 </SelectItem>
               ))}
             </SelectContent>
