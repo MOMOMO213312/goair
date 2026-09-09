@@ -771,6 +771,26 @@ const en = {
     noAnswer: "Can't find your answer?",
     contactCta: "Contact us",
   },
+  termsPage: {
+    meta: {
+      title: "Terms & Conditions — GoAir",
+      description: "The terms and conditions for booking GoAir trips.",
+    },
+    title: "Terms & Conditions",
+    lastUpdated: "Last updated: to be set before launch.",
+    draftNotice:
+      "Important notice: this document is an initial draft based on competitive research (not copied from any specific platform) to help you get started quickly — it is not approved legal wording. Since GoAir will launch in Egypt and Lebanon together, and each country has different consumer protection and transport laws, this document must be reviewed by a licensed lawyer in both countries before actual launch or accepting any real payment.",
+  },
+  privacyPage: {
+    meta: {
+      title: "Privacy Policy — GoAir",
+      description: "How GoAir collects, uses, and protects your data.",
+    },
+    title: "Privacy Policy",
+    lastUpdated: "Last updated: to be set before launch.",
+    draftNotice:
+      "Important notice: this document is an initial draft, not approved legal wording. Since GoAir will launch in Egypt and Lebanon together, this document must be reviewed by a licensed lawyer in both countries before actual launch — data protection laws in Egypt and Lebanon differ from each other, and each country needs a separate review.",
+  },
   contactPage: {
     meta: {
       title: "Contact Us — GoAir",
