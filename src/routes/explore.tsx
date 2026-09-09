@@ -34,6 +34,8 @@ import {
 } from "@/lib/goair";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-context";
+import { getCountryLabel } from "@/lib/i18n/country-labels";
+import { localize, localizeList } from "@/lib/i18n/localize";
 import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
 
 const pageMeta = translations[DEFAULT_LANGUAGE].explorePage.meta;
@@ -146,7 +148,10 @@ function PackagesBlock() {
 }
 
 function PackageCard({ pkg }: { pkg: PackageTier }) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const name = localize(pkg.name, pkg.nameEn, language);
+  const tagline = pkg.tagline ? localize(pkg.tagline, pkg.taglineEn, language) : null;
+  const features = localizeList(pkg.features, pkg.featuresEn, language);
   const Icon = ICONS[pkg.iconName] ?? Sparkles;
   const photo = useStockPhoto("packages", pkg.id, pkg.imageUrl);
   return (
@@ -228,7 +233,7 @@ function groupPlansByTier(plans: SubscriptionPlan[]): { tier: string; byDuration
 }
 
 function SubscriptionsBlock() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [subCountry, setSubCountry] = useState<string>(SUB_COUNTRIES[0] ?? "مصر");
   const [duration, setDuration] = useState<string>("annual");
   const { data: plans, isPending } = useQuery({
@@ -301,7 +306,7 @@ function SubscriptionsBlock() {
                 <SelectContent>
                   {SUB_COUNTRIES.map((c) => (
                     <SelectItem key={c} value={c}>
-                      {c}
+                      {getCountryLabel(c, language)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -334,9 +339,12 @@ function SubscriptionsBlock() {
 }
 
 function SubscriptionPlanCard({ plan, durationLabel }: { plan: SubscriptionPlan; durationLabel: Record<string, string> }) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const Icon = ICONS[plan.iconName] ?? Sparkles;
   const photo = useStockPhoto("subscription_plans", plan.id, plan.imageUrl);
+  const name = localize(plan.name, plan.nameEn, language);
+  const tagline = plan.tagline ? localize(plan.tagline, plan.taglineEn, language) : null;
+  const features = localizeList(plan.features, plan.featuresEn, language);
 
   return (
     <div
@@ -366,8 +374,8 @@ function SubscriptionPlanCard({ plan, durationLabel }: { plan: SubscriptionPlan;
         </span>
 
         <div className="absolute inset-x-0 bottom-0 p-4">
-          <h3 className="font-display text-lg font-extrabold text-white">{plan.name}</h3>
-          {plan.tagline ? <p className="mt-0.5 text-xs text-white/80">{plan.tagline}</p> : null}
+          <h3 className="font-display text-lg font-extrabold text-white">{name}</h3>
+          {tagline ? <p className="mt-0.5 text-xs text-white/80">{tagline}</p> : null}
         </div>
       </div>
 
@@ -406,7 +414,7 @@ function SubscriptionPlanCard({ plan, durationLabel }: { plan: SubscriptionPlan;
               <span>{t("explorePage.prioritySupport")}</span>
             </li>
           ) : null}
-          {plan.features.map((feature) => (
+          {features.map((feature) => (
             <li key={feature} className="flex items-start gap-2">
               <Check className={cn("mt-0.5 size-4 shrink-0", plan.isHighlighted ? "text-accent" : "text-primary")} />
               <span className={plan.isHighlighted ? "text-primary-foreground/90" : "text-foreground/90"}>{feature}</span>

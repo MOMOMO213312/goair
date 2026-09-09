@@ -17,7 +17,9 @@ import {
   friendlyErrorMessage,
   submitSubscriptionPayment,
 } from "@/lib/goair";
+import { getCountryLabel } from "@/lib/i18n/country-labels";
 import { useTranslation } from "@/lib/i18n/language-context";
+import { localize } from "@/lib/i18n/localize";
 import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
 
 const pageMeta = translations[DEFAULT_LANGUAGE].subscribePage.meta;
@@ -40,7 +42,7 @@ export const Route = createFileRoute("/subscribe")({
 type Step = "form" | "payment" | "done";
 
 function SubscribePage() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { planId } = Route.useSearch();
   const [step, setStep] = useState<Step>("form");
   const [fullName, setFullName] = useState("");
@@ -155,8 +157,8 @@ function SubscribePage() {
       <div className="mx-auto max-w-2xl px-4">
         <Card className="p-6 shadow-[var(--shadow-card)] sm:p-8">
           <p className="text-xs font-bold text-muted-foreground">{t("subscribePage.subscriptionLabel")}</p>
-          <h1 className="mt-1 font-display text-xl font-extrabold text-primary">{plan.name}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{plan.country} · {t("subscribePage.discountLabel")} {plan.discountPercent}%</p>
+          <h1 className="mt-1 font-display text-xl font-extrabold text-primary">{localize(plan.name, plan.nameEn, language)}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{getCountryLabel(plan.country, language)} · {t("subscribePage.discountLabel")} {plan.discountPercent}%</p>
 
           {step === "form" ? (
             <form onSubmit={onCreateSubscription} className="mt-6 space-y-4">

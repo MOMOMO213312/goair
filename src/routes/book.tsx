@@ -21,6 +21,7 @@ import {
   friendlyErrorMessage,
 } from "@/lib/goair";
 import { useTranslation } from "@/lib/i18n/language-context";
+import { localize } from "@/lib/i18n/localize";
 import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
 
 const pageMeta = translations[DEFAULT_LANGUAGE].bookPage.meta;
@@ -78,7 +79,7 @@ export const Route = createFileRoute("/book")({
 });
 
 function BookPage() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const search = Route.useSearch();
   const navigate = useNavigate();
 
@@ -242,7 +243,7 @@ function BookPage() {
                 flight={flight}
                 luggage={luggage}
                 notes={extrasNotes}
-                addonNames={selectedAddons.map((a) => a.name)}
+                addonNames={selectedAddons.map((a) => localize(a.name, a.nameEn, language))}
                 onEditExtras={() => setPhase("extras")}
                 onEditPassengers={() => setPhase("passengers")}
                 onConfirm={onConfirm}

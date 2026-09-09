@@ -35,6 +35,7 @@ import {
 import { filterPublicTrips, getAirportsForCountry, getDestinationsForAirport } from "@/lib/trip-stats";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-context";
+import { localize, localizeList } from "@/lib/i18n/localize";
 import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
 
 const pageMeta = translations[DEFAULT_LANGUAGE].packagePage.meta;
@@ -79,7 +80,7 @@ export const Route = createFileRoute("/package")({
 });
 
 function PackagePage() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const search = Route.useSearch();
   const navigate = useNavigate();
 
@@ -89,6 +90,9 @@ function PackagePage() {
     enabled: Boolean(search.packageId),
   });
   const pkg = packageQuery.data;
+  const pkgName = pkg ? localize(pkg.name, pkg.nameEn, language) : null;
+  const pkgTagline = pkg?.tagline ? localize(pkg.tagline, pkg.taglineEn, language) : null;
+  const pkgFeatures = pkg ? localizeList(pkg.features, pkg.featuresEn, language) : [];
 
   const tripsQuery = useQuery({ queryKey: ["goair", "trips"], queryFn: fetchTrips });
   const countriesQuery = useQuery({
@@ -128,6 +132,13 @@ function PackagePage() {
     () => (airport ? getDestinationsForAirport(visibleTrips, country, airport) : []),
     [visibleTrips, country, airport],
   );
+  const destinationEnByName = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const item of visibleTrips) {
+      if (item.destination_en) map.set(item.destination, item.destination_en);
+    }
+    return map;
+  }, [visibleTrips]);
 
   const trip = visibleTrips.find(
     (item) =>
@@ -273,11 +284,11 @@ function PackagePage() {
             <p className="text-sm text-muted-foreground">{t("packagePage.loadingPackage")}</p>
           ) : pkg ? (
             <>
-              <p className="font-display text-lg font-extrabold text-primary">{pkg.name}</p>
-              {pkg.tagline ? <p className="mt-1 text-sm text-muted-foreground">{pkg.tagline}</p> : null}
-              {pkg.features.length > 0 ? (
+              <p className="font-display text-lg font-extrabold text-primary">{pkgName}</p>
+              {pkgTagline ? <p className="mt-1 text-sm text-muted-foreground">{pkgTagline}</p> : null}
+              {pkgFeatures.length > 0 ? (
                 <ul className="mt-3 grid gap-1.5 sm:grid-cols-2">
-                  {pkg.features.map((feature) => (
+                  {pkgFeatures.map((feature) => (
                     <li key={feature} className="text-sm text-primary">
                       • {feature}
                     </li>
@@ -343,7 +354,7 @@ function PackagePage() {
                       <SelectContent>
                         {airports.map((item) => (
                           <SelectItem key={item.code} value={item.code}>
-                            {item.name}
+                            {localize(item.name, item.nameEn ?? null, language)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -365,7 +376,7 @@ function PackagePage() {
                       <SelectContent>
                         {destinations.map((item) => (
                           <SelectItem key={item} value={item}>
-                            {item}
+                            {localize(item, destinationEnByName.get(item) ?? null, language)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -483,8 +494,8 @@ function PackagePage() {
                 flight={flight}
                 luggage={luggage}
                 notes={extrasNotes}
-                {...(pkg?.name ? { packageName: pkg.name } : {})}
-                addonNames={selectedAddons.map((a) => a.name)}
+                {...(pkgName ? { packageName: pkgName } : {})}
+                addonNames={selectedAddons.map((a) => localize(a.name, a.nameEn, language))}
                 onEditExtras={() => setPhase("extras")}
                 onEditPassengers={() => setPhase("passengers")}
                 onConfirm={onConfirm}
@@ -497,7 +508,7 @@ function PackagePage() {
                 seats={seats}
                 pricePerSeat={packagePricePerSeat}
                 total={total}
-                {...(pkg?.name ? { packageName: pkg.name } : {})}
+                {...(pkgName ? { packageName: pkgName } : {})}
                 addonsTotal={addonsTotal}
               />
             </div>
@@ -509,7 +520,7 @@ function PackagePage() {
                 seats={seats}
                 pricePerSeat={packagePricePerSeat}
                 total={total}
-                {...(pkg?.name ? { packageName: pkg.name } : {})}
+                {...(pkgName ? { packageName: pkgName } : {})}
                 addonsTotal={addonsTotal}
               />
               <BookingTrustPanel />
