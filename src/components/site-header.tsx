@@ -69,15 +69,6 @@ export function SiteHeader() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-
-          <Link
-            to="/my-bookings"
-            search={{ ticket: "" }}
-            className="rounded-md px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
-            activeProps={{ className: "text-primary bg-secondary" }}
-          >
-            {t("header.myTrips")}
-          </Link>
         </nav>
 
         <div className="flex items-center gap-2">
@@ -150,15 +141,6 @@ export function SiteHeader() {
             </div>
           ) : null}
 
-          <Link
-            to="/my-bookings"
-            search={{ ticket: "" }}
-            onClick={() => setOpen(false)}
-            className="block rounded-md px-3 py-3 text-sm font-semibold text-muted-foreground"
-            activeProps={{ className: "text-primary" }}
-          >
-            {t("header.myTrips")}
-          </Link>
           <Link
             to="/my-bookings"
             search={{ ticket: "" }}
