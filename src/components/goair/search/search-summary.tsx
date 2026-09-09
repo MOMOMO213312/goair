@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { Trip } from "@/lib/goair";
 import { cn } from "@/lib/utils";
+import { getCountryLabel } from "@/lib/i18n/country-labels";
 import { useTranslation } from "@/lib/i18n/language-context";
+import { localize } from "@/lib/i18n/localize";
 
 type SearchSummaryProps = {
   trip: Trip | undefined;
@@ -41,8 +43,10 @@ export function SearchSummary({
   className,
 }: SearchSummaryProps) {
   const { t, language } = useTranslation();
-  const airportLabel = trip?.airport_name ?? trip?.origin ?? airportCode;
-  const destLabel = trip?.destination ?? destination;
+  const airportLabel = trip
+    ? localize(trip.airport_name ?? trip.origin, trip.airport_name_en ?? trip.origin_en, language)
+    : airportCode;
+  const destLabel = trip ? localize(trip.destination, trip.destination_en, language) : destination;
   const code = trip?.airport_code ?? airportCode;
   const isDeparting = direction === "to_airport";
   const firstLabel = isDeparting ? destLabel : airportLabel;
@@ -91,7 +95,7 @@ export function SearchSummary({
             {country ? (
               <span className="inline-flex items-center gap-1.5">
                 <MapPin className="size-4 shrink-0 text-accent" aria-hidden />
-                {country}
+                {getCountryLabel(country, language)}
               </span>
             ) : null}
           </div>

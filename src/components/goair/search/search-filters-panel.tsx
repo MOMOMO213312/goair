@@ -6,7 +6,9 @@ import { Slider } from "@/components/ui/slider";
 import type { Trip } from "@/lib/goair";
 import { formatUsd } from "@/lib/goair";
 import { cn } from "@/lib/utils";
+import { getCountryLabel } from "@/lib/i18n/country-labels";
 import { useTranslation } from "@/lib/i18n/language-context";
+import { localize } from "@/lib/i18n/localize";
 
 export type SearchFiltersState = {
   maxPrice: number | null;
@@ -39,7 +41,7 @@ export function SearchFiltersPanel({
   className,
   showReset = true,
 }: SearchFiltersPanelProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const hasActiveFilters = filters.maxPrice !== null && priceCeiling > priceFloor;
 
   return (
@@ -71,7 +73,7 @@ export function SearchFiltersPanel({
             <div className="flex justify-between gap-2">
               <dt className="text-muted-foreground">{t("search.filters.airport")}</dt>
               <dd className="font-bold text-primary">
-                {trip?.airport_name ?? airportCode}{" "}
+                {trip ? localize(trip.airport_name, trip.airport_name_en, language) : airportCode}{" "}
                 <span className="text-xs text-muted-foreground">({airportCode})</span>
               </dd>
             </div>
@@ -79,7 +81,7 @@ export function SearchFiltersPanel({
           {country ? (
             <div className="flex justify-between gap-2">
               <dt className="text-muted-foreground">{t("search.filters.country")}</dt>
-              <dd className="font-bold text-primary">{country}</dd>
+              <dd className="font-bold text-primary">{getCountryLabel(country, language)}</dd>
             </div>
           ) : null}
           {trip?.distance_km != null ? (

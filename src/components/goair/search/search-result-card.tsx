@@ -23,7 +23,9 @@ import {
   getTripRouteImage,
 } from "@/lib/trip-media";
 import { cn } from "@/lib/utils";
+import { getCountryLabel } from "@/lib/i18n/country-labels";
 import { useTranslation } from "@/lib/i18n/language-context";
+import { localize } from "@/lib/i18n/localize";
 
 export function isFallbackSchedule(scheduleId: string) {
   return isGeneratedScheduleId(scheduleId);
@@ -76,7 +78,9 @@ export function SearchResultCard({
   vehicleTypesById,
   flight,
 }: SearchResultCardProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const originLabel = localize(trip.origin, trip.origin_en, language);
+  const destLabel = localize(trip.destination, trip.destination_en, language);
   const cityLabel = getTripCityLocation(trip);
   const dedicatedImage = getDedicatedRouteImage(trip);
   const poolFallback = getTripRouteImage(trip);
@@ -138,12 +142,12 @@ export function SearchResultCard({
                 <span className="rounded-md bg-secondary px-2 py-0.5 font-bold text-primary">
                   {trip.airport_code}
                 </span>
-                <span>{trip.country}</span>
+                <span>{getCountryLabel(trip.country, language)}</span>
               </div>
               <h3 className="mt-2 font-display text-lg font-extrabold leading-snug text-primary sm:text-xl">
-                {trip.origin}
+                {originLabel}
                 <ArrowLeft className="mx-1.5 inline size-4 text-accent" aria-hidden />
-                {trip.destination}
+                {destLabel}
               </h3>
             </div>
           </div>
@@ -160,7 +164,7 @@ export function SearchResultCard({
             <div className="max-w-[8rem] text-center">
               <p className="text-[10px] font-bold uppercase text-muted-foreground">{t("search.resultCard.destination")}</p>
               <p className="mt-1 truncate font-display text-sm font-bold text-primary">
-                {trip.destination}
+                {destLabel}
               </p>
             </div>
           </div>
