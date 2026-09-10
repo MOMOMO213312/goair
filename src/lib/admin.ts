@@ -226,6 +226,81 @@ export async function adminUpdateTripOptionPrice(
   if (error) rpcError(error);
 }
 
+// --- Staff accounts (إدارة فريق لوحة الأدمن) ---
+
+export type AdminStaffAccount = {
+  id: string;
+  fullName: string;
+  isActive: boolean;
+  createdAt: string;
+  hasAuthAccount: boolean;
+  authEmail: string | null;
+  isLegacyTokenOnly: boolean;
+};
+
+function mapStaffAccount(row: Record<string, unknown>): AdminStaffAccount {
+  return {
+    id: String(row["id"]),
+    fullName: String(row["full_name"] ?? ""),
+    isActive: Boolean(row["is_active"]),
+    createdAt: String(row["created_at"] ?? ""),
+    hasAuthAccount: Boolean(row["has_auth_account"]),
+    authEmail: (row["auth_email"] as string | null) ?? null,
+    isLegacyTokenOnly: Boolean(row["is_legacy_token_only"]),
+  };
+}
+
+export async function adminListStaffAccounts(token: string): Promise<AdminStaffAccount[]> {
+  const { data, error } = await supabase.rpc("admin_list_staff_accounts", { p_access_token: token });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map(mapStaffAccount);
+}
+
+export async function adminDeactivateStaffAccount(token: string, staffId: string): Promise<void> {
+  const { error } = await supabase.rpc("admin_deactivate_staff_account", {
+    p_access_token: token,
+    p_staff_id: staffId,
+  });
+  if (error) rpcError(error);
+}
+
+// بينادوا على Edge Function (admin-staff-accounts) عشان إنشاء/تعديل حساب Supabase Auth
+// حقيقي محتاج service_role — ده مش ممكن يتعمل من دالة SQL عادية.
+// supabase.functions.invoke بيبعت تلقائي توكن جلسة الأدمن الحالي (JWT) في Authorization header،
+// والفانكشن بتتحقق منه وتتأكد إنه عضو فريق مفعّل قبل أي تعديل.
+async function callStaffAccountsFunction(payload: Record<string, unknown>) {
+  const { data, error } = await supabase.functions.invoke("admin-staff-accounts", { body: payload });
+  if (error) throw new Error(error.message || "حصل خطأ مؤقت. حاول تاني.");
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
+export async function adminCreateStaffAccount(params: {
+  fullName: string;
+  email: string;
+  password: string;
+}): Promise<void> {
+  await callStaffAccountsFunction({
+    action: "create",
+    full_name: params.fullName,
+    email: params.email,
+    password: params.password,
+  });
+}
+
+export async function adminSetStaffPassword(params: {
+  staffId: string;
+  email: string;
+  password: string;
+}): Promise<void> {
+  await callStaffAccountsFunction({
+    action: "set_password",
+    staff_id: params.staffId,
+    email: params.email,
+    password: params.password,
+  });
+}
+
 export function formatAdminMoney(amount: number | null) {
   if (amount == null) return "—";
   return `$${amount.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;

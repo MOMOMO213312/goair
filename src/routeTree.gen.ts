@@ -38,6 +38,7 @@ import { Route as AdminRentalApplicationsRouteImport } from './routes/admin.rent
 import { Route as AdminRentalVehiclesRouteImport } from './routes/admin.rental-vehicles'
 import { Route as AdminRequestsRouteImport } from './routes/admin.requests'
 import { Route as AdminSubscriptionPlansRouteImport } from './routes/admin.subscription-plans'
+import { Route as AdminTeamRouteImport } from './routes/admin.team'
 import { Route as AgencyIndexRouteImport } from './routes/agency.index'
 import { Route as AgencyBookRouteImport } from './routes/agency.book'
 import { Route as AgencyBookingsRouteImport } from './routes/agency.bookings'
@@ -197,6 +198,11 @@ const AdminSubscriptionPlansRoute = AdminSubscriptionPlansRouteImport.update({
   path: '/subscription-plans',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminTeamRoute = AdminTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AgencyIndexRoute = AgencyIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -292,6 +298,7 @@ export interface FileRoutesByFullPath {
   '/admin/rental-vehicles': typeof AdminRentalVehiclesRoute
   '/admin/requests': typeof AdminRequestsRoute
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
+  '/admin/team': typeof AdminTeamRoute
   '/agency/book': typeof AgencyBookRoute
   '/agency/bookings': typeof AgencyBookingsRoute
   '/agency/statements': typeof AgencyStatementsRoute
@@ -332,6 +339,7 @@ export interface FileRoutesByTo {
   '/admin/rental-vehicles': typeof AdminRentalVehiclesRoute
   '/admin/requests': typeof AdminRequestsRoute
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
+  '/admin/team': typeof AdminTeamRoute
   '/agency/book': typeof AgencyBookRoute
   '/agency/bookings': typeof AgencyBookingsRoute
   '/agency/statements': typeof AgencyStatementsRoute
@@ -377,6 +385,7 @@ export interface FileRoutesById {
   '/admin/rental-vehicles': typeof AdminRentalVehiclesRoute
   '/admin/requests': typeof AdminRequestsRoute
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
+  '/admin/team': typeof AdminTeamRoute
   '/agency/book': typeof AgencyBookRoute
   '/agency/bookings': typeof AgencyBookingsRoute
   '/agency/statements': typeof AgencyStatementsRoute
@@ -423,6 +432,7 @@ export interface FileRouteTypes {
     | '/admin/rental-vehicles'
     | '/admin/requests'
     | '/admin/subscription-plans'
+    | '/admin/team'
     | '/agency/book'
     | '/agency/bookings'
     | '/agency/statements'
@@ -463,6 +473,7 @@ export interface FileRouteTypes {
     | '/admin/rental-vehicles'
     | '/admin/requests'
     | '/admin/subscription-plans'
+    | '/admin/team'
     | '/agency/book'
     | '/agency/bookings'
     | '/agency/statements'
@@ -507,6 +518,7 @@ export interface FileRouteTypes {
     | '/admin/rental-vehicles'
     | '/admin/requests'
     | '/admin/subscription-plans'
+    | '/admin/team'
     | '/agency/book'
     | '/agency/bookings'
     | '/agency/statements'
@@ -750,6 +762,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSubscriptionPlansRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/team': {
+      id: '/admin/team'
+      path: '/team'
+      fullPath: '/admin/team'
+      preLoaderRoute: typeof AdminTeamRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/agency/': {
       id: '/agency/'
       path: '/'
@@ -854,6 +873,7 @@ interface AdminRouteChildren {
   AdminRentalVehiclesRoute: typeof AdminRentalVehiclesRoute
   AdminRequestsRoute: typeof AdminRequestsRoute
   AdminSubscriptionPlansRoute: typeof AdminSubscriptionPlansRoute
+  AdminTeamRoute: typeof AdminTeamRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -867,6 +887,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminRentalVehiclesRoute: AdminRentalVehiclesRoute,
   AdminRequestsRoute: AdminRequestsRoute,
   AdminSubscriptionPlansRoute: AdminSubscriptionPlansRoute,
+  AdminTeamRoute: AdminTeamRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
