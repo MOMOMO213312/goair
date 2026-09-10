@@ -33,6 +33,7 @@ import { Route as AdminAnnouncementsRouteImport } from './routes/admin.announcem
 import { Route as AdminFleetRouteImport } from './routes/admin.fleet'
 import { Route as AdminPackagesRouteImport } from './routes/admin.packages'
 import { Route as AdminPricingRouteImport } from './routes/admin.pricing'
+import { Route as AdminRentalApplicationsRouteImport } from './routes/admin.rental-applications'
 import { Route as AdminRequestsRouteImport } from './routes/admin.requests'
 import { Route as AdminSubscriptionPlansRouteImport } from './routes/admin.subscription-plans'
 import { Route as AgencyIndexRouteImport } from './routes/agency.index'
@@ -169,6 +170,11 @@ const AdminPricingRoute = AdminPricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminRentalApplicationsRoute = AdminRentalApplicationsRouteImport.update({
+  id: '/rental-applications',
+  path: '/rental-applications',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminRequestsRoute = AdminRequestsRouteImport.update({
   id: '/requests',
   path: '/requests',
@@ -269,6 +275,7 @@ export interface FileRoutesByFullPath {
   '/admin/fleet': typeof AdminFleetRoute
   '/admin/packages': typeof AdminPackagesRoute
   '/admin/pricing': typeof AdminPricingRoute
+  '/admin/rental-applications': typeof AdminRentalApplicationsRoute
   '/admin/requests': typeof AdminRequestsRoute
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
   '/agency/book': typeof AgencyBookRoute
@@ -306,6 +313,7 @@ export interface FileRoutesByTo {
   '/admin/fleet': typeof AdminFleetRoute
   '/admin/packages': typeof AdminPackagesRoute
   '/admin/pricing': typeof AdminPricingRoute
+  '/admin/rental-applications': typeof AdminRentalApplicationsRoute
   '/admin/requests': typeof AdminRequestsRoute
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
   '/agency/book': typeof AgencyBookRoute
@@ -348,6 +356,7 @@ export interface FileRoutesById {
   '/admin/fleet': typeof AdminFleetRoute
   '/admin/packages': typeof AdminPackagesRoute
   '/admin/pricing': typeof AdminPricingRoute
+  '/admin/rental-applications': typeof AdminRentalApplicationsRoute
   '/admin/requests': typeof AdminRequestsRoute
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
   '/agency/book': typeof AgencyBookRoute
@@ -391,6 +400,7 @@ export interface FileRouteTypes {
     | '/admin/fleet'
     | '/admin/packages'
     | '/admin/pricing'
+    | '/admin/rental-applications'
     | '/admin/requests'
     | '/admin/subscription-plans'
     | '/agency/book'
@@ -428,6 +438,7 @@ export interface FileRouteTypes {
     | '/admin/fleet'
     | '/admin/packages'
     | '/admin/pricing'
+    | '/admin/rental-applications'
     | '/admin/requests'
     | '/admin/subscription-plans'
     | '/agency/book'
@@ -469,6 +480,7 @@ export interface FileRouteTypes {
     | '/admin/fleet'
     | '/admin/packages'
     | '/admin/pricing'
+    | '/admin/rental-applications'
     | '/admin/requests'
     | '/admin/subscription-plans'
     | '/agency/book'
@@ -678,6 +690,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPricingRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/rental-applications': {
+      id: '/admin/rental-applications'
+      path: '/rental-applications'
+      fullPath: '/admin/rental-applications'
+      preLoaderRoute: typeof AdminRentalApplicationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/requests': {
       id: '/admin/requests'
       path: '/requests'
@@ -792,6 +811,7 @@ interface AdminRouteChildren {
   AdminFleetRoute: typeof AdminFleetRoute
   AdminPackagesRoute: typeof AdminPackagesRoute
   AdminPricingRoute: typeof AdminPricingRoute
+  AdminRentalApplicationsRoute: typeof AdminRentalApplicationsRoute
   AdminRequestsRoute: typeof AdminRequestsRoute
   AdminSubscriptionPlansRoute: typeof AdminSubscriptionPlansRoute
   AdminIndexRoute: typeof AdminIndexRoute
@@ -803,6 +823,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminFleetRoute: AdminFleetRoute,
   AdminPackagesRoute: AdminPackagesRoute,
   AdminPricingRoute: AdminPricingRoute,
+  AdminRentalApplicationsRoute: AdminRentalApplicationsRoute,
   AdminRequestsRoute: AdminRequestsRoute,
   AdminSubscriptionPlansRoute: AdminSubscriptionPlansRoute,
   AdminIndexRoute: AdminIndexRoute,

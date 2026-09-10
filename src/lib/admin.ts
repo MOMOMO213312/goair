@@ -599,3 +599,102 @@ export async function adminDeleteSubscriptionPlan(token: string, id: string) {
   const { error } = await supabase.rpc("admin_delete_subscription_plan", { p_access_token: token, p_id: id });
   if (error) rpcError(error);
 }
+
+// --- Rental partner applications (car rental / "أجّر عربيتك") ---
+
+export type RentalPartnerApplicationRow = {
+  id: string;
+  fullName: string;
+  phoneNumber: string;
+  email: string | null;
+  country: string;
+  city: string | null;
+  carMakeModel: string;
+  carYear: number | null;
+  categoryId: string | null;
+  hasDriverLicense: boolean;
+  notes: string | null;
+  status: string;
+  adminNotes: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+};
+
+function mapRentalPartnerApplication(row: Record<string, unknown>): RentalPartnerApplicationRow {
+  return {
+    id: String(row["id"]),
+    fullName: String(row["full_name"] ?? ""),
+    phoneNumber: String(row["phone_number"] ?? ""),
+    email: (row["email"] as string | null) ?? null,
+    country: String(row["country"] ?? ""),
+    city: (row["city"] as string | null) ?? null,
+    carMakeModel: String(row["car_make_model"] ?? ""),
+    carYear: row["car_year"] == null ? null : Number(row["car_year"]),
+    categoryId: (row["category_id"] as string | null) ?? null,
+    hasDriverLicense: Boolean(row["has_driver_license"]),
+    notes: (row["notes"] as string | null) ?? null,
+    status: String(row["status"] ?? "pending_review"),
+    adminNotes: (row["admin_notes"] as string | null) ?? null,
+    reviewedAt: (row["reviewed_at"] as string | null) ?? null,
+    createdAt: String(row["created_at"] ?? ""),
+  };
+}
+
+export async function adminListRentalPartnerApplications(token: string): Promise<RentalPartnerApplicationRow[]> {
+  const { data, error } = await supabase.rpc("admin_list_rental_partner_applications", { p_access_token: token });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map(mapRentalPartnerApplication);
+}
+
+export async function adminUpdateRentalPartnerApplicationStatus(
+  token: string,
+  applicationId: string,
+  status: string,
+  adminNotes?: string,
+) {
+  const { error } = await supabase.rpc("admin_update_rental_partner_application_status", {
+    p_access_token: token,
+    p_application_id: applicationId,
+    p_status: status,
+    p_admin_notes: adminNotes ?? null,
+  });
+  if (error) rpcError(error);
+}
+
+export async function adminApproveRentalPartnerApplication(
+  token: string,
+  params: {
+    applicationId: string;
+    plateNumber: string;
+    hourlyRateUsd: number | null;
+    dailyRateUsd: number;
+    multiDayRateUsd: number | null;
+    multiDayThresholdDays: number;
+    minRentalHours: number;
+    description: string | null;
+  },
+): Promise<string> {
+  const { data, error } = await supabase.rpc("admin_approve_rental_partner_application", {
+    p_access_token: token,
+    p_application_id: params.applicationId,
+    p_plate_number: params.plateNumber,
+    p_hourly_rate_usd: params.hourlyRateUsd,
+    p_daily_rate_usd: params.dailyRateUsd,
+    p_multi_day_rate_usd: params.multiDayRateUsd,
+    p_multi_day_threshold_days: params.multiDayThresholdDays,
+    p_min_rental_hours: params.minRentalHours,
+    p_description: params.description,
+  });
+  if (error) rpcError(error);
+  return String(data);
+}
+
+export function rentalApplicationStatusLabel(status: string) {
+  const map: Record<string, string> = {
+    pending_review: "جديد",
+    contacted: "تم التواصل",
+    approved: "متمت الموافقة",
+    rejected: "مرفوض",
+  };
+  return map[status] ?? status;
+}
