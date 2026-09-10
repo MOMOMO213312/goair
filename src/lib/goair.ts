@@ -242,7 +242,8 @@ export async function createPrivateBookingSafe(input: CreatePrivateBookingInput)
   if (error) throw new Error(error.message);
   const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
   const ticketCode = row ? pick<string>(row, ["ticket_code"]) : null;
-  if (!ticketCode) throw new Error("تم إنشاء الحجز لكن لم يرجع كود التذكرة — كلمنا فورًا على الدعم.");
+  if (!ticketCode)
+    throw new Error("تم إنشاء الحجز لكن لم يرجع كود التذكرة — كلمنا فورًا على الدعم.");
   clearStoredReferralCode();
   return { ticketCode, raw: row };
 }
@@ -376,8 +377,9 @@ export async function fetchScheduleOptions(
     fetchMarketScheduleConfig(fallbackTrip.country),
   ]);
 
-  const scheduleRows = (schedules.error ? [] : ((schedules.data ?? []) as Record<string, unknown>[]))
-    .filter((row) => pick(row, ["is_active"]) !== false);
+  const scheduleRows = (
+    schedules.error ? [] : ((schedules.data ?? []) as Record<string, unknown>[])
+  ).filter((row) => pick(row, ["is_active"]) !== false);
   const optionRows = options.error ? [] : ((options.data ?? []) as Record<string, unknown>[]);
 
   const defaultOption = optionRows[0] ?? null;
@@ -423,9 +425,7 @@ export async function fetchScheduleOptions(
       isAvailable: true,
     }));
 
-  return [...explicit, ...generated].sort((a, b) =>
-    a.departureTime.localeCompare(b.departureTime),
-  );
+  return [...explicit, ...generated].sort((a, b) => a.departureTime.localeCompare(b.departureTime));
 }
 
 export type CreateBookingInput = {
@@ -506,9 +506,7 @@ export async function createBookingSafe(input: CreateBookingInput) {
   // back to the signature already live today.
   if (error && isMissingDepartureParam(error)) {
     if (generated) {
-      throw new Error(
-        "الموعد ده لسه مش متاح للحجز الفوري — كلمنا على الدعم ونأكدلك الحجز.",
-      );
+      throw new Error("الموعد ده لسه مش متاح للحجز الفوري — كلمنا على الدعم ونأكدلك الحجز.");
     }
     ({ data, error } = await supabase.rpc("create_booking_safe", {
       ...baseArgs,
@@ -519,7 +517,8 @@ export async function createBookingSafe(input: CreateBookingInput) {
   if (error) throw new Error(error.message);
   const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
   const ticketCode = row ? pick<string>(row, ["ticket_code", "p_ticket_code"]) : null;
-  if (!ticketCode) throw new Error("تم إنشاء الحجز لكن لم يرجع كود التذكرة — كلمنا فورًا على الدعم.");
+  if (!ticketCode)
+    throw new Error("تم إنشاء الحجز لكن لم يرجع كود التذكرة — كلمنا فورًا على الدعم.");
   clearStoredReferralCode();
   return { ticketCode, raw: row };
 }
@@ -546,7 +545,8 @@ export async function cancelBookingByTicket(ticketCode: string, reason: string) 
     p_reason: reason,
   });
   if (error) throw new Error(error.message);
-  if (data === false) throw new Error("لم نتمكن من إلغاء الحجز — تأكد من كود التذكرة أو كلم الدعم.");
+  if (data === false)
+    throw new Error("لم نتمكن من إلغاء الحجز — تأكد من كود التذكرة أو كلم الدعم.");
   return true;
 }
 
@@ -628,6 +628,136 @@ export async function fetchRentalVehicleCategories(): Promise<RentalVehicleCateg
     .order("sort_order", { ascending: true });
   if (error) throw new Error(error.message);
   return data ?? [];
+}
+
+/** A customer-facing rental car listing — only approved & active vehicles are ever visible (enforced by RLS). */
+export type RentalVehicle = {
+  id: string;
+  categoryId: string | null;
+  categoryLabelAr: string | null;
+  categoryLabelEn: string | null;
+  country: string;
+  makeModel: string;
+  photos: string[];
+  description: string | null;
+  hourlyRateUsd: number | null;
+  dailyRateUsd: number;
+  multiDayRateUsd: number | null;
+  multiDayThresholdDays: number;
+  minRentalHours: number;
+};
+
+function mapRentalVehicle(row: Record<string, unknown>): RentalVehicle {
+  const category = row["rental_vehicle_categories"] as Record<string, unknown> | null;
+  return {
+    id: String(row["id"]),
+    categoryId: (row["category_id"] as string | null) ?? null,
+    categoryLabelAr: (category?.["label_ar"] as string | null) ?? null,
+    categoryLabelEn: (category?.["label_en"] as string | null) ?? null,
+    country: String(row["country"] ?? ""),
+    makeModel: String(row["make_model"] ?? ""),
+    photos: (row["photos"] as string[] | null) ?? [],
+    description: (row["description"] as string | null) ?? null,
+    hourlyRateUsd: row["hourly_rate_usd"] == null ? null : Number(row["hourly_rate_usd"]),
+    dailyRateUsd: Number(row["daily_rate_usd"] ?? 0),
+    multiDayRateUsd: row["multi_day_rate_usd"] == null ? null : Number(row["multi_day_rate_usd"]),
+    multiDayThresholdDays: Number(row["multi_day_threshold_days"] ?? 3),
+    minRentalHours: Number(row["min_rental_hours"] ?? 3),
+  };
+}
+
+/**
+ * Browse-available rental cars — RLS already restricts this to
+ * approval_status = 'approved' AND is_active = true, so no extra filtering
+ * is needed here. Optionally narrowed to one country.
+ */
+export async function fetchAvailableRentalVehicles(country?: string): Promise<RentalVehicle[]> {
+  let query = supabase
+    .from("rental_vehicles")
+    .select(
+      "id, category_id, country, make_model, photos, description, hourly_rate_usd, daily_rate_usd, multi_day_rate_usd, multi_day_threshold_days, min_rental_hours, rental_vehicle_categories(label_ar, label_en)",
+    )
+    .order("created_at", { ascending: false });
+  if (country) query = query.eq("country", country);
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Record<string, unknown>[]).map(mapRentalVehicle);
+}
+
+export type RentalDurationType = "hourly" | "daily" | "multi_day";
+
+export type RentalPriceQuote = {
+  durationType: RentalDurationType;
+  totalUsd: number;
+};
+
+/**
+ * Ask the DB what this booking would cost — the same calculation the DB
+ * will force on the real insert (see create_rental_booking_safe). Never
+ * compute the price on the client; this call exists so we can show it
+ * before the customer confirms.
+ */
+export async function quoteRentalPrice(
+  rentalVehicleId: string,
+  startDatetime: string,
+  endDatetime: string,
+): Promise<RentalPriceQuote> {
+  const { data, error } = await supabase.rpc("quote_rental_price", {
+    p_rental_vehicle_id: rentalVehicleId,
+    p_start_datetime: startDatetime,
+    p_end_datetime: endDatetime,
+  });
+  if (error) throw new Error(error.message);
+  const row = (data ?? [])[0] as Record<string, unknown> | undefined;
+  if (!row) throw new Error("لم نتمكن من حساب السعر لهذه العربية والمدة.");
+  return {
+    durationType: row["duration_type"] as RentalDurationType,
+    totalUsd: Number(row["total_usd"]),
+  };
+}
+
+export type CreateRentalBookingInput = {
+  rentalVehicleId: string;
+  fullName: string;
+  phoneNumber: string;
+  startDatetime: string;
+  endDatetime: string;
+  pickupLocation: string;
+};
+
+export type RentalBookingResult = {
+  id: string;
+  durationType: RentalDurationType;
+  totalUsd: number;
+  status: string;
+};
+
+/**
+ * Never insert into rental_bookings directly — same philosophy as
+ * createBookingSafe. The DB always recomputes duration_type/total_usd from
+ * the vehicle's rates on insert (trg_validate_rental_booking_total), so
+ * this call can't be used to under-pay for a rental.
+ */
+export async function createRentalBookingSafe(
+  input: CreateRentalBookingInput,
+): Promise<RentalBookingResult> {
+  const { data, error } = await supabase.rpc("create_rental_booking_safe", {
+    p_rental_vehicle_id: input.rentalVehicleId,
+    p_full_name: input.fullName,
+    p_phone_number: input.phoneNumber,
+    p_start_datetime: input.startDatetime,
+    p_end_datetime: input.endDatetime,
+    p_pickup_location: input.pickupLocation,
+  });
+  if (error) throw new Error(error.message);
+  const row = (data ?? [])[0] as Record<string, unknown> | undefined;
+  if (!row) throw new Error("لم يتم إنشاء الحجز.");
+  return {
+    id: String(row["out_id"]),
+    durationType: row["out_duration_type"] as RentalDurationType,
+    totalUsd: Number(row["out_total_usd"]),
+    status: String(row["out_status"]),
+  };
 }
 
 /**
@@ -764,7 +894,11 @@ export async function fetchSubscriptionPlans(country?: string): Promise<Subscrip
 }
 
 export async function fetchSubscriptionPlanById(id: string): Promise<SubscriptionPlan | null> {
-  const { data, error } = await supabase.from("subscription_plans").select("*").eq("id", id).limit(1);
+  const { data, error } = await supabase
+    .from("subscription_plans")
+    .select("*")
+    .eq("id", id)
+    .limit(1);
   if (error) throw new Error(error.message);
   const row = (data ?? [])[0];
   if (!row) return null;

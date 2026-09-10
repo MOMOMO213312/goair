@@ -23,6 +23,7 @@ import { Route as PackageRouteImport } from './routes/package'
 import { Route as PartnerRouteImport } from './routes/partner'
 import { Route as PaymentRouteImport } from './routes/payment'
 import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as RentACarRouteImport } from './routes/rent-a-car'
 import { Route as RentYourCarRouteImport } from './routes/rent-your-car'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SubscribeRouteImport } from './routes/subscribe'
@@ -119,6 +120,11 @@ const PaymentRoute = PaymentRouteImport.update({
 const PrivacyRoute = PrivacyRouteImport.update({
   id: '/privacy',
   path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RentACarRoute = RentACarRouteImport.update({
+  id: '/rent-a-car',
+  path: '/rent-a-car',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RentYourCarRoute = RentYourCarRouteImport.update({
@@ -272,6 +278,7 @@ export interface FileRoutesByFullPath {
   '/partner': typeof PartnerRouteWithChildren
   '/payment': typeof PaymentRoute
   '/privacy': typeof PrivacyRoute
+  '/rent-a-car': typeof RentACarRoute
   '/rent-your-car': typeof RentYourCarRoute
   '/search': typeof SearchRoute
   '/subscribe': typeof SubscribeRoute
@@ -311,6 +318,7 @@ export interface FileRoutesByTo {
   '/package': typeof PackageRoute
   '/payment': typeof PaymentRoute
   '/privacy': typeof PrivacyRoute
+  '/rent-a-car': typeof RentACarRoute
   '/rent-your-car': typeof RentYourCarRoute
   '/search': typeof SearchRoute
   '/subscribe': typeof SubscribeRoute
@@ -355,6 +363,7 @@ export interface FileRoutesById {
   '/partner': typeof PartnerRouteWithChildren
   '/payment': typeof PaymentRoute
   '/privacy': typeof PrivacyRoute
+  '/rent-a-car': typeof RentACarRoute
   '/rent-your-car': typeof RentYourCarRoute
   '/search': typeof SearchRoute
   '/subscribe': typeof SubscribeRoute
@@ -400,6 +409,7 @@ export interface FileRouteTypes {
     | '/partner'
     | '/payment'
     | '/privacy'
+    | '/rent-a-car'
     | '/rent-your-car'
     | '/search'
     | '/subscribe'
@@ -439,6 +449,7 @@ export interface FileRouteTypes {
     | '/package'
     | '/payment'
     | '/privacy'
+    | '/rent-a-car'
     | '/rent-your-car'
     | '/search'
     | '/subscribe'
@@ -482,6 +493,7 @@ export interface FileRouteTypes {
     | '/partner'
     | '/payment'
     | '/privacy'
+    | '/rent-a-car'
     | '/rent-your-car'
     | '/search'
     | '/subscribe'
@@ -526,6 +538,7 @@ export interface RootRouteChildren {
   PartnerRoute: typeof PartnerRouteWithChildren
   PaymentRoute: typeof PaymentRoute
   PrivacyRoute: typeof PrivacyRoute
+  RentACarRoute: typeof RentACarRoute
   RentYourCarRoute: typeof RentYourCarRoute
   SearchRoute: typeof SearchRoute
   SubscribeRoute: typeof SubscribeRoute
@@ -630,6 +643,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy'
       fullPath: '/privacy'
       preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rent-a-car': {
+      id: '/rent-a-car'
+      path: '/rent-a-car'
+      fullPath: '/rent-a-car'
+      preLoaderRoute: typeof RentACarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rent-your-car': {
@@ -921,6 +941,7 @@ const rootRouteChildren: RootRouteChildren = {
   PartnerRoute: PartnerRouteWithChildren,
   PaymentRoute: PaymentRoute,
   PrivacyRoute: PrivacyRoute,
+  RentACarRoute: RentACarRoute,
   RentYourCarRoute: RentYourCarRoute,
   SearchRoute: SearchRoute,
   SubscribeRoute: SubscribeRoute,

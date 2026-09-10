@@ -13,6 +13,7 @@ const en = {
     explore: "Explore",
     packages: "Packages",
     subscriptions: "Subscriptions",
+    rentACar: "Rent a Car",
     trackBooking: "Track my booking",
     menu: "Menu",
   },
@@ -80,12 +81,13 @@ const en = {
       q2: "Does the price change?",
       a2: "The price shown per seat is fixed — you won't see a different price at checkout.",
       q3: "How do I track my booking?",
-      a3: "From the \"My Bookings\" page — enter the ticket code you received after booking.",
+      a3: 'From the "My Bookings" page — enter the ticket code you received after booking.',
     },
   },
   travelExperience: {
     sectionTitle: "Choose your journey",
-    sectionDescription: "Three simple ways to start — each one takes you straight to what you need.",
+    sectionDescription:
+      "Three simple ways to start — each one takes you straight to what you need.",
     departing: {
       title: "Departure",
       description: "From your location to the airport — book your seat at a fixed price and time.",
@@ -93,12 +95,14 @@ const en = {
     },
     arriving: {
       title: "Return",
-      description: "From the airport to your destination — a GoAir rep waits for you with a sign bearing your name.",
+      description:
+        "From the airport to your destination — a GoAir rep waits for you with a sign bearing your name.",
       cta: "Find your ride",
     },
     services: {
       title: "Airport services",
-      description: "Everything you need inside the airport — Fast Track, VIP lounge, and personal assistance.",
+      description:
+        "Everything you need inside the airport — Fast Track, VIP lounge, and personal assistance.",
       cta: "Explore services",
     },
   },
@@ -160,7 +164,8 @@ const en = {
     noTripsInPriceRangeBody: "Widen the price range or clear the filters to see all schedules.",
     clearFilters: "Clear filters",
     scheduleLoadErrorTitle: "Couldn't load schedules right now",
-    scheduleLoadErrorBody: "Try refreshing the page. If the problem continues, adjust your search or contact support.",
+    scheduleLoadErrorBody:
+      "Try refreshing the page. If the problem continues, adjust your search or contact support.",
   },
   search: {
     editSearch: "Edit search",
@@ -173,7 +178,8 @@ const en = {
       submitSuccess: "Got your request — we'll reach out on WhatsApp.",
       submitError: "We couldn't send the request. Try again or contact us.",
       noSchedulesTitle: "No schedules on this route for the selected day",
-      noSchedulesBody: "Request the route and leave your number — our team will get back to you with a suitable time.",
+      noSchedulesBody:
+        "Request the route and leave your number — our team will get back to you with a suitable time.",
       submitted: "Your request has been sent ✓",
       phoneLabel: "Mobile number / WhatsApp",
       submitButton: "Request this route",
@@ -226,7 +232,8 @@ const en = {
     },
     privateBooking: {
       title: "Private booking",
-      subtitle: "The whole vehicle for your group only — no other passengers, and a flat price instead of per seat.",
+      subtitle:
+        "The whole vehicle for your group only — no other passengers, and a flat price instead of per seat.",
       recommended: "Best fit for your group",
       upToPassengers: "Up to {{count}} passengers.",
       upToLuggage: "Up to {{count}} bags",
@@ -240,7 +247,8 @@ const en = {
   bookPage: {
     meta: {
       title: "Complete Booking — GoAir",
-      description: "Enter passenger details to complete your seat booking on shared airport transport.",
+      description:
+        "Enter passenger details to complete your seat booking on shared airport transport.",
       ogDescription: "Clear steps stand between you and confirming your seat.",
     },
     fullNameRequired: "Enter your full name.",
@@ -257,7 +265,8 @@ const en = {
     },
     backToTrips: "Back to trips",
     trustNote: "Your info is used only to complete the booking and reach you",
-    cancellationNote: "You can cancel or change your booking for free up to 24 hours before departure.",
+    cancellationNote:
+      "You can cancel or change your booking for free up to 24 hours before departure.",
     addonsStep: {
       title: "Make your airport experience easier",
       subtitle: "Optional — add any service that improves your trip.",
@@ -320,7 +329,8 @@ const en = {
       luggageCount: "Number of bags",
       notes: "Notes",
       notesPlaceholder: "Child seat, help with luggage…",
-      flightWaitNote: "If you enter your flight number, the driver will wait free for up to an hour after actual landing.",
+      flightWaitNote:
+        "If you enter your flight number, the driver will wait free for up to an hour after actual landing.",
       preparing: "Preparing your booking...",
       continueButton: "Continue booking",
     },
@@ -373,7 +383,8 @@ const en = {
     },
   },
   payment: {
-    afterNote: "After you submit your payment details, the GoAir team will review them and confirm your booking.",
+    afterNote:
+      "After you submit your payment details, the GoAir team will review them and confirm your booking.",
     backLink: {
       text: "Back to booking details",
     },
@@ -428,7 +439,8 @@ const en = {
       invalidType: "The file must be an image (JPG/PNG/WebP) or PDF.",
       tooLarge: "File is larger than 8MB. Try a smaller image.",
       uploadSuccess: "Payment proof uploaded.",
-      uploadFailed: "We couldn't upload the file — you can still continue with just the transaction number.",
+      uploadFailed:
+        "We couldn't upload the file — you can still continue with just the transaction number.",
       cancelAria: "Remove file",
       uploading: "Uploading...",
       chooseFile: "Choose an image or PDF",
@@ -438,7 +450,8 @@ const en = {
   paymentPage: {
     meta: {
       title: "Complete Payment — GoAir",
-      description: "Review your trip details and choose the right payment method to complete your booking.",
+      description:
+        "Review your trip details and choose the right payment method to complete your booking.",
       ogDescription: "Bank transfer or e-wallet — confirmed after review.",
     },
     selectMethodError: "Choose a payment method.",
@@ -447,7 +460,8 @@ const en = {
     paymentSubmitError: "We couldn't record the payment. Try again or contact support.",
     loadError: {
       title: "Couldn't load the booking",
-      description: "Try refreshing the page. If the problem continues, check your ticket code or contact support.",
+      description:
+        "Try refreshing the page. If the problem continues, check your ticket code or contact support.",
     },
     total: "Total",
     confirming: "Confirming payment...",
@@ -510,7 +524,8 @@ const en = {
     nextSteps: {
       title: "What's next?",
       keepTicket: "Keep your booking number and QR code handy for reference.",
-      pendingNote: "Once your payment details are reviewed, the GoAir team will confirm your booking.",
+      pendingNote:
+        "Once your payment details are reviewed, the GoAir team will confirm your booking.",
       confirmedNote: "Your pickup point will be shared in a WhatsApp message before the trip.",
       driverWait: "Your driver will wait free of charge for up to an hour after actual landing.",
     },
@@ -529,11 +544,13 @@ const en = {
   myBookingsPage: {
     meta: {
       title: "My Bookings — Look up & cancel | GoAir",
-      description: "Search for your booking with your ticket code to view details or cancel your trip for free.",
+      description:
+        "Search for your booking with your ticket code to view details or cancel your trip for free.",
       ogDescription: "Your ticket code is all you need to view or cancel your booking.",
     },
     title: "My Bookings",
-    subtitle: "Enter your ticket code to view or cancel a booking, or your subscription code to view your membership.",
+    subtitle:
+      "Enter your ticket code to view or cancel a booking, or your subscription code to view your membership.",
     tabs: {
       booking: "Trip booking",
       subscription: "Subscription",
@@ -590,19 +607,40 @@ const en = {
     },
   },
   heroTrustStrip: {
-    fixedPrice: { title: "Fixed price from the start", text: "The price you see is what you pay — no haggling, no surprises." },
-    freeCancellation: { title: "Free cancellation up to 24 hours", text: "Changed your mind? Cancel or edit for free up to a day before your trip." },
-    namedPickup: { title: "Pickup with a sign bearing your name", text: "A GoAir rep waits for you at arrivals with a sign bearing your name." },
+    fixedPrice: {
+      title: "Fixed price from the start",
+      text: "The price you see is what you pay — no haggling, no surprises.",
+    },
+    freeCancellation: {
+      title: "Free cancellation up to 24 hours",
+      text: "Changed your mind? Cancel or edit for free up to a day before your trip.",
+    },
+    namedPickup: {
+      title: "Pickup with a sign bearing your name",
+      text: "A GoAir rep waits for you at arrivals with a sign bearing your name.",
+    },
   },
   howItWorks: {
     sectionTitle: "How to book with GoAir",
     sectionDescription: "From search to pickup in 4 simple steps.",
     imageAlt: "Airport runway",
     stepLabel: "Step {{number}}",
-    search: { title: "Search", text: "Pick the airport, destination, and date, and see all available schedules and prices." },
-    choose: { title: "Choose", text: "Compare schedules and pick shared or private transport based on your group." },
-    book: { title: "Book", text: "Enter passenger details and confirm payment — your ticket is ready instantly." },
-    pickup: { title: "Pickup", text: "A GoAir rep waits for you at arrivals with a sign bearing your name." },
+    search: {
+      title: "Search",
+      text: "Pick the airport, destination, and date, and see all available schedules and prices.",
+    },
+    choose: {
+      title: "Choose",
+      text: "Compare schedules and pick shared or private transport based on your group.",
+    },
+    book: {
+      title: "Book",
+      text: "Enter passenger details and confirm payment — your ticket is ready instantly.",
+    },
+    pickup: {
+      title: "Pickup",
+      text: "A GoAir rep waits for you at arrivals with a sign bearing your name.",
+    },
   },
   beforeYouLand: {
     sectionTitle: "Before you land, everything's ready",
@@ -628,7 +666,8 @@ const en = {
   },
   businessPromoBanner: {
     title: "For travel agencies & airlines",
-    description: "Offer airport transfer service to your customers and earn a commission on every booking.",
+    description:
+      "Offer airport transfer service to your customers and earn a commission on every booking.",
     agencyCta: "For travel agencies",
     partnerCta: "For airlines",
   },
@@ -639,7 +678,8 @@ const en = {
   },
   coverageCountries: {
     sectionTitle: "Countries we currently cover ({{count}})",
-    sectionDescription: "GoAir currently operates in these destinations, and is gradually expanding to new countries.",
+    sectionDescription:
+      "GoAir currently operates in these destinations, and is gradually expanding to new countries.",
   },
   countryExploreCard: {
     activeRouteSingular: "active route",
@@ -654,7 +694,8 @@ const en = {
   },
   exploreRoutesSection: {
     sectionTitle: "Explore your trips",
-    sectionDescription: "Pick your airport and see the destinations available at a fixed price per seat.",
+    sectionDescription:
+      "Pick your airport and see the destinations available at a fixed price per seat.",
     allAirports: "All airports",
     emptyTitle: "No destinations available right now",
     emptyDescription: "Try another airport or contact us with your question.",
@@ -662,32 +703,39 @@ const en = {
   explorePage: {
     meta: {
       title: "Explore — GoAir",
-      description: "Extra services, packages, and subscriptions — everything GoAir offers for your trip, on one page.",
+      description:
+        "Extra services, packages, and subscriptions — everything GoAir offers for your trip, on one page.",
       ogDescription: "Add the comfort your trip needs, or subscribe for a permanent discount.",
     },
     tabEyebrow: "Every service and every deal, in one place",
     packagesHeroTitle: "Trip Packages",
-    packagesHeroDescription: "Ready-made packages bundling several services together, at a better price than buying them separately.",
+    packagesHeroDescription:
+      "Ready-made packages bundling several services together, at a better price than buying them separately.",
     subscriptionsHeroTitle: "Subscriptions",
-    subscriptionsHeroDescription: "A membership with a permanent discount on all your trips — subscribe once, benefit every trip.",
+    subscriptionsHeroDescription:
+      "A membership with a permanent discount on all your trips — subscribe once, benefit every trip.",
     mostRequested: "Most requested",
     perTraveler: "per traveler",
     packagesLoading: "Loading packages...",
     noPackagesAvailable: "No packages available right now.",
-    packagesFootnote: "These packages are on top of the base seat price, and are added to your booking total automatically.",
-    packagesSectionDescription: "Extra packages on top of the base seat price, added to your booking automatically.",
+    packagesFootnote:
+      "These packages are on top of the base seat price, and are added to your booking total automatically.",
+    packagesSectionDescription:
+      "Extra packages on top of the base seat price, added to your booking automatically.",
     choosePackageAndSearch: "Choose this package and find your trip",
     nextStepPackage: "Next step: choose your trip inside the package flow",
     membershipBadge: "GoAir Membership",
     membershipHeroTitle: "Your trips, with a permanent discount and priority",
-    membershipHeroDescription: "Subscribe once and benefit every trip — a fixed discount, extra luggage, and a guaranteed seat during busy times.",
+    membershipHeroDescription:
+      "Subscribe once and benefit every trip — a fixed discount, extra luggage, and a guaranteed seat during busy times.",
     choosePlanTitle: "Choose your plan",
     choosePlanDescription: "Same benefits, with a subscription length that suits you.",
     durationSemiAnnual: "6 months",
     durationAnnual: "Annual",
     subscriptionsLoading: "Loading subscriptions...",
     noSubscriptionsInCountry: "No subscriptions available in this country right now.",
-    subscriptionFootnote: 'A subscription is a separate membership from a booking — after subscribing you\'ll get a tracking code from the "My Bookings" page (Subscription tab).',
+    subscriptionFootnote:
+      'A subscription is a separate membership from a booking — after subscribing you\'ll get a tracking code from the "My Bookings" page (Subscription tab).',
     mostSavings: "Best value",
     discountOnAllTrips: "{{percent}}% discount on all your trips",
     freeRideSingular: "free trip",
@@ -699,9 +747,11 @@ const en = {
   subscribePage: {
     meta: {
       title: "Subscribe — GoAir",
-      description: "Join GoAir membership and get a fixed discount and free trips throughout your subscription.",
+      description:
+        "Join GoAir membership and get a fixed discount and free trips throughout your subscription.",
     },
-    noPlanSelectedError: "No subscription plan selected — go back to the deals page and pick a plan.",
+    noPlanSelectedError:
+      "No subscription plan selected — go back to the deals page and pick a plan.",
     nameAndPhoneRequired: "Enter a valid name and mobile number.",
     createError: "We couldn't create the subscription. Try again.",
     choosePaymentMethod: "Choose a payment method.",
@@ -721,14 +771,17 @@ const en = {
     keepCodeNote: "Keep it until we confirm the payment.",
     paidSubmit: "I've sent the payment",
     paymentReceivedTitle: "We received your payment details",
-    paymentReceivedBody: "We're reviewing it now — your subscription activates as soon as it's confirmed.",
-    keepCodeLong: 'Keep this code — you can track your subscription status with it from the "My Bookings" page (Subscription tab).',
+    paymentReceivedBody:
+      "We're reviewing it now — your subscription activates as soon as it's confirmed.",
+    keepCodeLong:
+      'Keep this code — you can track your subscription status with it from the "My Bookings" page (Subscription tab).',
     trackSubscription: "Track subscription",
   },
   packagePage: {
     meta: {
       title: "Package Booking — GoAir",
-      description: "Pick your trip and finish booking your package in steps fully separate from a regular booking.",
+      description:
+        "Pick your trip and finish booking your package in steps fully separate from a regular booking.",
     },
     chooseAirportDestinationFirst: "Choose the airport and destination first.",
     chooseTimeFirst: "Choose a trip time first.",
@@ -764,7 +817,8 @@ const en = {
   faqPage: {
     meta: {
       title: "FAQ — GoAir",
-      description: "Answers to the most common questions about booking, payment, cancellation, and travel day.",
+      description:
+        "Answers to the most common questions about booking, payment, cancellation, and travel day.",
       ogDescription: "Everything you need to know about your trip with GoAir.",
     },
     title: "Frequently Asked Questions",
@@ -818,10 +872,12 @@ const en = {
   rentYourCarPage: {
     meta: {
       title: "Rent Your Car with GoAir — Car + Driver",
-      description: "Register your car and rent-with-driver details, and the GoAir team will reach out after review.",
+      description:
+        "Register your car and rent-with-driver details, and the GoAir team will reach out after review.",
     },
     title: "Rent Your Car with GoAir",
-    subtitle: "Have a car and drive it yourself? Register your details here — our team will review and reach out to activate your partner account.",
+    subtitle:
+      "Have a car and drive it yourself? Register your details here — our team will review and reach out to activate your partner account.",
     nameLabel: "Full name",
     phoneLabel: "Mobile number",
     emailLabel: "Email (optional)",
@@ -836,13 +892,53 @@ const en = {
     hasDriverLicenseLabel: "Do you have a valid driving license?",
     notesLabel: "Any extra details",
     notesPlaceholder: "Preferred pickup areas, pricing in mind, etc.",
-    reviewNote: "This is just a registration of interest, not a login account. GoAir will review your details and car/license documents, and activate your partner account once approved.",
+    reviewNote:
+      "This is just a registration of interest, not a login account. GoAir will review your details and car/license documents, and activate your partner account once approved.",
     submit: "Submit Request",
     missingFields: "Enter your name, phone number, country, and car details.",
     sendError: "We couldn't send the request.",
     successTitle: "Request received",
     successBody: "The GoAir team will review your details and reach out soon with next steps.",
     submitAnother: "Submit another request",
+  },
+  rentACarPage: {
+    meta: {
+      title: "Rent a Car with a Driver — GoAir",
+      description:
+        "Choose an approved car with a driver, pick your dates and pickup spot, and the GoAir team will reach out to confirm.",
+    },
+    title: "Rent a Car with a Driver",
+    subtitle: "Cars approved by the GoAir team — book hourly, daily, or for multiple days.",
+    loading: "Loading available cars...",
+    empty: "No cars available right now, please check back later.",
+    perHour: "/hour",
+    perDay: "/day",
+    perMultiDay: "/multi-day",
+    bookButton: "Book",
+    backToBrowse: "Back to browsing cars",
+    bookingFormTitle: "Booking details",
+    durationTypeLabel: "Duration type",
+    durationHourly: "Hourly",
+    durationDaily: "Daily",
+    durationMultiDay: "Multi-day",
+    startLabel: "From",
+    endLabel: "To",
+    pickupLocationLabel: "Pickup location",
+    pickupLocationPlaceholder: "e.g. Cairo Airport, arrivals hall",
+    nameLabel: "Full name",
+    phoneLabel: "Mobile number",
+    quoting: "Calculating price...",
+    estimatedTotal: "Estimated total",
+    quoteError: "We couldn't calculate a price for this duration — try adjusting the dates.",
+    missingFields: "Enter your name, phone number, and pickup location.",
+    confirmButton: "Confirm booking",
+    submitting: "Confirming booking...",
+    bookingError: "We couldn't create the booking.",
+    successTitle: "Your booking request is in",
+    successBody:
+      "The GoAir team will contact you on your number to confirm the details and payment.",
+    bookAnother: "Book another car",
+    minHoursNote: "The minimum hourly booking for this car is {hours} hours.",
   },
 } as const;
 

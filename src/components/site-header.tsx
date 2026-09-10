@@ -69,15 +69,18 @@ export function SiteHeader() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+
+          <Link
+            to="/rent-a-car"
+            className="rounded-md px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-primary"
+            activeProps={{ className: "text-primary bg-secondary" }}
+          >
+            {t("header.rentACar")}
+          </Link>
         </nav>
 
         <div className="flex items-center gap-2">
-          <Button
-            asChild
-            size="sm"
-            variant="outline"
-            className="hidden gap-1.5 sm:inline-flex"
-          >
+          <Button asChild size="sm" variant="outline" className="hidden gap-1.5 sm:inline-flex">
             <Link to="/my-bookings" search={{ ticket: "" }}>
               <Ticket className="size-4" aria-hidden />
               {t("header.trackBooking")}
@@ -140,6 +143,15 @@ export function SiteHeader() {
               ))}
             </div>
           ) : null}
+
+          <Link
+            to="/rent-a-car"
+            onClick={() => setOpen(false)}
+            className="block rounded-md px-3 py-3 text-sm font-semibold text-muted-foreground"
+            activeProps={{ className: "text-primary" }}
+          >
+            {t("header.rentACar")}
+          </Link>
 
           <Link
             to="/my-bookings"
