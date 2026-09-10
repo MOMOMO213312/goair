@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/partner", label: "نظرة عامة", exact: true, icon: LayoutDashboard },
+  { to: "/partner/book", label: "احجز لعميل", icon: CalendarRange },
   { to: "/partner/bookings", label: "الحجوزات", icon: CalendarRange },
   { to: "/partner/statements", label: "كشوف الحساب", icon: ScrollText },
   { to: "/partner/capacity", label: "التوقعات", icon: BarChart3 },
@@ -225,7 +226,9 @@ function PartnerHeader({ data }: { data: PartnerDashboard }) {
             <h1 className="font-display text-2xl font-extrabold text-primary sm:text-3xl">
               {data.partnerName}
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">لوحة تحكم شركاء GoAir</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {data.partnerType === "agency" ? "لوحة تحكم وكالات السياحة" : "لوحة تحكم شركاء GoAir"}
+            </p>
           </div>
         </div>
         <span

@@ -60,14 +60,17 @@ export type PartnerDashboard = {
   slaMaxCancellationRate: number | null;
   slaTerminationNoticeDays: number | null;
   slaNotes: string | null;
+  /** "airline" or "agency" — the unified Partner Portal serves both. */
+  partnerType: string;
 };
 
 export async function getPartnerDashboard(token: string): Promise<PartnerDashboard> {
-  const { data, error } = await supabase.rpc("get_partner_dashboard", { p_access_token: token });
+  const { data, error } = await supabase.rpc("get_business_dashboard", { p_access_token: token });
   if (error) throwPartnerRpcError(error);
   const row = unwrap<Record<string, unknown>>(data);
   if (!row) throw new Error(PARTNER_AUTH_ERROR);
   return {
+    partnerType: (row["partner_type"] as string | null) ?? "airline",
     partnerName: String(row["partner_name"] ?? row["name"] ?? "شريك GoAir"),
     logoUrl: (row["logo_url"] as string | null) ?? null,
     brandApproved: row["brand_approved"] === true,
@@ -98,7 +101,7 @@ export type PartnerStatement = {
 };
 
 export async function getPartnerStatements(token: string): Promise<PartnerStatement[]> {
-  const { data, error } = await supabase.rpc("get_partner_statements", { p_access_token: token });
+  const { data, error } = await supabase.rpc("get_business_statements", { p_access_token: token });
   if (error) throwPartnerRpcError(error);
   return ((data ?? []) as Record<string, unknown>[]).map((row, index) => ({
     id: String(row["id"] ?? `${row["period_start"]}-${index}`),
@@ -131,7 +134,7 @@ export async function getPartnerBookings(
   from: string | null,
   to: string | null,
 ): Promise<PartnerBooking[]> {
-  const { data, error } = await supabase.rpc("get_partner_bookings", {
+  const { data, error } = await supabase.rpc("get_business_bookings", {
     p_access_token: token,
     p_from: from,
     p_to: to,

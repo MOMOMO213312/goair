@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useAgencyToken } from "@/lib/agency-session";
+import { usePartnerToken } from "@/lib/partner-session";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CheckCircle2, ClipboardPaste, Lock, Users } from "lucide-react";
 
-import { AgencyAuthError, AgencySection, AgencyTempError } from "@/components/agency/agency-shell";
+import { PartnerAuthError, PartnerSection, PartnerTempError } from "@/components/partner/partner-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { getAgencyDashboard, isAgencyAuthError } from "@/lib/agency";
+import { getPartnerDashboard, isPartnerAuthError } from "@/lib/partner";
 import {
   createBookingSafe,
   createPrivateBookingSafe,
@@ -28,7 +28,7 @@ import {
   type PrivateOption,
 } from "@/lib/goair";
 
-export const Route = createFileRoute("/agency/book")({
+export const Route = createFileRoute("/partner/book")({
   head: () => ({
     meta: [
       { title: "حجز سريع للعميل — لوحة الوكالة" },
@@ -36,7 +36,7 @@ export const Route = createFileRoute("/agency/book")({
       { name: "robots", content: "noindex" },
     ],
   }),
-  component: AgencyQuickBookingPage,
+  component: PartnerQuickBookingPage,
 });
 
 /**
@@ -55,23 +55,23 @@ function parsePassengerNames(raw: string): string[] {
     .filter((line) => line.length > 0);
 }
 
-function AgencyQuickBookingPage() {
-  const token = useAgencyToken();
+function PartnerQuickBookingPage() {
+  const token = usePartnerToken();
 
-  const agencyQuery = useQuery({
-    queryKey: ["agency-dashboard", token],
-    queryFn: () => getAgencyDashboard(token),
+  const partnerQuery = useQuery({
+    queryKey: ["partner-dashboard", token],
+    queryFn: () => getPartnerDashboard(token),
     retry: false,
     enabled: Boolean(token),
   });
 
-  if (!token) return <AgencyAuthError />;
-  if (agencyQuery.isPending) return null;
-  if (agencyQuery.isError || !agencyQuery.data) {
-    return isAgencyAuthError(agencyQuery.error) ? <AgencyAuthError /> : <AgencyTempError />;
+  if (!token) return <PartnerAuthError />;
+  if (partnerQuery.isPending) return null;
+  if (partnerQuery.isError || !partnerQuery.data) {
+    return isPartnerAuthError(partnerQuery.error) ? <PartnerAuthError /> : <PartnerTempError />;
   }
 
-  return <QuickBookingForm referralCode={agencyQuery.data.referralCode} />;
+  return <QuickBookingForm referralCode={partnerQuery.data.referralCode} />;
 }
 
 type BookingMode = "single" | "group";
@@ -113,7 +113,7 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
   const isPrivate = mode === "group" && groupType === "private";
 
   const scheduleQuery = useQuery({
-    queryKey: ["agency-book-schedule", tripId, date],
+    queryKey: ["partner-book-schedule", tripId, date],
     queryFn: () => fetchScheduleOptions(tripId, date, selectedTrip),
     enabled: Boolean(tripId && date) && !isPrivate,
   });
@@ -123,7 +123,7 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
   );
 
   const privateOptionsQuery = useQuery({
-    queryKey: ["agency-book-private-options", tripId],
+    queryKey: ["partner-book-private-options", tripId],
     queryFn: () => fetchPrivateTripOptions(tripId),
     enabled: Boolean(tripId) && isPrivate,
   });
@@ -222,7 +222,7 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
 
   if (result) {
     return (
-      <AgencySection title="تم إنشاء الحجز">
+      <PartnerSection title="تم إنشاء الحجز">
         <p className="text-sm text-muted-foreground">
           كود التذكرة: <span className="font-display text-lg font-extrabold text-primary">{result}</span>
         </p>
@@ -236,12 +236,12 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
         <Button className="mt-4" variant="outline" onClick={resetForm}>
           حجز جديد
         </Button>
-      </AgencySection>
+      </PartnerSection>
     );
   }
 
   return (
-    <AgencySection
+    <PartnerSection
       title="حجز بالنيابة عن عميلك"
       description="هيتسجل تلقائيًا معزوّ لعمولة وكالتك — بدون ما العميل يحتاج يفتح الموقع."
     >
@@ -448,7 +448,7 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
           {busy ? "جاري الحجز..." : "إنشاء الحجز"}
         </Button>
       </form>
-    </AgencySection>
+    </PartnerSection>
   );
 }
 

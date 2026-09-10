@@ -34,7 +34,7 @@ export function PartnerSessionProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const { data, error } = await supabase.rpc("partner_check_session");
+      const { data, error } = await supabase.rpc("business_check_session");
       if (cancelled) return;
 
       if (error || !data) {
