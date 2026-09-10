@@ -28,6 +28,7 @@ import {
   type GroundHandlingPartnerRow,
 } from "@/lib/admin";
 import { useAdminToken } from "@/lib/admin-session";
+import { adminInvitePortalOwner } from "@/lib/portal-members";
 
 export const Route = createFileRoute("/admin/ground-handling")({
   head: () => ({
@@ -252,6 +253,7 @@ function PartnerCard({
   onDone: () => void;
 }) {
   const [editOpen, setEditOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
   function copyToken() {
@@ -321,6 +323,17 @@ function PartnerCard({
         <Button size="sm" variant="outline" disabled={busy} onClick={toggleActive}>
           {partner.isActive ? "إيقاف" : "تفعيل"}
         </Button>
+        <Dialog open={inviteOpen} onOpenChange={setInviteOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" variant="outline">
+              دعوة حساب دخول
+            </Button>
+          </DialogTrigger>
+          <InvitePartnerOwnerDialog
+            partner={partner}
+            onDone={() => setInviteOpen(false)}
+          />
+        </Dialog>
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
           <DialogTrigger asChild>
             <Button size="sm" variant="outline">
@@ -341,6 +354,82 @@ function PartnerCard({
         </Button>
       </div>
     </Card>
+  );
+}
+
+function InvitePartnerOwnerDialog({
+  partner,
+  onDone,
+}: {
+  partner: GroundHandlingPartnerRow;
+  onDone: () => void;
+}) {
+  const [email, setEmail] = useState(partner.contactEmail ?? "");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!email.trim() || password.trim().length < 8) {
+      toast.error("الإيميل مطلوب، والباسورد لازم يكون 8 أحرف على الأقل.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await adminInvitePortalOwner({
+        portalType: "ground_handling",
+        entityId: partner.id,
+        email: email.trim(),
+        password: password.trim(),
+      });
+      toast.success(`تم إنشاء حساب الدخول لـ ${email.trim()}. ابعتله الإيميل والباسورد.`);
+      onDone();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>دعوة حساب دخول لـ {partner.name}</DialogTitle>
+      </DialogHeader>
+      <p className="text-sm text-muted-foreground">
+        هينشئ حساب Supabase Auth (owner) لبوابة التشغيل الأرضي — الشريك هيدخل بالإيميل
+        والباسورد دول بدل رمز الدخول القديم.
+      </p>
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="gh-invite-email">البريد الإلكتروني</Label>
+          <Input
+            id="gh-invite-email"
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="gh-invite-password">كلمة سر مبدئية</Label>
+          <Input
+            id="gh-invite-password"
+            type="text"
+            dir="ltr"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="8 أحرف على الأقل"
+          />
+        </div>
+        <DialogFooter>
+          <Button type="submit" disabled={busy} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">
+            {busy ? "جاري الإنشاء..." : "إنشاء الحساب"}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
   );
 }
 
