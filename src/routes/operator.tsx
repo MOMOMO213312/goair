@@ -42,6 +42,7 @@ function OperatorLayout() {
                 { to: "/operator/trips", label: "الرحلات المخصصة" },
                 { to: "/operator/fleet", label: "أسطولي" },
                 { to: "/operator/statements", label: "كشوف الحساب" },
+                { to: "/operator/team", label: "الأعضاء" },
               ].map((item) => (
                 <Link
                   key={item.to}

@@ -43,14 +43,17 @@ import { Route as AgencyIndexRouteImport } from './routes/agency.index'
 import { Route as AgencyBookRouteImport } from './routes/agency.book'
 import { Route as AgencyBookingsRouteImport } from './routes/agency.bookings'
 import { Route as AgencyStatementsRouteImport } from './routes/agency.statements'
+import { Route as AgencyTeamRouteImport } from './routes/agency.team'
 import { Route as OperatorIndexRouteImport } from './routes/operator.index'
 import { Route as OperatorFleetRouteImport } from './routes/operator.fleet'
 import { Route as OperatorStatementsRouteImport } from './routes/operator.statements'
+import { Route as OperatorTeamRouteImport } from './routes/operator.team'
 import { Route as OperatorTripsRouteImport } from './routes/operator.trips'
 import { Route as PartnerIndexRouteImport } from './routes/partner.index'
 import { Route as PartnerBookingsRouteImport } from './routes/partner.bookings'
 import { Route as PartnerCapacityRouteImport } from './routes/partner.capacity'
 import { Route as PartnerStatementsRouteImport } from './routes/partner.statements'
+import { Route as PartnerTeamRouteImport } from './routes/partner.team'
 import { Route as PartnerTermsRouteImport } from './routes/partner.terms'
 
 const IndexRoute = IndexRouteImport.update({
@@ -223,6 +226,11 @@ const AgencyStatementsRoute = AgencyStatementsRouteImport.update({
   path: '/statements',
   getParentRoute: () => AgencyRoute,
 } as any)
+const AgencyTeamRoute = AgencyTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => AgencyRoute,
+} as any)
 const OperatorIndexRoute = OperatorIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -236,6 +244,11 @@ const OperatorFleetRoute = OperatorFleetRouteImport.update({
 const OperatorStatementsRoute = OperatorStatementsRouteImport.update({
   id: '/statements',
   path: '/statements',
+  getParentRoute: () => OperatorRoute,
+} as any)
+const OperatorTeamRoute = OperatorTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
   getParentRoute: () => OperatorRoute,
 } as any)
 const OperatorTripsRoute = OperatorTripsRouteImport.update({
@@ -261,6 +274,11 @@ const PartnerCapacityRoute = PartnerCapacityRouteImport.update({
 const PartnerStatementsRoute = PartnerStatementsRouteImport.update({
   id: '/statements',
   path: '/statements',
+  getParentRoute: () => PartnerRoute,
+} as any)
+const PartnerTeamRoute = PartnerTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
   getParentRoute: () => PartnerRoute,
 } as any)
 const PartnerTermsRoute = PartnerTermsRouteImport.update({
@@ -302,12 +320,15 @@ export interface FileRoutesByFullPath {
   '/agency/book': typeof AgencyBookRoute
   '/agency/bookings': typeof AgencyBookingsRoute
   '/agency/statements': typeof AgencyStatementsRoute
+  '/agency/team': typeof AgencyTeamRoute
   '/operator/fleet': typeof OperatorFleetRoute
   '/operator/statements': typeof OperatorStatementsRoute
+  '/operator/team': typeof OperatorTeamRoute
   '/operator/trips': typeof OperatorTripsRoute
   '/partner/bookings': typeof PartnerBookingsRoute
   '/partner/capacity': typeof PartnerCapacityRoute
   '/partner/statements': typeof PartnerStatementsRoute
+  '/partner/team': typeof PartnerTeamRoute
   '/partner/terms': typeof PartnerTermsRoute
   '/admin/': typeof AdminIndexRoute
   '/agency/': typeof AgencyIndexRoute
@@ -343,12 +364,15 @@ export interface FileRoutesByTo {
   '/agency/book': typeof AgencyBookRoute
   '/agency/bookings': typeof AgencyBookingsRoute
   '/agency/statements': typeof AgencyStatementsRoute
+  '/agency/team': typeof AgencyTeamRoute
   '/operator/fleet': typeof OperatorFleetRoute
   '/operator/statements': typeof OperatorStatementsRoute
+  '/operator/team': typeof OperatorTeamRoute
   '/operator/trips': typeof OperatorTripsRoute
   '/partner/bookings': typeof PartnerBookingsRoute
   '/partner/capacity': typeof PartnerCapacityRoute
   '/partner/statements': typeof PartnerStatementsRoute
+  '/partner/team': typeof PartnerTeamRoute
   '/partner/terms': typeof PartnerTermsRoute
   '/admin': typeof AdminIndexRoute
   '/agency': typeof AgencyIndexRoute
@@ -389,12 +413,15 @@ export interface FileRoutesById {
   '/agency/book': typeof AgencyBookRoute
   '/agency/bookings': typeof AgencyBookingsRoute
   '/agency/statements': typeof AgencyStatementsRoute
+  '/agency/team': typeof AgencyTeamRoute
   '/operator/fleet': typeof OperatorFleetRoute
   '/operator/statements': typeof OperatorStatementsRoute
+  '/operator/team': typeof OperatorTeamRoute
   '/operator/trips': typeof OperatorTripsRoute
   '/partner/bookings': typeof PartnerBookingsRoute
   '/partner/capacity': typeof PartnerCapacityRoute
   '/partner/statements': typeof PartnerStatementsRoute
+  '/partner/team': typeof PartnerTeamRoute
   '/partner/terms': typeof PartnerTermsRoute
   '/admin/': typeof AdminIndexRoute
   '/agency/': typeof AgencyIndexRoute
@@ -436,12 +463,15 @@ export interface FileRouteTypes {
     | '/agency/book'
     | '/agency/bookings'
     | '/agency/statements'
+    | '/agency/team'
     | '/operator/fleet'
     | '/operator/statements'
+    | '/operator/team'
     | '/operator/trips'
     | '/partner/bookings'
     | '/partner/capacity'
     | '/partner/statements'
+    | '/partner/team'
     | '/partner/terms'
     | '/admin/'
     | '/agency/'
@@ -477,12 +507,15 @@ export interface FileRouteTypes {
     | '/agency/book'
     | '/agency/bookings'
     | '/agency/statements'
+    | '/agency/team'
     | '/operator/fleet'
     | '/operator/statements'
+    | '/operator/team'
     | '/operator/trips'
     | '/partner/bookings'
     | '/partner/capacity'
     | '/partner/statements'
+    | '/partner/team'
     | '/partner/terms'
     | '/admin'
     | '/agency'
@@ -522,12 +555,15 @@ export interface FileRouteTypes {
     | '/agency/book'
     | '/agency/bookings'
     | '/agency/statements'
+    | '/agency/team'
     | '/operator/fleet'
     | '/operator/statements'
+    | '/operator/team'
     | '/operator/trips'
     | '/partner/bookings'
     | '/partner/capacity'
     | '/partner/statements'
+    | '/partner/team'
     | '/partner/terms'
     | '/admin/'
     | '/agency/'
@@ -797,6 +833,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AgencyStatementsRouteImport
       parentRoute: typeof AgencyRoute
     }
+    '/agency/team': {
+      id: '/agency/team'
+      path: '/team'
+      fullPath: '/agency/team'
+      preLoaderRoute: typeof AgencyTeamRouteImport
+      parentRoute: typeof AgencyRoute
+    }
     '/operator/': {
       id: '/operator/'
       path: '/'
@@ -816,6 +859,13 @@ declare module '@tanstack/react-router' {
       path: '/statements'
       fullPath: '/operator/statements'
       preLoaderRoute: typeof OperatorStatementsRouteImport
+      parentRoute: typeof OperatorRoute
+    }
+    '/operator/team': {
+      id: '/operator/team'
+      path: '/team'
+      fullPath: '/operator/team'
+      preLoaderRoute: typeof OperatorTeamRouteImport
       parentRoute: typeof OperatorRoute
     }
     '/operator/trips': {
@@ -851,6 +901,13 @@ declare module '@tanstack/react-router' {
       path: '/statements'
       fullPath: '/partner/statements'
       preLoaderRoute: typeof PartnerStatementsRouteImport
+      parentRoute: typeof PartnerRoute
+    }
+    '/partner/team': {
+      id: '/partner/team'
+      path: '/team'
+      fullPath: '/partner/team'
+      preLoaderRoute: typeof PartnerTeamRouteImport
       parentRoute: typeof PartnerRoute
     }
     '/partner/terms': {
@@ -897,6 +954,7 @@ interface AgencyRouteChildren {
   AgencyBookRoute: typeof AgencyBookRoute
   AgencyBookingsRoute: typeof AgencyBookingsRoute
   AgencyStatementsRoute: typeof AgencyStatementsRoute
+  AgencyTeamRoute: typeof AgencyTeamRoute
   AgencyIndexRoute: typeof AgencyIndexRoute
 }
 
@@ -904,6 +962,7 @@ const AgencyRouteChildren: AgencyRouteChildren = {
   AgencyBookRoute: AgencyBookRoute,
   AgencyBookingsRoute: AgencyBookingsRoute,
   AgencyStatementsRoute: AgencyStatementsRoute,
+  AgencyTeamRoute: AgencyTeamRoute,
   AgencyIndexRoute: AgencyIndexRoute,
 }
 
@@ -913,6 +972,7 @@ const AgencyRouteWithChildren =
 interface OperatorRouteChildren {
   OperatorFleetRoute: typeof OperatorFleetRoute
   OperatorStatementsRoute: typeof OperatorStatementsRoute
+  OperatorTeamRoute: typeof OperatorTeamRoute
   OperatorTripsRoute: typeof OperatorTripsRoute
   OperatorIndexRoute: typeof OperatorIndexRoute
 }
@@ -920,6 +980,7 @@ interface OperatorRouteChildren {
 const OperatorRouteChildren: OperatorRouteChildren = {
   OperatorFleetRoute: OperatorFleetRoute,
   OperatorStatementsRoute: OperatorStatementsRoute,
+  OperatorTeamRoute: OperatorTeamRoute,
   OperatorTripsRoute: OperatorTripsRoute,
   OperatorIndexRoute: OperatorIndexRoute,
 }
@@ -932,6 +993,7 @@ interface PartnerRouteChildren {
   PartnerBookingsRoute: typeof PartnerBookingsRoute
   PartnerCapacityRoute: typeof PartnerCapacityRoute
   PartnerStatementsRoute: typeof PartnerStatementsRoute
+  PartnerTeamRoute: typeof PartnerTeamRoute
   PartnerTermsRoute: typeof PartnerTermsRoute
   PartnerIndexRoute: typeof PartnerIndexRoute
 }
@@ -940,6 +1002,7 @@ const PartnerRouteChildren: PartnerRouteChildren = {
   PartnerBookingsRoute: PartnerBookingsRoute,
   PartnerCapacityRoute: PartnerCapacityRoute,
   PartnerStatementsRoute: PartnerStatementsRoute,
+  PartnerTeamRoute: PartnerTeamRoute,
   PartnerTermsRoute: PartnerTermsRoute,
   PartnerIndexRoute: PartnerIndexRoute,
 }

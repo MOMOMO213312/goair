@@ -1,5 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { AlertCircle, CalendarRange, LayoutDashboard, PlusCircle, ScrollText } from "lucide-react";
+import {
+  AlertCircle,
+  CalendarRange,
+  LayoutDashboard,
+  PlusCircle,
+  ScrollText,
+  Users,
+} from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,6 +19,7 @@ const NAV = [
   { to: "/agency/book", label: "حجز سريع", icon: PlusCircle },
   { to: "/agency/bookings", label: "الحجوزات", icon: CalendarRange },
   { to: "/agency/statements", label: "كشوف الحساب", icon: ScrollText },
+  { to: "/agency/team", label: "الأعضاء", icon: Users },
 ] as const;
 
 export function AgencyNav({ variant = "tabs" }: { variant?: "tabs" | "sidebar" }) {
@@ -115,7 +123,12 @@ export function AgencySection({
   className?: string;
 }) {
   return (
-    <Card className={cn("rounded-xl border-border/80 p-5 shadow-[var(--shadow-card)] sm:p-6", className)}>
+    <Card
+      className={cn(
+        "rounded-xl border-border/80 p-5 shadow-[var(--shadow-card)] sm:p-6",
+        className,
+      )}
+    >
       <h2 className="font-display text-lg font-extrabold text-primary">{title}</h2>
       {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
       <div className="mt-5">{children}</div>
@@ -138,15 +151,27 @@ export function AgencyStatCard({
     <Card
       className={cn(
         "rounded-xl p-5 shadow-[var(--shadow-card)]",
-        highlight ? "border-accent/30 bg-primary text-primary-foreground" : "border-border/80 bg-card",
+        highlight
+          ? "border-accent/30 bg-primary text-primary-foreground"
+          : "border-border/80 bg-card",
       )}
     >
-      <p className={cn("text-sm", highlight ? "text-primary-foreground/80" : "text-muted-foreground")}>
+      <p
+        className={cn(
+          "text-sm",
+          highlight ? "text-primary-foreground/80" : "text-muted-foreground",
+        )}
+      >
         {label}
       </p>
       <p className="mt-2 font-display text-2xl font-extrabold">{value}</p>
       {hint ? (
-        <p className={cn("mt-1 text-xs", highlight ? "text-primary-foreground/70" : "text-muted-foreground")}>
+        <p
+          className={cn(
+            "mt-1 text-xs",
+            highlight ? "text-primary-foreground/70" : "text-muted-foreground",
+          )}
+        >
           {hint}
         </p>
       ) : null}
@@ -204,9 +229,7 @@ function AgencyHeader({ data }: { data: AgencyDashboard }) {
         <span
           className={cn(
             "inline-flex rounded-full px-3 py-1 text-xs font-bold",
-            data.brandApproved
-              ? "bg-primary text-primary-foreground"
-              : "bg-accent/15 text-primary",
+            data.brandApproved ? "bg-primary text-primary-foreground" : "bg-accent/15 text-primary",
           )}
         >
           {data.brandApproved ? "الهوية معتمدة" : "الهوية قيد المراجعة"}
@@ -222,7 +245,10 @@ export function AgencyStatementStatusBadge({ status }: { status: string }) {
     sent: { label: "مرسل", className: "bg-accent/15 text-primary" },
     paid: { label: "مدفوع", className: "bg-primary text-primary-foreground" },
   };
-  const entry = map[status.toLowerCase()] ?? { label: status, className: "bg-muted text-muted-foreground" };
+  const entry = map[status.toLowerCase()] ?? {
+    label: status,
+    className: "bg-muted text-muted-foreground",
+  };
   return (
     <span className={cn("inline-flex rounded-full px-3 py-1 text-xs font-bold", entry.className)}>
       {entry.label}
