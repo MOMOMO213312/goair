@@ -17,6 +17,7 @@ import { Route as ConfirmationRouteImport } from './routes/confirmation'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as GroundHandlingRouteImport } from './routes/ground-handling'
 import { Route as MyBookingsRouteImport } from './routes/my-bookings'
 import { Route as OperatorRouteImport } from './routes/operator'
 import { Route as PackageRouteImport } from './routes/package'
@@ -32,7 +33,9 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAddonServicesRouteImport } from './routes/admin.addon-services'
 import { Route as AdminAnnouncementsRouteImport } from './routes/admin.announcements'
 import { Route as AdminFleetRouteImport } from './routes/admin.fleet'
+import { Route as AdminGroundHandlingRouteImport } from './routes/admin.ground-handling'
 import { Route as AdminPackagesRouteImport } from './routes/admin.packages'
+import { Route as AdminPartnersRouteImport } from './routes/admin.partners'
 import { Route as AdminPricingRouteImport } from './routes/admin.pricing'
 import { Route as AdminRentalApplicationsRouteImport } from './routes/admin.rental-applications'
 import { Route as AdminRentalVehiclesRouteImport } from './routes/admin.rental-vehicles'
@@ -44,6 +47,7 @@ import { Route as AgencyBookRouteImport } from './routes/agency.book'
 import { Route as AgencyBookingsRouteImport } from './routes/agency.bookings'
 import { Route as AgencyStatementsRouteImport } from './routes/agency.statements'
 import { Route as AgencyTeamRouteImport } from './routes/agency.team'
+import { Route as GroundHandlingIndexRouteImport } from './routes/ground-handling.index'
 import { Route as OperatorIndexRouteImport } from './routes/operator.index'
 import { Route as OperatorFleetRouteImport } from './routes/operator.fleet'
 import { Route as OperatorStatementsRouteImport } from './routes/operator.statements'
@@ -94,6 +98,11 @@ const ExploreRoute = ExploreRouteImport.update({
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GroundHandlingRoute = GroundHandlingRouteImport.update({
+  id: '/ground-handling',
+  path: '/ground-handling',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MyBookingsRoute = MyBookingsRouteImport.update({
@@ -171,9 +180,19 @@ const AdminFleetRoute = AdminFleetRouteImport.update({
   path: '/fleet',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminGroundHandlingRoute = AdminGroundHandlingRouteImport.update({
+  id: '/ground-handling',
+  path: '/ground-handling',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPackagesRoute = AdminPackagesRouteImport.update({
   id: '/packages',
   path: '/packages',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminPartnersRoute = AdminPartnersRouteImport.update({
+  id: '/partners',
+  path: '/partners',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminPricingRoute = AdminPricingRouteImport.update({
@@ -230,6 +249,11 @@ const AgencyTeamRoute = AgencyTeamRouteImport.update({
   id: '/team',
   path: '/team',
   getParentRoute: () => AgencyRoute,
+} as any)
+const GroundHandlingIndexRoute = GroundHandlingIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => GroundHandlingRoute,
 } as any)
 const OperatorIndexRoute = OperatorIndexRouteImport.update({
   id: '/',
@@ -296,6 +320,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
+  '/ground-handling': typeof GroundHandlingRouteWithChildren
   '/my-bookings': typeof MyBookingsRoute
   '/operator': typeof OperatorRouteWithChildren
   '/package': typeof PackageRoute
@@ -310,7 +335,9 @@ export interface FileRoutesByFullPath {
   '/admin/addon-services': typeof AdminAddonServicesRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/fleet': typeof AdminFleetRoute
+  '/admin/ground-handling': typeof AdminGroundHandlingRoute
   '/admin/packages': typeof AdminPackagesRoute
+  '/admin/partners': typeof AdminPartnersRoute
   '/admin/pricing': typeof AdminPricingRoute
   '/admin/rental-applications': typeof AdminRentalApplicationsRoute
   '/admin/rental-vehicles': typeof AdminRentalVehiclesRoute
@@ -332,6 +359,7 @@ export interface FileRoutesByFullPath {
   '/partner/terms': typeof PartnerTermsRoute
   '/admin/': typeof AdminIndexRoute
   '/agency/': typeof AgencyIndexRoute
+  '/ground-handling/': typeof GroundHandlingIndexRoute
   '/operator/': typeof OperatorIndexRoute
   '/partner/': typeof PartnerIndexRoute
 }
@@ -354,7 +382,9 @@ export interface FileRoutesByTo {
   '/admin/addon-services': typeof AdminAddonServicesRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/fleet': typeof AdminFleetRoute
+  '/admin/ground-handling': typeof AdminGroundHandlingRoute
   '/admin/packages': typeof AdminPackagesRoute
+  '/admin/partners': typeof AdminPartnersRoute
   '/admin/pricing': typeof AdminPricingRoute
   '/admin/rental-applications': typeof AdminRentalApplicationsRoute
   '/admin/rental-vehicles': typeof AdminRentalVehiclesRoute
@@ -376,6 +406,7 @@ export interface FileRoutesByTo {
   '/partner/terms': typeof PartnerTermsRoute
   '/admin': typeof AdminIndexRoute
   '/agency': typeof AgencyIndexRoute
+  '/ground-handling': typeof GroundHandlingIndexRoute
   '/operator': typeof OperatorIndexRoute
   '/partner': typeof PartnerIndexRoute
 }
@@ -389,6 +420,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
+  '/ground-handling': typeof GroundHandlingRouteWithChildren
   '/my-bookings': typeof MyBookingsRoute
   '/operator': typeof OperatorRouteWithChildren
   '/package': typeof PackageRoute
@@ -403,7 +435,9 @@ export interface FileRoutesById {
   '/admin/addon-services': typeof AdminAddonServicesRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/fleet': typeof AdminFleetRoute
+  '/admin/ground-handling': typeof AdminGroundHandlingRoute
   '/admin/packages': typeof AdminPackagesRoute
+  '/admin/partners': typeof AdminPartnersRoute
   '/admin/pricing': typeof AdminPricingRoute
   '/admin/rental-applications': typeof AdminRentalApplicationsRoute
   '/admin/rental-vehicles': typeof AdminRentalVehiclesRoute
@@ -425,6 +459,7 @@ export interface FileRoutesById {
   '/partner/terms': typeof PartnerTermsRoute
   '/admin/': typeof AdminIndexRoute
   '/agency/': typeof AgencyIndexRoute
+  '/ground-handling/': typeof GroundHandlingIndexRoute
   '/operator/': typeof OperatorIndexRoute
   '/partner/': typeof PartnerIndexRoute
 }
@@ -439,6 +474,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/explore'
     | '/faq'
+    | '/ground-handling'
     | '/my-bookings'
     | '/operator'
     | '/package'
@@ -453,7 +489,9 @@ export interface FileRouteTypes {
     | '/admin/addon-services'
     | '/admin/announcements'
     | '/admin/fleet'
+    | '/admin/ground-handling'
     | '/admin/packages'
+    | '/admin/partners'
     | '/admin/pricing'
     | '/admin/rental-applications'
     | '/admin/rental-vehicles'
@@ -475,6 +513,7 @@ export interface FileRouteTypes {
     | '/partner/terms'
     | '/admin/'
     | '/agency/'
+    | '/ground-handling/'
     | '/operator/'
     | '/partner/'
   fileRoutesByTo: FileRoutesByTo
@@ -497,7 +536,9 @@ export interface FileRouteTypes {
     | '/admin/addon-services'
     | '/admin/announcements'
     | '/admin/fleet'
+    | '/admin/ground-handling'
     | '/admin/packages'
+    | '/admin/partners'
     | '/admin/pricing'
     | '/admin/rental-applications'
     | '/admin/rental-vehicles'
@@ -519,6 +560,7 @@ export interface FileRouteTypes {
     | '/partner/terms'
     | '/admin'
     | '/agency'
+    | '/ground-handling'
     | '/operator'
     | '/partner'
   id:
@@ -531,6 +573,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/explore'
     | '/faq'
+    | '/ground-handling'
     | '/my-bookings'
     | '/operator'
     | '/package'
@@ -545,7 +588,9 @@ export interface FileRouteTypes {
     | '/admin/addon-services'
     | '/admin/announcements'
     | '/admin/fleet'
+    | '/admin/ground-handling'
     | '/admin/packages'
+    | '/admin/partners'
     | '/admin/pricing'
     | '/admin/rental-applications'
     | '/admin/rental-vehicles'
@@ -567,6 +612,7 @@ export interface FileRouteTypes {
     | '/partner/terms'
     | '/admin/'
     | '/agency/'
+    | '/ground-handling/'
     | '/operator/'
     | '/partner/'
   fileRoutesById: FileRoutesById
@@ -580,6 +626,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   ExploreRoute: typeof ExploreRoute
   FaqRoute: typeof FaqRoute
+  GroundHandlingRoute: typeof GroundHandlingRouteWithChildren
   MyBookingsRoute: typeof MyBookingsRoute
   OperatorRoute: typeof OperatorRouteWithChildren
   PackageRoute: typeof PackageRoute
@@ -649,6 +696,13 @@ declare module '@tanstack/react-router' {
       path: '/faq'
       fullPath: '/faq'
       preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ground-handling': {
+      id: '/ground-handling'
+      path: '/ground-handling'
+      fullPath: '/ground-handling'
+      preLoaderRoute: typeof GroundHandlingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/my-bookings': {
@@ -756,11 +810,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminFleetRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/ground-handling': {
+      id: '/admin/ground-handling'
+      path: '/ground-handling'
+      fullPath: '/admin/ground-handling'
+      preLoaderRoute: typeof AdminGroundHandlingRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/packages': {
       id: '/admin/packages'
       path: '/packages'
       fullPath: '/admin/packages'
       preLoaderRoute: typeof AdminPackagesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/partners': {
+      id: '/admin/partners'
+      path: '/partners'
+      fullPath: '/admin/partners'
+      preLoaderRoute: typeof AdminPartnersRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/pricing': {
@@ -839,6 +907,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/agency/team'
       preLoaderRoute: typeof AgencyTeamRouteImport
       parentRoute: typeof AgencyRoute
+    }
+    '/ground-handling/': {
+      id: '/ground-handling/'
+      path: '/'
+      fullPath: '/ground-handling/'
+      preLoaderRoute: typeof GroundHandlingIndexRouteImport
+      parentRoute: typeof GroundHandlingRoute
     }
     '/operator/': {
       id: '/operator/'
@@ -924,7 +999,9 @@ interface AdminRouteChildren {
   AdminAddonServicesRoute: typeof AdminAddonServicesRoute
   AdminAnnouncementsRoute: typeof AdminAnnouncementsRoute
   AdminFleetRoute: typeof AdminFleetRoute
+  AdminGroundHandlingRoute: typeof AdminGroundHandlingRoute
   AdminPackagesRoute: typeof AdminPackagesRoute
+  AdminPartnersRoute: typeof AdminPartnersRoute
   AdminPricingRoute: typeof AdminPricingRoute
   AdminRentalApplicationsRoute: typeof AdminRentalApplicationsRoute
   AdminRentalVehiclesRoute: typeof AdminRentalVehiclesRoute
@@ -938,7 +1015,9 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAddonServicesRoute: AdminAddonServicesRoute,
   AdminAnnouncementsRoute: AdminAnnouncementsRoute,
   AdminFleetRoute: AdminFleetRoute,
+  AdminGroundHandlingRoute: AdminGroundHandlingRoute,
   AdminPackagesRoute: AdminPackagesRoute,
+  AdminPartnersRoute: AdminPartnersRoute,
   AdminPricingRoute: AdminPricingRoute,
   AdminRentalApplicationsRoute: AdminRentalApplicationsRoute,
   AdminRentalVehiclesRoute: AdminRentalVehiclesRoute,
@@ -968,6 +1047,18 @@ const AgencyRouteChildren: AgencyRouteChildren = {
 
 const AgencyRouteWithChildren =
   AgencyRoute._addFileChildren(AgencyRouteChildren)
+
+interface GroundHandlingRouteChildren {
+  GroundHandlingIndexRoute: typeof GroundHandlingIndexRoute
+}
+
+const GroundHandlingRouteChildren: GroundHandlingRouteChildren = {
+  GroundHandlingIndexRoute: GroundHandlingIndexRoute,
+}
+
+const GroundHandlingRouteWithChildren = GroundHandlingRoute._addFileChildren(
+  GroundHandlingRouteChildren,
+)
 
 interface OperatorRouteChildren {
   OperatorFleetRoute: typeof OperatorFleetRoute
@@ -1019,6 +1110,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   ExploreRoute: ExploreRoute,
   FaqRoute: FaqRoute,
+  GroundHandlingRoute: GroundHandlingRouteWithChildren,
   MyBookingsRoute: MyBookingsRoute,
   OperatorRoute: OperatorRouteWithChildren,
   PackageRoute: PackageRoute,
