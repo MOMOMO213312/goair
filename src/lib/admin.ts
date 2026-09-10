@@ -92,7 +92,12 @@ export async function adminRejectPayment(token: string, paymentId: string): Prom
   if (error) rpcError(error);
 }
 
-export type AdminDriver = { id: string; full_name: string; phone_number: string; operator_name: string | null };
+export type AdminDriver = {
+  id: string;
+  full_name: string;
+  phone_number: string;
+  operator_name: string | null;
+};
 
 export async function adminListDrivers(token: string): Promise<AdminDriver[]> {
   const { data, error } = await supabase.rpc("admin_list_drivers", { p_access_token: token });
@@ -125,7 +130,12 @@ export async function adminListOperators(token: string): Promise<AdminOperator[]
   return (data ?? []) as AdminOperator[];
 }
 
-export async function adminAddDriver(token: string, fullName: string, phoneNumber: string, operatorId: string | null = null) {
+export async function adminAddDriver(
+  token: string,
+  fullName: string,
+  phoneNumber: string,
+  operatorId: string | null = null,
+) {
   const { error } = await supabase.rpc("admin_add_driver", {
     p_access_token: token,
     p_full_name: fullName,
@@ -251,7 +261,9 @@ function mapStaffAccount(row: Record<string, unknown>): AdminStaffAccount {
 }
 
 export async function adminListStaffAccounts(token: string): Promise<AdminStaffAccount[]> {
-  const { data, error } = await supabase.rpc("admin_list_staff_accounts", { p_access_token: token });
+  const { data, error } = await supabase.rpc("admin_list_staff_accounts", {
+    p_access_token: token,
+  });
   if (error) rpcError(error);
   return ((data ?? []) as Record<string, unknown>[]).map(mapStaffAccount);
 }
@@ -269,7 +281,9 @@ export async function adminDeactivateStaffAccount(token: string, staffId: string
 // supabase.functions.invoke بيبعت تلقائي توكن جلسة الأدمن الحالي (JWT) في Authorization header،
 // والفانكشن بتتحقق منه وتتأكد إنه عضو فريق مفعّل قبل أي تعديل.
 async function callStaffAccountsFunction(payload: Record<string, unknown>) {
-  const { data, error } = await supabase.functions.invoke("admin-staff-accounts", { body: payload });
+  const { data, error } = await supabase.functions.invoke("admin-staff-accounts", {
+    body: payload,
+  });
   if (error) throw new Error(error.message || "حصل خطأ مؤقت. حاول تاني.");
   if (data?.error) throw new Error(data.error);
   return data;
@@ -320,7 +334,11 @@ export function paymentMethodLabel(method: string | null) {
 }
 
 export function bookingStatusLabel(status: string) {
-  const map: Record<string, string> = { pending: "قيد الانتظار", confirmed: "مؤكد", cancelled: "ملغي" };
+  const map: Record<string, string> = {
+    pending: "قيد الانتظار",
+    confirmed: "مؤكد",
+    cancelled: "ملغي",
+  };
   return map[status] ?? status;
 }
 
@@ -365,12 +383,18 @@ function mapCustomRequest(row: Record<string, unknown>): CustomRequestRow {
 }
 
 export async function adminListCustomRequests(token: string): Promise<CustomRequestRow[]> {
-  const { data, error } = await supabase.rpc("admin_list_custom_requests", { p_access_token: token });
+  const { data, error } = await supabase.rpc("admin_list_custom_requests", {
+    p_access_token: token,
+  });
   if (error) rpcError(error);
   return ((data ?? []) as Record<string, unknown>[]).map(mapCustomRequest);
 }
 
-export async function adminUpdateCustomRequestStatus(token: string, requestId: string, status: string) {
+export async function adminUpdateCustomRequestStatus(
+  token: string,
+  requestId: string,
+  status: string,
+) {
   const { error } = await supabase.rpc("admin_update_custom_request_status", {
     p_access_token: token,
     p_request_id: requestId,
@@ -402,12 +426,18 @@ function mapContactMessage(row: Record<string, unknown>): ContactMessageRow {
 }
 
 export async function adminListContactMessages(token: string): Promise<ContactMessageRow[]> {
-  const { data, error } = await supabase.rpc("admin_list_contact_messages", { p_access_token: token });
+  const { data, error } = await supabase.rpc("admin_list_contact_messages", {
+    p_access_token: token,
+  });
   if (error) rpcError(error);
   return ((data ?? []) as Record<string, unknown>[]).map(mapContactMessage);
 }
 
-export async function adminUpdateContactMessageStatus(token: string, messageId: string, status: string) {
+export async function adminUpdateContactMessageStatus(
+  token: string,
+  messageId: string,
+  status: string,
+) {
   const { error } = await supabase.rpc("admin_update_contact_message_status", {
     p_access_token: token,
     p_message_id: messageId,
@@ -460,7 +490,15 @@ export async function adminListPackages(token: string): Promise<AdminPackage[]> 
 
 export async function adminCreatePackage(
   token: string,
-  pkg: { name: string; tagline: string; priceUsd: number; iconName: string; features: string[]; isHighlighted: boolean; sortOrder: number },
+  pkg: {
+    name: string;
+    tagline: string;
+    priceUsd: number;
+    iconName: string;
+    features: string[];
+    isHighlighted: boolean;
+    sortOrder: number;
+  },
 ) {
   const { error } = await supabase.rpc("admin_create_package", {
     p_access_token: token,
@@ -475,10 +513,7 @@ export async function adminCreatePackage(
   if (error) rpcError(error);
 }
 
-export async function adminUpdatePackage(
-  token: string,
-  pkg: AdminPackage,
-) {
+export async function adminUpdatePackage(token: string, pkg: AdminPackage) {
   const { error } = await supabase.rpc("admin_update_package", {
     p_access_token: token,
     p_id: pkg.id,
@@ -526,14 +561,24 @@ function mapAdminAddonService(r: Record<string, unknown>): AdminAddonService {
 }
 
 export async function adminListAddonServices(token: string): Promise<AdminAddonService[]> {
-  const { data, error } = await supabase.rpc("admin_list_addon_services", { p_access_token: token });
+  const { data, error } = await supabase.rpc("admin_list_addon_services", {
+    p_access_token: token,
+  });
   if (error) rpcError(error);
   return ((data ?? []) as Record<string, unknown>[]).map(mapAdminAddonService);
 }
 
 export async function adminCreateAddonService(
   token: string,
-  addon: { nameAr: string; descriptionAr: string; category: string; priceUsd: number; iconName: string; isHighlighted: boolean; sortOrder: number },
+  addon: {
+    nameAr: string;
+    descriptionAr: string;
+    category: string;
+    priceUsd: number;
+    iconName: string;
+    isHighlighted: boolean;
+    sortOrder: number;
+  },
 ) {
   const { error } = await supabase.rpc("admin_create_addon_service", {
     p_access_token: token,
@@ -565,7 +610,10 @@ export async function adminUpdateAddonService(token: string, addon: AdminAddonSe
 }
 
 export async function adminDeleteAddonService(token: string, id: string) {
-  const { error } = await supabase.rpc("admin_delete_addon_service", { p_access_token: token, p_id: id });
+  const { error } = await supabase.rpc("admin_delete_addon_service", {
+    p_access_token: token,
+    p_id: id,
+  });
   if (error) rpcError(error);
 }
 
@@ -612,7 +660,9 @@ function mapAdminSubscriptionPlan(r: Record<string, unknown>): AdminSubscription
 }
 
 export async function adminListSubscriptionPlans(token: string): Promise<AdminSubscriptionPlan[]> {
-  const { data, error } = await supabase.rpc("admin_list_subscription_plans", { p_access_token: token });
+  const { data, error } = await supabase.rpc("admin_list_subscription_plans", {
+    p_access_token: token,
+  });
   if (error) rpcError(error);
   return ((data ?? []) as Record<string, unknown>[]).map(mapAdminSubscriptionPlan);
 }
@@ -620,9 +670,21 @@ export async function adminListSubscriptionPlans(token: string): Promise<AdminSu
 export async function adminCreateSubscriptionPlan(
   token: string,
   plan: {
-    country: string; tier: string; duration: string; name: string; tagline: string; priceUsd: number;
-    discountPercent: number; freeRideCredits: number; extraLuggagePieces: number; prioritySupport: boolean;
-    guaranteedSeat: boolean; iconName: string; features: string[]; isHighlighted: boolean; sortOrder: number;
+    country: string;
+    tier: string;
+    duration: string;
+    name: string;
+    tagline: string;
+    priceUsd: number;
+    discountPercent: number;
+    freeRideCredits: number;
+    extraLuggagePieces: number;
+    prioritySupport: boolean;
+    guaranteedSeat: boolean;
+    iconName: string;
+    features: string[];
+    isHighlighted: boolean;
+    sortOrder: number;
   },
 ) {
   const { error } = await supabase.rpc("admin_create_subscription_plan", {
@@ -671,7 +733,10 @@ export async function adminUpdateSubscriptionPlan(token: string, plan: AdminSubs
 }
 
 export async function adminDeleteSubscriptionPlan(token: string, id: string) {
-  const { error } = await supabase.rpc("admin_delete_subscription_plan", { p_access_token: token, p_id: id });
+  const { error } = await supabase.rpc("admin_delete_subscription_plan", {
+    p_access_token: token,
+    p_id: id,
+  });
   if (error) rpcError(error);
 }
 
@@ -715,8 +780,12 @@ function mapRentalPartnerApplication(row: Record<string, unknown>): RentalPartne
   };
 }
 
-export async function adminListRentalPartnerApplications(token: string): Promise<RentalPartnerApplicationRow[]> {
-  const { data, error } = await supabase.rpc("admin_list_rental_partner_applications", { p_access_token: token });
+export async function adminListRentalPartnerApplications(
+  token: string,
+): Promise<RentalPartnerApplicationRow[]> {
+  const { data, error } = await supabase.rpc("admin_list_rental_partner_applications", {
+    p_access_token: token,
+  });
   if (error) rpcError(error);
   return ((data ?? []) as Record<string, unknown>[]).map(mapRentalPartnerApplication);
 }
@@ -825,7 +894,9 @@ function mapAdminRentalVehicle(row: Record<string, unknown>): AdminRentalVehicle
 }
 
 export async function adminListRentalVehicles(token: string): Promise<AdminRentalVehicle[]> {
-  const { data, error } = await supabase.rpc("admin_list_rental_vehicles", { p_access_token: token });
+  const { data, error } = await supabase.rpc("admin_list_rental_vehicles", {
+    p_access_token: token,
+  });
   if (error) rpcError(error);
   return ((data ?? []) as Record<string, unknown>[]).map(mapAdminRentalVehicle);
 }
@@ -936,15 +1007,25 @@ function mapGroundHandlingPartnerRow(row: Record<string, unknown>): GroundHandli
   };
 }
 
-export async function adminListGroundHandlingPartners(token: string): Promise<GroundHandlingPartnerRow[]> {
-  const { data, error } = await supabase.rpc("admin_list_ground_handling_partners", { p_access_token: token });
+export async function adminListGroundHandlingPartners(
+  token: string,
+): Promise<GroundHandlingPartnerRow[]> {
+  const { data, error } = await supabase.rpc("admin_list_ground_handling_partners", {
+    p_access_token: token,
+  });
   if (error) rpcError(error);
   return ((data ?? []) as Record<string, unknown>[]).map(mapGroundHandlingPartnerRow);
 }
 
 export async function adminCreateGroundHandlingPartner(
   token: string,
-  params: { name: string; airportCode: string; country?: string | null; contactEmail?: string | null; contactPhone?: string | null },
+  params: {
+    name: string;
+    airportCode: string;
+    country?: string | null;
+    contactEmail?: string | null;
+    contactPhone?: string | null;
+  },
 ): Promise<GroundHandlingPartnerRow> {
   const { data, error } = await supabase.rpc("admin_create_ground_handling_partner", {
     p_access_token: token,
@@ -963,7 +1044,14 @@ export async function adminUpdateGroundHandlingPartner(
   id: string,
   // This RPC fully overwrites the row (no partial-update coalesce server-side),
   // so always pass the complete current values, not just the changed field.
-  params: { name: string; airportCode: string; country: string | null; contactEmail: string | null; contactPhone: string | null; isActive: boolean },
+  params: {
+    name: string;
+    airportCode: string;
+    country: string | null;
+    contactEmail: string | null;
+    contactPhone: string | null;
+    isActive: boolean;
+  },
 ): Promise<void> {
   const { error } = await supabase.rpc("admin_update_ground_handling_partner", {
     p_access_token: token,
@@ -1050,4 +1138,243 @@ export function groundHandlingStatusLabel(status: string) {
     cancelled: "ملغاة",
   };
   return map[status] ?? status;
+}
+
+// ===== وكالات السياحة (agencies) =====
+export type AdminAgencyRow = {
+  id: string;
+  name: string;
+  commissionRate: number;
+  contactEmail: string | null;
+  isActive: boolean;
+  accessToken: string;
+};
+
+function mapAgencyRow(row: Record<string, unknown>): AdminAgencyRow {
+  return {
+    id: String(row["id"]),
+    name: String(row["name"] ?? ""),
+    commissionRate: Number(row["commission_rate"] ?? 0),
+    contactEmail: (row["contact_email"] as string | null) ?? null,
+    isActive: Boolean(row["is_active"]),
+    accessToken: String(row["access_token"] ?? ""),
+  };
+}
+
+export async function adminListAgencies(token: string): Promise<AdminAgencyRow[]> {
+  const { data, error } = await supabase.rpc("admin_list_agencies", { p_access_token: token });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map(mapAgencyRow);
+}
+
+export async function adminCreateAgency(
+  token: string,
+  params: { name: string; commissionRate?: number; contactEmail?: string | null },
+): Promise<AdminAgencyRow> {
+  const { data, error } = await supabase.rpc("admin_create_agency", {
+    p_access_token: token,
+    p_name: params.name,
+    p_commission_rate: params.commissionRate ?? 0,
+    p_contact_email: params.contactEmail ?? null,
+  });
+  if (error) rpcError(error);
+  return mapAgencyRow(data as Record<string, unknown>);
+}
+
+export async function adminUpdateAgency(
+  token: string,
+  id: string,
+  params: { name: string; commissionRate: number; contactEmail: string | null; isActive: boolean },
+): Promise<void> {
+  const { error } = await supabase.rpc("admin_update_agency", {
+    p_access_token: token,
+    p_id: id,
+    p_name: params.name,
+    p_commission_rate: params.commissionRate,
+    p_contact_email: params.contactEmail,
+    p_is_active: params.isActive,
+  });
+  if (error) rpcError(error);
+}
+
+export async function adminDeleteAgency(token: string, id: string): Promise<void> {
+  const { error } = await supabase.rpc("admin_delete_agency", { p_access_token: token, p_id: id });
+  if (error) rpcError(error);
+}
+
+// ===== شركاء الطيران (airline partners) =====
+export type AdminAirlinePartnerRow = {
+  id: string;
+  name: string;
+  commissionRate: number;
+  contactEmail: string | null;
+  isActive: boolean;
+  accessToken: string;
+};
+
+function mapAirlinePartnerRow(row: Record<string, unknown>): AdminAirlinePartnerRow {
+  return {
+    id: String(row["id"]),
+    name: String(row["name"] ?? ""),
+    commissionRate: Number(row["commission_rate"] ?? 0),
+    contactEmail: (row["contact_email"] as string | null) ?? null,
+    isActive: Boolean(row["is_active"]),
+    accessToken: String(row["access_token"] ?? ""),
+  };
+}
+
+export async function adminListAirlinePartners(token: string): Promise<AdminAirlinePartnerRow[]> {
+  const { data, error } = await supabase.rpc("admin_list_airline_partners", {
+    p_access_token: token,
+  });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map(mapAirlinePartnerRow);
+}
+
+export async function adminCreateAirlinePartner(
+  token: string,
+  params: { name: string; commissionRate?: number; contactEmail?: string | null },
+): Promise<AdminAirlinePartnerRow> {
+  const { data, error } = await supabase.rpc("admin_create_airline_partner", {
+    p_access_token: token,
+    p_name: params.name,
+    p_commission_rate: params.commissionRate ?? 0.25,
+    p_contact_email: params.contactEmail ?? null,
+  });
+  if (error) rpcError(error);
+  return mapAirlinePartnerRow(data as Record<string, unknown>);
+}
+
+export async function adminUpdateAirlinePartner(
+  token: string,
+  id: string,
+  params: { name: string; commissionRate: number; contactEmail: string | null; isActive: boolean },
+): Promise<void> {
+  const { error } = await supabase.rpc("admin_update_airline_partner", {
+    p_access_token: token,
+    p_id: id,
+    p_name: params.name,
+    p_commission_rate: params.commissionRate,
+    p_contact_email: params.contactEmail,
+    p_is_active: params.isActive,
+  });
+  if (error) rpcError(error);
+}
+
+export async function adminDeleteAirlinePartner(token: string, id: string): Promise<void> {
+  const { error } = await supabase.rpc("admin_delete_airline_partner", {
+    p_access_token: token,
+    p_id: id,
+  });
+  if (error) rpcError(error);
+}
+
+// ===== شركات النقل (operators) =====
+export type AdminOperatorRow = {
+  id: string;
+  name: string;
+  contactPhone: string | null;
+  contactEmail: string | null;
+  payoutModel: string;
+  fixedAmountUsd: number | null;
+  percentageRate: number | null;
+  perSeatAmountUsd: number | null;
+  isActive: boolean;
+  accessToken: string;
+};
+
+function mapOperatorRow(row: Record<string, unknown>): AdminOperatorRow {
+  return {
+    id: String(row["id"]),
+    name: String(row["name"] ?? ""),
+    contactPhone: (row["contact_phone"] as string | null) ?? null,
+    contactEmail: (row["contact_email"] as string | null) ?? null,
+    payoutModel: String(row["payout_model"] ?? "fixed_per_trip"),
+    fixedAmountUsd: row["fixed_amount_usd"] != null ? Number(row["fixed_amount_usd"]) : null,
+    percentageRate: row["percentage_rate"] != null ? Number(row["percentage_rate"]) : null,
+    perSeatAmountUsd:
+      row["per_seat_amount_usd"] != null ? Number(row["per_seat_amount_usd"]) : null,
+    isActive: Boolean(row["is_active"]),
+    accessToken: String(row["access_token"] ?? ""),
+  };
+}
+
+// نفس الـ RPC admin_list_operators القديمة (كانت بترجع الصف كامل بالفعل،
+// الكود القديم كان بس بيقرا id/name منه) — استخدمناها هنا كمان لعرض كل البيانات.
+export async function adminListOperatorsFull(token: string): Promise<AdminOperatorRow[]> {
+  const { data, error } = await supabase.rpc("admin_list_operators", { p_access_token: token });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map(mapOperatorRow);
+}
+
+export async function adminCreateOperator(
+  token: string,
+  params: {
+    name: string;
+    contactPhone?: string | null;
+    contactEmail?: string | null;
+    payoutModel?: string;
+    fixedAmountUsd?: number | null;
+    percentageRate?: number | null;
+    perSeatAmountUsd?: number | null;
+  },
+): Promise<AdminOperatorRow> {
+  const { data, error } = await supabase.rpc("admin_create_operator", {
+    p_access_token: token,
+    p_name: params.name,
+    p_contact_phone: params.contactPhone ?? null,
+    p_contact_email: params.contactEmail ?? null,
+    p_payout_model: params.payoutModel ?? "fixed_per_trip",
+    p_fixed_amount_usd: params.fixedAmountUsd ?? null,
+    p_percentage_rate: params.percentageRate ?? null,
+    p_per_seat_amount_usd: params.perSeatAmountUsd ?? null,
+  });
+  if (error) rpcError(error);
+  return mapOperatorRow(data as Record<string, unknown>);
+}
+
+export async function adminUpdateOperator(
+  token: string,
+  id: string,
+  params: {
+    name: string;
+    contactPhone: string | null;
+    contactEmail: string | null;
+    payoutModel: string;
+    fixedAmountUsd: number | null;
+    percentageRate: number | null;
+    perSeatAmountUsd: number | null;
+    isActive: boolean;
+  },
+): Promise<void> {
+  const { error } = await supabase.rpc("admin_update_operator", {
+    p_access_token: token,
+    p_id: id,
+    p_name: params.name,
+    p_contact_phone: params.contactPhone,
+    p_contact_email: params.contactEmail,
+    p_payout_model: params.payoutModel,
+    p_fixed_amount_usd: params.fixedAmountUsd,
+    p_percentage_rate: params.percentageRate,
+    p_per_seat_amount_usd: params.perSeatAmountUsd,
+    p_is_active: params.isActive,
+  });
+  if (error) rpcError(error);
+}
+
+export async function adminDeleteOperator(token: string, id: string): Promise<void> {
+  const { error } = await supabase.rpc("admin_delete_operator", {
+    p_access_token: token,
+    p_id: id,
+  });
+  if (error) rpcError(error);
+}
+
+export function payoutModelLabel(model: string) {
+  const map: Record<string, string> = {
+    fixed_per_trip: "مبلغ ثابت للرحلة",
+    percentage: "نسبة من قيمة الرحلة",
+    per_seat: "مبلغ لكل مقعد",
+  };
+  return map[model] ?? model;
 }
