@@ -217,6 +217,8 @@ export type CreatePrivateBookingInput = {
   packageId?: string | null;
   /** Selected individual add-on services (from `addon_services`) — flat amounts, saved to `booking_addon_services`. */
   addonIds?: string[];
+  /** One name per seat, saved to `booking_passengers` — array length must exactly match `seatsCount`. */
+  passengerNames?: string[] | null;
 };
 
 /** Reserve a whole vehicle for one group — flat price, no shared-capacity contention. */
@@ -237,6 +239,9 @@ export async function createPrivateBookingSafe(input: CreatePrivateBookingInput)
     ...(pendingReferralCode ? { p_referral_code: pendingReferralCode } : {}),
     ...(input.packageId ? { p_package_id: input.packageId } : {}),
     ...(input.addonIds && input.addonIds.length > 0 ? { p_addon_ids: input.addonIds } : {}),
+    ...(input.passengerNames && input.passengerNames.length > 0
+      ? { p_passenger_names: input.passengerNames }
+      : {}),
   });
 
   if (error) throw new Error(error.message);
@@ -452,6 +457,13 @@ export type CreateBookingInput = {
   packageId?: string | null;
   /** Selected individual add-on services (from `addon_services`) — flat amounts, saved to `booking_addon_services`. */
   addonIds?: string[];
+  /**
+   * One name per seat, saved to `booking_passengers` — for group bookings
+   * where each seat is a named passenger. The DB rejects the call if the
+   * array length doesn't exactly match `seatsCount`, so only pass a full
+   * list (or omit/null for the normal single-contact booking).
+   */
+  passengerNames?: string[] | null;
 };
 
 /** A configured hourly departure (or legacy fallback slot) that has no stored `schedules` row yet. */
@@ -494,6 +506,9 @@ export async function createBookingSafe(input: CreateBookingInput) {
     ...(pendingReferralCode ? { p_referral_code: pendingReferralCode } : {}),
     ...(input.packageId ? { p_package_id: input.packageId } : {}),
     ...(input.addonIds && input.addonIds.length > 0 ? { p_addon_ids: input.addonIds } : {}),
+    ...(input.passengerNames && input.passengerNames.length > 0
+      ? { p_passenger_names: input.passengerNames }
+      : {}),
   };
 
   let { data, error } = await supabase.rpc("create_booking_safe", {

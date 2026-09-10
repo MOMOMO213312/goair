@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -108,6 +109,7 @@ function BookingsPage() {
                 <TableHead className="text-right">تاريخ الرحلة</TableHead>
                 <TableHead className="text-right">الوجهة</TableHead>
                 <TableHead className="text-right">عدد المقاعد</TableHead>
+                <TableHead className="text-right">ركاب الجروب</TableHead>
                 <TableHead className="text-right">الدفع</TableHead>
                 <TableHead className="text-right">الحالة</TableHead>
                 <TableHead className="text-right">إجمالي الحجز</TableHead>
@@ -123,6 +125,19 @@ function BookingsPage() {
                   <TableCell>{formatDate(row.travelDate)}</TableCell>
                   <TableCell>{row.origin} ← {row.destination}</TableCell>
                   <TableCell>{row.seatsCount}</TableCell>
+                  <TableCell>
+                    {row.passengerNames.length > 0 ? (
+                      <div className="flex max-w-[220px] flex-wrap gap-1">
+                        {row.passengerNames.map((name, i) => (
+                          <Badge key={`${row.id}-${i}`} variant="secondary" className="font-normal">
+                            {name}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
                   <TableCell>{row.paymentStatus}</TableCell>
                   <TableCell>
                     <AgencyBookingStatusBadge status={row.status} />

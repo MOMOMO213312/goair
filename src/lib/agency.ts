@@ -128,6 +128,8 @@ export type AgencyBooking = {
   expectedTotalUsd: number;
   commissionUsd: number;
   paymentStatus: string;
+  /** Named passengers on this booking (group bookings) — empty when only the main contact was recorded. */
+  passengerNames: string[];
 };
 
 export async function getAgencyBookings(
@@ -154,6 +156,9 @@ export async function getAgencyBookings(
     expectedTotalUsd: num(row["expected_total_usd"]),
     commissionUsd: num(row["commission_usd"]),
     paymentStatus: String(row["payment_status"] ?? "لسه ما دفعش"),
+    passengerNames: Array.isArray(row["passenger_names"])
+      ? (row["passenger_names"] as unknown[]).map((n) => String(n))
+      : [],
   }));
 }
 
