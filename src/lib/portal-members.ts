@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 // وشريك الطيران (partner). الدوال دي بتتعامل مع جدول portal_members اللي
 // بيسجل كل عضو بدور owner أو member.
 
-export type PortalType = "operator" | "agency" | "partner";
+export type PortalType = "operator" | "agency" | "partner" | "ground_handling";
 
 export type PortalMemberRole = "owner" | "member";
 
@@ -89,6 +89,25 @@ export async function portalInviteMember(params: {
     email: params.email,
     password: params.password,
     role: params.role,
+  });
+}
+
+// بيستخدمها فريق GoAir (admin) بس، عشان ينشئ أول owner لكيان شريك جديد
+// (عنده entity_id بالفعل من غير ما يكون عنده owner مسجّل قبل كده) — بيتحقق
+// السيرفر إن الطالب عضو فريق مفعّل في staff_access قبل ما ينفّذ.
+export async function adminInvitePortalOwner(params: {
+  portalType: PortalType;
+  entityId: string;
+  email: string;
+  password: string;
+}): Promise<void> {
+  await callPortalMembersFunction({
+    portal_type: params.portalType,
+    action: "admin_invite",
+    entity_id: params.entityId,
+    email: params.email,
+    password: params.password,
+    role: "owner",
   });
 }
 
