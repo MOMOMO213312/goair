@@ -1,14 +1,22 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ComponentType } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
+  Armchair,
   CalendarClock,
   Car,
   CheckCircle2,
+  Gem,
   Loader2,
   MapPin,
+  Receipt,
   RotateCcw,
+  ShieldCheck,
+  Sparkles,
+  Truck,
+  Users,
+  Wallet,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -55,6 +63,39 @@ export const Route = createFileRoute("/rent-a-car")({
 type Phase = "browse" | "book" | "confirm";
 type SortOption = "newest" | "price_asc" | "price_desc";
 const RENTAL_COUNTRIES = ["مصر", "لبنان"] as const;
+
+const CATEGORY_ICONS: Record<string, ComponentType<{ className?: string }>> = {
+  economy: Wallet,
+  comfort: Armchair,
+  suv: Truck,
+  van: Users,
+  luxury: Gem,
+};
+
+function TrustStrip() {
+  const { t } = useTranslation();
+  const items = [
+    { icon: Car, label: t("rentACarPage.trustDriverIncluded") },
+    { icon: ShieldCheck, label: t("rentACarPage.trustVerifiedPartners") },
+    { icon: Receipt, label: t("rentACarPage.trustClearPricing") },
+    { icon: Sparkles, label: t("rentACarPage.trustRange") },
+  ];
+  return (
+    <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {items.map(({ icon: Icon, label }) => (
+        <div
+          key={label}
+          className="flex items-center gap-2 rounded-xl border border-border/70 bg-mist/30 p-3"
+        >
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Icon className="size-4" aria-hidden />
+          </span>
+          <span className="text-xs font-semibold leading-tight text-primary">{label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function toLocalInputValue(date: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -125,7 +166,7 @@ function RentACarPage() {
 
   return (
     <div className="goair-section">
-      <div className="goair-container max-w-4xl">
+      <div className="goair-container max-w-6xl">
         {phase === "browse" ? (
           <>
             <h1 className="font-display text-2xl font-extrabold text-primary sm:text-3xl">
@@ -133,7 +174,44 @@ function RentACarPage() {
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">{t("rentACarPage.subtitle")}</p>
 
-            <div className="mt-6 flex flex-wrap items-center gap-3">
+            <TrustStrip />
+
+            <div className="mt-6 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCategoryFilter("all")}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-bold transition-colors",
+                  categoryFilter === "all"
+                    ? "border-accent bg-accent text-accent-foreground"
+                    : "border-border/80 text-muted-foreground hover:border-accent/50",
+                )}
+              >
+                {t("rentACarPage.categoryAll")}
+              </button>
+              {(categoriesQuery.data ?? []).map((category) => {
+                const Icon = CATEGORY_ICONS[category.code] ?? Car;
+                const active = categoryFilter === category.id;
+                return (
+                  <button
+                    key={category.id}
+                    type="button"
+                    onClick={() => setCategoryFilter(category.id)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-bold transition-colors",
+                      active
+                        ? "border-accent bg-accent text-accent-foreground"
+                        : "border-border/80 text-muted-foreground hover:border-accent/50",
+                    )}
+                  >
+                    <Icon className="size-3.5" aria-hidden />
+                    {localize(category.label_ar, category.label_en, language)}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-3">
               <Select value={countryFilter} onValueChange={setCountryFilter}>
                 <SelectTrigger className="w-auto min-w-40">
                   <SelectValue placeholder={t("rentACarPage.filterAllCountries")} />
@@ -143,20 +221,6 @@ function RentACarPage() {
                   {RENTAL_COUNTRIES.map((country) => (
                     <SelectItem key={country} value={country}>
                       {country}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-auto min-w-40">
-                  <SelectValue placeholder={t("rentACarPage.filterAllCategories")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("rentACarPage.filterAllCategories")}</SelectItem>
-                  {(categoriesQuery.data ?? []).map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {localize(category.label_ar, category.label_en, language)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -218,7 +282,7 @@ function RentACarPage() {
                 ) : null}
               </div>
             ) : (
-              <div className="mt-8 grid gap-6 sm:grid-cols-2">
+              <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {visibleVehicles.map((vehicle) => (
                   <RentalVehicleCard
                     key={vehicle.id}
@@ -240,12 +304,14 @@ function RentACarPage() {
         ) : null}
 
         {phase === "book" && selectedVehicle ? (
-          <BookingForm
-            vehicle={selectedVehicle}
-            language={language}
-            onBack={() => setPhase("browse")}
-            onDone={onBookingDone}
-          />
+          <div className="mx-auto max-w-4xl">
+            <BookingForm
+              vehicle={selectedVehicle}
+              language={language}
+              onBack={() => setPhase("browse")}
+              onDone={onBookingDone}
+            />
+          </div>
         ) : null}
 
         {phase === "confirm" ? (
