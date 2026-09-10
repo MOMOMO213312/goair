@@ -1,7 +1,15 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { CalendarClock, Car, CheckCircle2, Loader2, MapPin } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import {
+  AlertTriangle,
+  CalendarClock,
+  Car,
+  CheckCircle2,
+  Loader2,
+  MapPin,
+  RotateCcw,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -9,8 +17,16 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   createRentalBookingSafe,
   fetchAvailableRentalVehicles,
+  fetchRentalVehicleCategories,
   formatUsd,
   friendlyErrorMessage,
   quoteRentalPrice,
@@ -37,6 +53,8 @@ export const Route = createFileRoute("/rent-a-car")({
 });
 
 type Phase = "browse" | "book" | "confirm";
+type SortOption = "newest" | "price_asc" | "price_desc";
+const RENTAL_COUNTRIES = ["مصر", "لبنان"] as const;
 
 function toLocalInputValue(date: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -53,13 +71,43 @@ function defaultStart() {
 function RentACarPage() {
   const { t, language } = useTranslation();
 
+  const [countryFilter, setCountryFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
+
   const vehiclesQuery = useQuery({
-    queryKey: ["goair", "rental-vehicles"],
-    queryFn: () => fetchAvailableRentalVehicles(),
+    queryKey: ["goair", "rental-vehicles", countryFilter],
+    queryFn: () =>
+      fetchAvailableRentalVehicles(countryFilter === "all" ? undefined : countryFilter),
+  });
+
+  const categoriesQuery = useQuery({
+    queryKey: ["goair", "rental-vehicle-categories"],
+    queryFn: fetchRentalVehicleCategories,
   });
 
   const [phase, setPhase] = useState<Phase>("browse");
   const [selectedVehicle, setSelectedVehicle] = useState<RentalVehicle | null>(null);
+
+  const visibleVehicles = useMemo(() => {
+    const list = vehiclesQuery.data ?? [];
+    const filtered =
+      categoryFilter === "all"
+        ? list
+        : list.filter((vehicle) => vehicle.categoryId === categoryFilter);
+    const sorted = [...filtered];
+    if (sortBy === "price_asc") sorted.sort((a, b) => a.dailyRateUsd - b.dailyRateUsd);
+    else if (sortBy === "price_desc") sorted.sort((a, b) => b.dailyRateUsd - a.dailyRateUsd);
+    return sorted;
+  }, [vehiclesQuery.data, categoryFilter, sortBy]);
+
+  const hasAnyVehicles = (vehiclesQuery.data?.length ?? 0) > 0;
+  const filtersActive = countryFilter !== "all" || categoryFilter !== "all";
+
+  function clearFilters() {
+    setCountryFilter("all");
+    setCategoryFilter("all");
+  }
 
   function onSelectVehicle(vehicle: RentalVehicle) {
     setSelectedVehicle(vehicle);
@@ -85,17 +133,93 @@ function RentACarPage() {
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">{t("rentACarPage.subtitle")}</p>
 
+            <div className="mt-6 flex flex-wrap items-center gap-3">
+              <Select value={countryFilter} onValueChange={setCountryFilter}>
+                <SelectTrigger className="w-auto min-w-40">
+                  <SelectValue placeholder={t("rentACarPage.filterAllCountries")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("rentACarPage.filterAllCountries")}</SelectItem>
+                  {RENTAL_COUNTRIES.map((country) => (
+                    <SelectItem key={country} value={country}>
+                      {country}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-auto min-w-40">
+                  <SelectValue placeholder={t("rentACarPage.filterAllCategories")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("rentACarPage.filterAllCategories")}</SelectItem>
+                  {(categoriesQuery.data ?? []).map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {localize(category.label_ar, category.label_en, language)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                <SelectTrigger className="w-auto min-w-40">
+                  <SelectValue placeholder={t("rentACarPage.sortLabel")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">{t("rentACarPage.sortNewest")}</SelectItem>
+                  <SelectItem value="price_asc">{t("rentACarPage.sortPriceAsc")}</SelectItem>
+                  <SelectItem value="price_desc">{t("rentACarPage.sortPriceDesc")}</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {filtersActive ? (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-primary"
+                >
+                  <RotateCcw className="size-3.5" aria-hidden />
+                  {t("rentACarPage.clearFilters")}
+                </button>
+              ) : null}
+
+              {!vehiclesQuery.isPending && !vehiclesQuery.isError ? (
+                <span className="text-sm text-muted-foreground">
+                  {t("rentACarPage.resultsCount").replace(
+                    "{count}",
+                    String(visibleVehicles.length),
+                  )}
+                </span>
+              ) : null}
+            </div>
+
             {vehiclesQuery.isPending ? (
               <p className="mt-10 text-center text-sm text-muted-foreground">
                 {t("rentACarPage.loading")}
               </p>
-            ) : !vehiclesQuery.data || vehiclesQuery.data.length === 0 ? (
-              <p className="mt-10 text-center text-sm text-muted-foreground">
-                {t("rentACarPage.empty")}
-              </p>
+            ) : vehiclesQuery.isError ? (
+              <div className="mt-10 flex flex-col items-center gap-3 text-center">
+                <AlertTriangle className="size-8 text-destructive" aria-hidden />
+                <p className="text-sm text-muted-foreground">{t("rentACarPage.errorLoading")}</p>
+                <Button variant="outline" onClick={() => vehiclesQuery.refetch()}>
+                  {t("rentACarPage.retryButton")}
+                </Button>
+              </div>
+            ) : visibleVehicles.length === 0 ? (
+              <div className="mt-10 flex flex-col items-center gap-3 text-center">
+                <p className="text-sm text-muted-foreground">
+                  {hasAnyVehicles ? t("rentACarPage.noResultsForFilter") : t("rentACarPage.empty")}
+                </p>
+                {hasAnyVehicles ? (
+                  <Button variant="outline" onClick={clearFilters}>
+                    {t("rentACarPage.clearFilters")}
+                  </Button>
+                ) : null}
+              </div>
             ) : (
               <div className="mt-8 grid gap-6 sm:grid-cols-2">
-                {vehiclesQuery.data.map((vehicle) => (
+                {visibleVehicles.map((vehicle) => (
                   <RentalVehicleCard
                     key={vehicle.id}
                     vehicle={vehicle}
@@ -105,6 +229,13 @@ function RentACarPage() {
                 ))}
               </div>
             )}
+
+            <div className="mt-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-border/80 p-4 text-sm">
+              <span className="text-muted-foreground">{t("rentACarPage.becomePartnerCta")}</span>
+              <Link to="/rent-your-car" className="font-bold text-accent hover:underline">
+                {t("rentACarPage.becomePartnerLink")}
+              </Link>
+            </div>
           </>
         ) : null}
 
