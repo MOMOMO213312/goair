@@ -698,3 +698,141 @@ export function rentalApplicationStatusLabel(status: string) {
   };
   return map[status] ?? status;
 }
+
+// --- Rental vehicles (car rental listings) ---
+
+export type AdminRentalVehicle = {
+  id: string;
+  partnerId: string;
+  partnerName: string;
+  partnerPhone: string;
+  categoryId: string | null;
+  categoryLabelAr: string | null;
+  country: string;
+  plateNumber: string;
+  makeModel: string;
+  photos: string[];
+  description: string | null;
+  hourlyRateUsd: number | null;
+  dailyRateUsd: number;
+  multiDayRateUsd: number | null;
+  multiDayThresholdDays: number;
+  minRentalHours: number;
+  approvalStatus: string;
+  adminNotes: string | null;
+  isActive: boolean;
+  createdAt: string;
+};
+
+function mapAdminRentalVehicle(row: Record<string, unknown>): AdminRentalVehicle {
+  return {
+    id: String(row["id"]),
+    partnerId: String(row["partner_id"]),
+    partnerName: String(row["partner_name"] ?? ""),
+    partnerPhone: String(row["partner_phone"] ?? ""),
+    categoryId: (row["category_id"] as string | null) ?? null,
+    categoryLabelAr: (row["category_label_ar"] as string | null) ?? null,
+    country: String(row["country"] ?? ""),
+    plateNumber: String(row["plate_number"] ?? ""),
+    makeModel: String(row["make_model"] ?? ""),
+    photos: (row["photos"] as string[] | null) ?? [],
+    description: (row["description"] as string | null) ?? null,
+    hourlyRateUsd: row["hourly_rate_usd"] == null ? null : Number(row["hourly_rate_usd"]),
+    dailyRateUsd: Number(row["daily_rate_usd"] ?? 0),
+    multiDayRateUsd: row["multi_day_rate_usd"] == null ? null : Number(row["multi_day_rate_usd"]),
+    multiDayThresholdDays: Number(row["multi_day_threshold_days"] ?? 3),
+    minRentalHours: Number(row["min_rental_hours"] ?? 3),
+    approvalStatus: String(row["approval_status"] ?? "pending_review"),
+    adminNotes: (row["admin_notes"] as string | null) ?? null,
+    isActive: Boolean(row["is_active"]),
+    createdAt: String(row["created_at"] ?? ""),
+  };
+}
+
+export async function adminListRentalVehicles(token: string): Promise<AdminRentalVehicle[]> {
+  const { data, error } = await supabase.rpc("admin_list_rental_vehicles", { p_access_token: token });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map(mapAdminRentalVehicle);
+}
+
+export async function adminUpdateRentalVehicle(
+  token: string,
+  vehicle: {
+    id: string;
+    categoryId: string | null;
+    plateNumber: string;
+    makeModel: string;
+    description: string | null;
+    hourlyRateUsd: number | null;
+    dailyRateUsd: number;
+    multiDayRateUsd: number | null;
+    multiDayThresholdDays: number;
+    minRentalHours: number;
+    approvalStatus: string;
+    adminNotes: string | null;
+    isActive: boolean;
+  },
+) {
+  const { error } = await supabase.rpc("admin_update_rental_vehicle", {
+    p_access_token: token,
+    p_id: vehicle.id,
+    p_category_id: vehicle.categoryId,
+    p_plate_number: vehicle.plateNumber,
+    p_make_model: vehicle.makeModel,
+    p_description: vehicle.description,
+    p_hourly_rate_usd: vehicle.hourlyRateUsd,
+    p_daily_rate_usd: vehicle.dailyRateUsd,
+    p_multi_day_rate_usd: vehicle.multiDayRateUsd,
+    p_multi_day_threshold_days: vehicle.multiDayThresholdDays,
+    p_min_rental_hours: vehicle.minRentalHours,
+    p_approval_status: vehicle.approvalStatus,
+    p_admin_notes: vehicle.adminNotes,
+    p_is_active: vehicle.isActive,
+  });
+  if (error) rpcError(error);
+}
+
+export async function adminAddRentalVehicle(
+  token: string,
+  params: {
+    partnerFullName: string;
+    partnerPhone: string;
+    partnerCountry: string;
+    categoryId: string | null;
+    plateNumber: string;
+    makeModel: string;
+    description: string | null;
+    hourlyRateUsd: number | null;
+    dailyRateUsd: number;
+    multiDayRateUsd: number | null;
+    multiDayThresholdDays: number;
+    minRentalHours: number;
+  },
+): Promise<string> {
+  const { data, error } = await supabase.rpc("admin_add_rental_vehicle", {
+    p_access_token: token,
+    p_partner_full_name: params.partnerFullName,
+    p_partner_phone: params.partnerPhone,
+    p_partner_country: params.partnerCountry,
+    p_category_id: params.categoryId,
+    p_plate_number: params.plateNumber,
+    p_make_model: params.makeModel,
+    p_description: params.description,
+    p_hourly_rate_usd: params.hourlyRateUsd,
+    p_daily_rate_usd: params.dailyRateUsd,
+    p_multi_day_rate_usd: params.multiDayRateUsd,
+    p_multi_day_threshold_days: params.multiDayThresholdDays,
+    p_min_rental_hours: params.minRentalHours,
+  });
+  if (error) rpcError(error);
+  return String(data);
+}
+
+export function rentalVehicleApprovalLabel(status: string) {
+  const map: Record<string, string> = {
+    pending_review: "قيد المراجعة",
+    approved: "معتمدة",
+    rejected: "مرفوضة",
+  };
+  return map[status] ?? status;
+}
