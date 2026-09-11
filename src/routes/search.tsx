@@ -14,7 +14,6 @@ import { SearchFiltersSheet } from "@/components/goair/search/search-filters-she
 import { PrivateBookingSection } from "@/components/goair/search/private-booking-section";
 import { SearchResultCard } from "@/components/goair/search/search-result-card";
 import { SearchResultsSkeleton } from "@/components/goair/search/search-results-skeleton";
-import { SearchSortDesktop, SearchSortMobile, type SortKey } from "@/components/goair/search/search-sort";
 import { SearchSummary } from "@/components/goair/search/search-summary";
 import { Card } from "@/components/ui/card";
 import { DestinationCard } from "@/components/goair/destination-card";
@@ -56,7 +55,6 @@ export const Route = createFileRoute("/search")({
 function SearchPage() {
   const { t } = useTranslation();
   const params = Route.useSearch();
-  const [sort, setSort] = useState<SortKey>("recommended");
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
 
   const tripsQuery = useQuery({ queryKey: ["goair", "trips"], queryFn: fetchTrips });
@@ -92,16 +90,15 @@ function SearchPage() {
     : 0;
   const activeMax = maxPrice ?? priceCeiling;
 
+  // Sort tabs removed — only one route is shown per search, so "sorting"
+  // just reordered items inside the single time-picker dropdown. Cheapest
+  // first is the one ordering that's actually useful there.
   const visibleOptions = useMemo(
     () =>
       allOptions
         .filter((option) => option.pricePerSeat <= activeMax)
-        .sort((a, b) => {
-          if (sort === "cheapest") return a.pricePerSeat - b.pricePerSeat;
-          if (sort === "earliest") return a.departureTime.localeCompare(b.departureTime);
-          return 0;
-        }),
-    [allOptions, activeMax, sort],
+        .sort((a, b) => a.pricePerSeat - b.pricePerSeat),
+    [allOptions, activeMax],
   );
 
   // Airport chosen but no specific destination yet (e.g. from the homepage
@@ -161,16 +158,6 @@ function SearchPage() {
           direction={params.direction}
         />
 
-        {trip ? (
-          <PrivateBookingSection
-            trip={trip}
-            destination={params.destination}
-            date={params.date}
-            seats={params.seats}
-            id="private-picks"
-          />
-        ) : null}
-
         {needsDestinationChoice ? (
           <div className="mt-8">
             <h2 className="font-display text-xl font-extrabold text-primary sm:text-2xl">
@@ -224,27 +211,23 @@ function SearchPage() {
 
         {!isLoading && !tripNotFound && allOptions.length > 0 ? (
           <div className="mt-8">
-            {/* Results header + sort */}
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <h1 className="font-display text-2xl font-extrabold text-primary sm:text-3xl">
-                  {t("searchPage.availableTrips")}
-                </h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {visibleOptions.length}{" "}
-                  {visibleOptions.length === 1
-                    ? t("searchPage.tripsAvailableSingular")
-                    : t("searchPage.tripsAvailablePlural")}
-                  {visibleOptions.length !== allOptions.length
-                    ? ` ${t("searchPage.outOf", { count: allOptions.length })}`
-                    : ""}
-                </p>
-              </div>
-              <SearchSortDesktop value={sort} onChange={setSort} />
+            {/* Results header */}
+            <div>
+              <h1 className="font-display text-2xl font-extrabold text-primary sm:text-3xl">
+                {t("searchPage.availableTrips")}
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {visibleOptions.length}{" "}
+                {visibleOptions.length === 1
+                  ? t("searchPage.tripsAvailableSingular")
+                  : t("searchPage.tripsAvailablePlural")}
+                {visibleOptions.length !== allOptions.length
+                  ? ` ${t("searchPage.outOf", { count: allOptions.length })}`
+                  : ""}
+              </p>
             </div>
 
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row lg:hidden">
-              <SearchSortMobile value={sort} onChange={setSort} className="flex-1" />
+            <div className="mt-4 flex justify-end lg:hidden">
               <SearchFiltersSheet
                 {...filterPanelProps}
                 activeFilterCount={activeFilterCount}
@@ -296,6 +279,19 @@ function SearchPage() {
 
             <BookingTrustPanel className="mt-6 lg:hidden" />
           </div>
+        ) : null}
+
+        {/* Private booking — a secondary option below the core shared-ride
+            results (GoAir's main product), not competing with them for the
+            first thing the visitor sees. */}
+        {trip ? (
+          <PrivateBookingSection
+            trip={trip}
+            destination={params.destination}
+            date={params.date}
+            seats={params.seats}
+            id="private-picks"
+          />
         ) : null}
 
         {/* Schedule load issue — friendly, no technical errors */}
