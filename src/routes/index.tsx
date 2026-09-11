@@ -111,7 +111,7 @@ function Home() {
               RTL start edge (right) so it hugs the true left side, in normal
               document flow — no absolute positioning, so it can never
               overlap the title block below it. */}
-          <div id="find-your-ride" className="mb-8 w-full max-w-sm ms-auto scroll-mt-24 sm:max-w-md">
+          <div id="find-your-ride" className="mb-8 w-full scroll-mt-24">
             <SearchWidget trips={trips} countries={countries} />
           </div>
 
