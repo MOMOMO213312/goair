@@ -52,10 +52,12 @@ export async function getOperatorDashboard(token: string): Promise<OperatorDashb
   };
 }
 
+export type OperatorTripStatus = "pending" | "accepted" | "rejected" | string;
+
 export type OperatorTrip = {
   assignmentId: string; travelDate: string; departureTime: string | null;
   destination: string; origin: string; seatsCount: number; amountDueUsd: number;
-  driverName: string | null; vehiclePlate: string;
+  driverName: string | null; vehiclePlate: string; operatorStatus: OperatorTripStatus;
 };
 
 export async function getOperatorTrips(token: string): Promise<OperatorTrip[]> {
@@ -71,7 +73,29 @@ export async function getOperatorTrips(token: string): Promise<OperatorTrip[]> {
     amountDueUsd: num(r["amount_due_usd"]),
     driverName: (r["driver_name"] as string | null) ?? null,
     vehiclePlate: String(r["vehicle_plate"] ?? "—"),
+    operatorStatus: String(r["operator_status"] ?? "pending"),
   }));
+}
+
+export const OPERATOR_TRIP_STATUS_LABELS: Record<string, string> = {
+  pending: "بانتظار ردك",
+  accepted: "موافَق عليها",
+  rejected: "مرفوضة",
+};
+
+// الدالة دي كانت جاهزة في القاعدة (operator_set_trip_status) من غير أي مكان في
+// الواجهة بينادي عليها — الأوبريتور ماكانش يقدر يوافق/يرفض رحلة متخصصة له.
+export async function operatorSetTripStatus(
+  token: string,
+  assignmentId: string,
+  status: "accepted" | "rejected",
+): Promise<void> {
+  const { error } = await supabase.rpc("operator_set_trip_status", {
+    p_access_token: token,
+    p_assignment_id: assignmentId,
+    p_status: status,
+  });
+  if (error) rpcError(error);
 }
 
 export type OperatorStatement = {

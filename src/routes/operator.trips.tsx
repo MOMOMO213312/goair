@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Users } from "lucide-react";
+import { Check, Users, X } from "lucide-react";
+import { toast } from "sonner";
 import { useOperatorToken } from "@/lib/operator-session";
 import { OperatorAuthError, OperatorLoading, OperatorSection } from "@/components/operator/operator-shell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,6 +13,8 @@ import {
   getOperatorTrips,
   getOperatorTripPassengers,
   isOperatorAuthError,
+  operatorSetTripStatus,
+  OPERATOR_TRIP_STATUS_LABELS,
   type OperatorTrip,
 } from "@/lib/operator";
 
@@ -28,13 +31,29 @@ export const Route = createFileRoute("/operator/trips")({
 
 function TripsPage() {
   const token = useOperatorToken();
+  const qc = useQueryClient();
   const q = useQuery({ queryKey: ["operator-trips", token], queryFn: () => getOperatorTrips(token), retry: false, enabled: Boolean(token) });
   const [activeTrip, setActiveTrip] = useState<OperatorTrip | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
   if (!token) return null;
   if (q.isPending) return <OperatorLoading />;
   if (q.isError) return isOperatorAuthError(q.error) ? <OperatorAuthError /> : <OperatorAuthError message="حصل خطأ مؤقت." />;
 
   const trips = q.data ?? [];
+
+  async function respondToTrip(assignmentId: string, status: "accepted" | "rejected") {
+    setUpdatingId(assignmentId);
+    try {
+      await operatorSetTripStatus(token, assignmentId, status);
+      await qc.invalidateQueries({ queryKey: ["operator-trips", token] });
+      toast.success(status === "accepted" ? "تم قبول الرحلة." : "تم رفض الرحلة.");
+    } catch {
+      toast.error("حصل خطأ مؤقت. حاول تاني.");
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
   return (
     <OperatorSection title="الرحلات المخصصة لأسطولك">
       {trips.length === 0 ? (
@@ -50,6 +69,7 @@ function TripsPage() {
                 <TableHead className="text-right">السائق</TableHead>
                 <TableHead className="text-right">المقاعد</TableHead>
                 <TableHead className="text-right">المستحق</TableHead>
+                <TableHead className="text-right">الحالة</TableHead>
                 <TableHead className="text-right">الركاب</TableHead>
               </TableRow>
             </TableHeader>
@@ -62,6 +82,42 @@ function TripsPage() {
                   <TableCell>{t.driverName ?? "—"}</TableCell>
                   <TableCell>{t.seatsCount}</TableCell>
                   <TableCell className="font-bold text-accent">{formatOperatorMoney(t.amountDueUsd)}</TableCell>
+                  <TableCell>
+                    {t.operatorStatus === "pending" ? (
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="h-7 gap-1 px-2"
+                          disabled={updatingId === t.assignmentId}
+                          onClick={() => respondToTrip(t.assignmentId, "accepted")}
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                          قبول
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 gap-1 px-2 text-destructive"
+                          disabled={updatingId === t.assignmentId}
+                          onClick={() => respondToTrip(t.assignmentId, "rejected")}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          رفض
+                        </Button>
+                      </div>
+                    ) : (
+                      <span
+                        className={
+                          t.operatorStatus === "accepted"
+                            ? "text-xs font-bold text-emerald-600"
+                            : "text-xs font-bold text-destructive"
+                        }
+                      >
+                        {OPERATOR_TRIP_STATUS_LABELS[t.operatorStatus] ?? t.operatorStatus}
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setActiveTrip(t)}>
                       <Users className="h-3.5 w-3.5" />
