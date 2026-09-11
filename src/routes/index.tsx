@@ -15,7 +15,6 @@ import { HeroImageCarousel } from "@/components/hero-image-carousel";
 import { HowItWorks } from "@/components/goair/how-it-works";
 import { SectionHeader } from "@/components/goair/section-header";
 import { ServiceHighlights } from "@/components/goair/service-highlights";
-import { TravelExperienceSection } from "@/components/goair/travel-experience-section";
 import { FlightPath } from "@/components/flight-path";
 import { SearchWidget } from "@/components/search-widget";
 import {
@@ -156,10 +155,6 @@ function Home() {
       <div className="pt-10 sm:pt-8">
         <HeroTrustStrip />
       </div>
-
-      {/* اختار تجربة رحلتك — three large image-led cards routing into the
-          right flow before the customer touches the search form. */}
-      <TravelExperienceSection />
 
       {/* Explore routes — one merged section (was: popular routes + by-airport grid +
           destinations grid, three views of the same data). Filterable by airport. */}
