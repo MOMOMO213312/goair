@@ -65,38 +65,43 @@ function PrivateOptionCard({
   return (
     <div
       className={cn(
-        "flex flex-col overflow-hidden rounded-2xl border bg-card shadow-[var(--shadow-card)] transition-shadow",
+        "flex flex-col overflow-hidden rounded-2xl border bg-card shadow-[var(--shadow-card)] transition-shadow sm:flex-row",
         isRecommended ? "border-2 border-accent shadow-[var(--shadow-float)]" : "border-border/80",
       )}
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden">
+      {/* Photo — fixed-width column on desktop, matching a horizontal
+          "search results" row instead of a stacked card. */}
+      <div className="relative h-44 w-full shrink-0 overflow-hidden sm:h-auto sm:w-48 md:w-56">
         <img src={photo} alt="" loading="lazy" className="size-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent" />
         {showTier ? (
           <span
             className={cn(
-              "absolute left-3 top-3 inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold",
+              "absolute start-3 top-3 inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold",
               isPremium ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground",
             )}
           >
             {isPremium ? t("search.privateBooking.tierPremiumBadge") : t("search.privateBooking.tierStandardBadge")}
           </span>
         ) : null}
-        {isRecommended ? (
-          <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-accent-foreground">
-            <Sparkle className="size-3" aria-hidden />
-            {t("search.privateBooking.recommended")}
-          </span>
-        ) : null}
-        <h3 className="absolute inset-x-0 bottom-0 p-4 font-display text-base font-extrabold text-white">{modelName}</h3>
       </div>
 
-      <div className="flex flex-1 flex-col p-5">
+      {/* Details — the middle column. */}
+      <div className="flex flex-1 flex-col justify-center gap-2 p-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="font-display text-base font-extrabold text-primary sm:text-lg">{modelName}</h3>
+          {isRecommended ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-accent-foreground">
+              <Sparkle className="size-3" aria-hidden />
+              {t("search.privateBooking.recommended")}
+            </span>
+          ) : null}
+        </div>
+
         <p className="text-sm leading-relaxed text-muted-foreground">
           {getVehicleBlurb(t, option.vehicleCode) ?? t("search.privateBooking.upToPassengers", { count: option.capacity })}
         </p>
 
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <div className="flex items-center -space-x-1 space-x-reverse">
             {Array.from({ length: dotCount }).map((_, i) => (
               <Users key={i} className="size-3.5 text-accent" aria-hidden />
@@ -120,7 +125,7 @@ function PrivateOptionCard({
         </div>
 
         {/* Same trust perks as the shared-ride cards, for a consistent promise across booking types */}
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <CalendarX2 className="size-3.5 text-accent" aria-hidden />
             {t("search.resultCard.freeCancellation")}
@@ -132,7 +137,7 @@ function PrivateOptionCard({
         </div>
 
         {highlights.length > 0 ? (
-          <Collapsible open={highlightsOpen} onOpenChange={setHighlightsOpen} className="mt-3 border-t border-border pt-3">
+          <Collapsible open={highlightsOpen} onOpenChange={setHighlightsOpen} className="border-t border-border pt-3">
             <CollapsibleTrigger className="flex w-full items-center justify-between text-xs font-bold text-primary">
               {t("search.privateBooking.serviceHighlights")}
               <ChevronDown className={cn("size-3.5 transition-transform", highlightsOpen ? "rotate-180" : "")} aria-hidden />
@@ -146,12 +151,14 @@ function PrivateOptionCard({
             </CollapsibleContent>
           </Collapsible>
         ) : null}
+      </div>
 
-        <div className="mt-4 flex items-baseline justify-between border-t border-border pt-4">
-          <span className="text-xs font-bold text-muted-foreground">{t("search.privateBooking.fullVehiclePrice")}</span>
-          <span className="font-display text-xl font-extrabold text-accent">{formatUsd(option.priceUsd)}</span>
-        </div>
-
+      {/* Price + CTA — its own column on desktop, divided from the details
+          by a border, so price and the booking action are the first thing
+          the eye lands on (matches a horizontal results-row layout). */}
+      <div className="flex shrink-0 flex-col items-center justify-center gap-2 border-t border-border p-5 text-center sm:w-52 sm:border-t-0 sm:border-s sm:border-border">
+        <span className="text-xs font-bold text-muted-foreground">{t("search.privateBooking.fullVehiclePrice")}</span>
+        <span className="font-display text-2xl font-extrabold text-accent">{formatUsd(option.priceUsd)}</span>
         <Link
           to="/book"
           search={{
@@ -165,7 +172,7 @@ function PrivateOptionCard({
             bookingType: "private",
             vehicleTypeId: option.vehicleTypeId,
           }}
-          className="mt-5 inline-flex items-center justify-center rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-foreground transition-colors hover:bg-accent/90"
+          className="mt-1 inline-flex w-full items-center justify-center rounded-lg bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground transition-colors hover:bg-accent/90"
         >
           {t("search.privateBooking.bookPrivateFor", { destination })}
         </Link>
@@ -223,7 +230,12 @@ export function PrivateBookingSection({ trip, destination, date, seats, classNam
         </div>
       </div>
 
-      <div className="mt-4 grid gap-5 sm:grid-cols-3">
+      <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
+        <CalendarX2 className="size-4 shrink-0" aria-hidden />
+        {t("search.privateBooking.freeCancellationBanner")}
+      </div>
+
+      <div className="mt-4 space-y-4">
         {options.map((option) => (
           <PrivateOptionCard
             key={option.tripOptionId}
