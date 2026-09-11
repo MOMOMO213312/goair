@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -37,15 +37,41 @@ function GroundHandlingLayout() {
     return <GroundHandlingLoginForm invalid={state === "invalid"} onSignedIn={signIn} />;
   }
 
+  const navItems = [
+    { to: "/ground-handling", label: "لوحة التحكم", exact: true },
+    { to: "/ground-handling/requests", label: "طلبات الخدمات" },
+    { to: "/ground-handling/flights", label: "الرحلات" },
+    { to: "/ground-handling/travelers", label: "المسافرون" },
+    { to: "/ground-handling/services", label: "إدارة الخدمات" },
+    { to: "/ground-handling/staff", label: "الموظفون" },
+    { to: "/ground-handling/reports", label: "التقارير" },
+    { to: "/ground-handling/statements", label: "التسويات المالية" },
+  ];
+
   return (
     <div className="bg-mist/30 pb-16 pt-6 sm:pt-8">
-      <div className="mx-auto max-w-4xl px-4">
-        <header className="mb-6 flex items-center justify-between">
-          <h1 className="font-display text-2xl font-extrabold text-primary">بوابة التشغيل الأرضي</h1>
-          <Button variant="outline" size="sm" onClick={() => signOut()}>
+      <div className="mx-auto max-w-6xl px-4">
+        <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <h1 className="font-display text-2xl font-extrabold text-primary">بوابة GOAIR للخدمات الأرضية</h1>
+          <button
+            onClick={() => signOut()}
+            className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground hover:bg-muted"
+          >
             خروج
-          </Button>
+          </button>
         </header>
+        <nav className="mb-6 flex flex-wrap gap-2">
+          {navItems.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              activeOptions={{ exact: item.exact ?? false }}
+              className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
         <Outlet />
       </div>
     </div>

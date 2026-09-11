@@ -1,39 +1,26 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { AlertTriangle, PlaneTakeoff } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { GHLoading, GHStatCard, GHEmpty } from "@/components/ground-handling/ground-handling-shell";
 import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
 import {
-  formatGroundHandlingDate,
   getGroundHandlingDashboard,
   getGroundHandlingRequests,
   groundHandlingStatusLabel,
   isGroundHandlingAuthError,
-  updateGroundHandlingRequestStatus,
-  type GroundHandlingRequest,
+  formatGroundHandlingDate,
 } from "@/lib/ground-handling";
 import { useGroundHandlingSession, useGroundHandlingToken } from "@/lib/ground-handling-session";
 
 export const Route = createFileRoute("/ground-handling/")({
+  head: () => ({ meta: [{ title: "لوحة التحكم — بوابة GOAIR للخدمات الأرضية" }] }),
   component: GroundHandlingDashboardPage,
 });
-
-const STATUS_TABS: { value: string | null; label: string }[] = [
-  { value: null, label: "الكل" },
-  { value: "pending", label: "مطلوبة" },
-  { value: "in_progress", label: "جاري التجهيز" },
-  { value: "done", label: "تمت" },
-];
 
 function GroundHandlingDashboardPage() {
   const token = useGroundHandlingToken();
   const { signOut } = useGroundHandlingSession();
-  const queryClient = useQueryClient();
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
   const dashboardQuery = useQuery({
     queryKey: ["ground-handling-dashboard", token],
@@ -42,179 +29,94 @@ function GroundHandlingDashboardPage() {
     enabled: Boolean(token),
   });
 
-  const requestsQuery = useQuery({
-    queryKey: ["ground-handling-requests", token, statusFilter],
-    queryFn: () => getGroundHandlingRequests(token as string, statusFilter),
+  const urgentQuery = useQuery({
+    queryKey: ["ground-handling-urgent", token],
+    queryFn: () => getGroundHandlingRequests(token as string, null),
     retry: false,
     enabled: Boolean(token),
   });
 
   if (!token) return null;
 
-  if (dashboardQuery.isPending) {
-    return (
-      <div className="space-y-3">
-        {[0, 1, 2].map((i) => (
-          <Skeleton key={i} className="h-24 w-full" />
-        ))}
-      </div>
-    );
-  }
+  if (dashboardQuery.isPending) return <GHLoading />;
 
   if (dashboardQuery.isError || !dashboardQuery.data) {
     if (isGroundHandlingAuthError(dashboardQuery.error)) signOut();
-    return (
-      <Card className="rounded-xl border-border/80 p-6 text-center text-sm text-muted-foreground">
-        حصل خطأ مؤقت. حاول تاني.
-      </Card>
-    );
+    return <GHEmpty>حصل خطأ مؤقت. حاول تاني.</GHEmpty>;
   }
 
-  const dashboard = dashboardQuery.data;
-  const requests = requestsQuery.data ?? [];
-
-  function invalidate() {
-    queryClient.invalidateQueries({ queryKey: ["ground-handling-dashboard", token] });
-    queryClient.invalidateQueries({ queryKey: ["ground-handling-requests", token] });
-  }
+  const d = dashboardQuery.data;
+  const urgentRequests = (urgentQuery.data ?? []).filter(
+    (r) => r.isUrgent && r.status !== "completed" && r.status !== "cancelled",
+  );
 
   return (
     <div className="space-y-8">
       <section>
-        <h2 className="mb-1 font-display text-lg font-extrabold text-primary">{dashboard.name}</h2>
+        <h2 className="mb-1 font-display text-lg font-extrabold text-primary">{d.name}</h2>
         <p className="mb-4 text-sm text-muted-foreground">
-          {dashboard.airportCode}
-          {dashboard.country ? ` · ${dashboard.country}` : ""}
+          {d.airportCode}
+          {d.country ? ` · ${d.country}` : ""}
+          {!d.isActive ? " · (الحساب موقوف)" : ""}
         </p>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard label="مطلوبة" value={dashboard.pendingCount} />
-          <StatCard label="جاري التجهيز" value={dashboard.inProgressCount} />
-          <StatCard label="تمت اليوم" value={dashboard.doneTodayCount} />
+        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-7">
+          <GHStatCard label="إجمالي الطلبات" value={d.totalCount} />
+          <GHStatCard label="طلبات جديدة" value={d.newCount} />
+          <GHStatCard label="قيد التجهيز" value={d.preparingCount} />
+          <GHStatCard label="قيد التنفيذ" value={d.inProgressCount} />
+          <GHStatCard label="المكتملة اليوم" value={d.completedTodayCount} />
+          <GHStatCard label="طلبات عاجلة" value={d.urgentCount} tone={d.urgentCount > 0 ? "urgent" : undefined} />
+          <GHStatCard label="رحلات اليوم" value={d.todayFlightsCount} />
         </div>
       </section>
+
+      {urgentRequests.length > 0 ? (
+        <section>
+          <h3 className="mb-3 flex items-center gap-2 font-display text-base font-extrabold text-destructive">
+            <AlertTriangle className="size-4" aria-hidden />
+            طلبات عاجلة تحتاج انتباه
+          </h3>
+          <div className="space-y-2">
+            {urgentRequests.slice(0, 5).map((r) => (
+              <Card key={r.requestId} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border-destructive/40 p-3">
+                <div className="min-w-0 text-sm">
+                  <span className="font-bold text-primary">{r.serviceName}</span>
+                  <span className="text-muted-foreground"> — {r.passengerName}</span>
+                  {r.flightNumber ? <span className="text-muted-foreground"> · رحلة {r.flightNumber}</span> : null}
+                </div>
+                <span className="shrink-0 rounded-full bg-mist px-3 py-1 text-xs font-bold text-primary">
+                  {groundHandlingStatusLabel(r.status)}
+                </span>
+              </Card>
+            ))}
+          </div>
+          <Link to="/ground-handling/requests" className="mt-3 inline-block text-sm font-bold text-primary underline">
+            عرض كل الطلبات ←
+          </Link>
+        </section>
+      ) : null}
 
       <section>
-        <div className="mb-3 flex flex-wrap gap-2">
-          {STATUS_TABS.map((tab) => (
-            <button
-              key={tab.label}
-              onClick={() => setStatusFilter(tab.value)}
-              className={`rounded-lg border px-3 py-1.5 text-sm font-bold ${
-                statusFilter === tab.value
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border text-muted-foreground hover:bg-muted"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        <h3 className="mb-3 flex items-center gap-2 font-display text-base font-extrabold text-primary">
+          <PlaneTakeoff className="size-4" aria-hidden />
+          نظرة سريعة
+        </h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Link to="/ground-handling/requests">
+            <Card className="rounded-xl border-border/80 p-4 text-sm font-bold text-primary shadow-[var(--shadow-card)] hover:bg-muted">
+              إدارة طلبات الخدمات ←
+            </Card>
+          </Link>
+          <Link to="/ground-handling/flights">
+            <Card className="rounded-xl border-border/80 p-4 text-sm font-bold text-primary shadow-[var(--shadow-card)] hover:bg-muted">
+              رحلات اليوم ←
+            </Card>
+          </Link>
         </div>
-
-        {requestsQuery.isPending ? (
-          <div className="space-y-3">
-            {[0, 1].map((i) => (
-              <Skeleton key={i} className="h-28 w-full" />
-            ))}
-          </div>
-        ) : requests.length === 0 ? (
-          <Card className="rounded-xl border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            مفيش طلبات في القسم ده دلوقتي.
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {requests.map((req) => (
-              <RequestCard key={req.requestId} request={req} token={token} onDone={invalidate} />
-            ))}
-          </div>
-        )}
+        <p className="mt-2 text-xs text-muted-foreground">
+          آخر تحديث: {formatGroundHandlingDate(new Date().toISOString())}
+        </p>
       </section>
     </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <Card className="rounded-xl border-border/80 p-4 text-center shadow-[var(--shadow-card)]">
-      <p className="font-display text-3xl font-extrabold text-primary">{value}</p>
-      <p className="mt-1 text-sm text-muted-foreground">{label}</p>
-    </Card>
-  );
-}
-
-function RequestCard({
-  request,
-  token,
-  onDone,
-}: {
-  request: GroundHandlingRequest;
-  token: string;
-  onDone: () => void;
-}) {
-  const [notes, setNotes] = useState(request.partnerNotes ?? "");
-  const [busy, setBusy] = useState(false);
-
-  async function setStatus(status: "in_progress" | "done" | "cancelled") {
-    setBusy(true);
-    try {
-      await updateGroundHandlingRequestStatus(token, request.requestId, status, notes.trim() || null);
-      toast.success("تم التحديث.");
-      onDone();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Card className="space-y-3 rounded-xl border-border/80 p-4 shadow-[var(--shadow-card)]">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="font-display text-base font-bold text-primary">{request.serviceName}</p>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {request.passengerName} — {request.phoneNumber}
-          </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {request.origin} ← {request.destination} · {formatGroundHandlingDate(request.travelDate)}
-            {request.flightNumber ? ` · رحلة ${request.flightNumber}` : ""}
-            {request.ticketCode ? ` · تذكرة ${request.ticketCode}` : ""}
-          </p>
-        </div>
-        <span className="shrink-0 rounded-full bg-mist px-3 py-1 text-xs font-bold text-primary">
-          {groundHandlingStatusLabel(request.status)}
-        </span>
-      </div>
-
-      {request.status !== "done" && request.status !== "cancelled" ? (
-        <>
-          <Textarea
-            placeholder="ملاحظات (اختياري)"
-            rows={2}
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-          />
-          <div className="flex flex-wrap gap-2">
-            {request.status !== "in_progress" ? (
-              <Button size="sm" variant="outline" disabled={busy} onClick={() => setStatus("in_progress")}>
-                بدء التجهيز
-              </Button>
-            ) : null}
-            <Button
-              size="sm"
-              disabled={busy}
-              className="bg-primary font-bold text-primary-foreground hover:bg-primary/90"
-              onClick={() => setStatus("done")}
-            >
-              تم التنفيذ
-            </Button>
-            <Button size="sm" variant="outline" disabled={busy} onClick={() => setStatus("cancelled")}>
-              إلغاء
-            </Button>
-          </div>
-        </>
-      ) : request.partnerNotes ? (
-        <p className="text-sm text-muted-foreground">ملاحظات: {request.partnerNotes}</p>
-      ) : null}
-    </Card>
   );
 }

@@ -43,6 +43,13 @@ import { Route as AdminRequestsRouteImport } from './routes/admin.requests'
 import { Route as AdminSubscriptionPlansRouteImport } from './routes/admin.subscription-plans'
 import { Route as AdminTeamRouteImport } from './routes/admin.team'
 import { Route as GroundHandlingIndexRouteImport } from './routes/ground-handling.index'
+import { Route as GroundHandlingFlightsRouteImport } from './routes/ground-handling.flights'
+import { Route as GroundHandlingReportsRouteImport } from './routes/ground-handling.reports'
+import { Route as GroundHandlingRequestsRouteImport } from './routes/ground-handling.requests'
+import { Route as GroundHandlingServicesRouteImport } from './routes/ground-handling.services'
+import { Route as GroundHandlingStaffRouteImport } from './routes/ground-handling.staff'
+import { Route as GroundHandlingStatementsRouteImport } from './routes/ground-handling.statements'
+import { Route as GroundHandlingTravelersRouteImport } from './routes/ground-handling.travelers'
 import { Route as OperatorIndexRouteImport } from './routes/operator.index'
 import { Route as OperatorFleetRouteImport } from './routes/operator.fleet'
 import { Route as OperatorStatementsRouteImport } from './routes/operator.statements'
@@ -226,6 +233,42 @@ const GroundHandlingIndexRoute = GroundHandlingIndexRouteImport.update({
   path: '/',
   getParentRoute: () => GroundHandlingRoute,
 } as any)
+const GroundHandlingFlightsRoute = GroundHandlingFlightsRouteImport.update({
+  id: '/flights',
+  path: '/flights',
+  getParentRoute: () => GroundHandlingRoute,
+} as any)
+const GroundHandlingReportsRoute = GroundHandlingReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => GroundHandlingRoute,
+} as any)
+const GroundHandlingRequestsRoute = GroundHandlingRequestsRouteImport.update({
+  id: '/requests',
+  path: '/requests',
+  getParentRoute: () => GroundHandlingRoute,
+} as any)
+const GroundHandlingServicesRoute = GroundHandlingServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
+  getParentRoute: () => GroundHandlingRoute,
+} as any)
+const GroundHandlingStaffRoute = GroundHandlingStaffRouteImport.update({
+  id: '/staff',
+  path: '/staff',
+  getParentRoute: () => GroundHandlingRoute,
+} as any)
+const GroundHandlingStatementsRoute =
+  GroundHandlingStatementsRouteImport.update({
+    id: '/statements',
+    path: '/statements',
+    getParentRoute: () => GroundHandlingRoute,
+  } as any)
+const GroundHandlingTravelersRoute = GroundHandlingTravelersRouteImport.update({
+  id: '/travelers',
+  path: '/travelers',
+  getParentRoute: () => GroundHandlingRoute,
+} as any)
 const OperatorIndexRoute = OperatorIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -320,6 +363,13 @@ export interface FileRoutesByFullPath {
   '/admin/requests': typeof AdminRequestsRoute
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
   '/admin/team': typeof AdminTeamRoute
+  '/ground-handling/flights': typeof GroundHandlingFlightsRoute
+  '/ground-handling/reports': typeof GroundHandlingReportsRoute
+  '/ground-handling/requests': typeof GroundHandlingRequestsRoute
+  '/ground-handling/services': typeof GroundHandlingServicesRoute
+  '/ground-handling/staff': typeof GroundHandlingStaffRoute
+  '/ground-handling/statements': typeof GroundHandlingStatementsRoute
+  '/ground-handling/travelers': typeof GroundHandlingTravelersRoute
   '/operator/fleet': typeof OperatorFleetRoute
   '/operator/statements': typeof OperatorStatementsRoute
   '/operator/team': typeof OperatorTeamRoute
@@ -364,6 +414,13 @@ export interface FileRoutesByTo {
   '/admin/requests': typeof AdminRequestsRoute
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
   '/admin/team': typeof AdminTeamRoute
+  '/ground-handling/flights': typeof GroundHandlingFlightsRoute
+  '/ground-handling/reports': typeof GroundHandlingReportsRoute
+  '/ground-handling/requests': typeof GroundHandlingRequestsRoute
+  '/ground-handling/services': typeof GroundHandlingServicesRoute
+  '/ground-handling/staff': typeof GroundHandlingStaffRoute
+  '/ground-handling/statements': typeof GroundHandlingStatementsRoute
+  '/ground-handling/travelers': typeof GroundHandlingTravelersRoute
   '/operator/fleet': typeof OperatorFleetRoute
   '/operator/statements': typeof OperatorStatementsRoute
   '/operator/team': typeof OperatorTeamRoute
@@ -413,6 +470,13 @@ export interface FileRoutesById {
   '/admin/requests': typeof AdminRequestsRoute
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
   '/admin/team': typeof AdminTeamRoute
+  '/ground-handling/flights': typeof GroundHandlingFlightsRoute
+  '/ground-handling/reports': typeof GroundHandlingReportsRoute
+  '/ground-handling/requests': typeof GroundHandlingRequestsRoute
+  '/ground-handling/services': typeof GroundHandlingServicesRoute
+  '/ground-handling/staff': typeof GroundHandlingStaffRoute
+  '/ground-handling/statements': typeof GroundHandlingStatementsRoute
+  '/ground-handling/travelers': typeof GroundHandlingTravelersRoute
   '/operator/fleet': typeof OperatorFleetRoute
   '/operator/statements': typeof OperatorStatementsRoute
   '/operator/team': typeof OperatorTeamRoute
@@ -463,6 +527,13 @@ export interface FileRouteTypes {
     | '/admin/requests'
     | '/admin/subscription-plans'
     | '/admin/team'
+    | '/ground-handling/flights'
+    | '/ground-handling/reports'
+    | '/ground-handling/requests'
+    | '/ground-handling/services'
+    | '/ground-handling/staff'
+    | '/ground-handling/statements'
+    | '/ground-handling/travelers'
     | '/operator/fleet'
     | '/operator/statements'
     | '/operator/team'
@@ -507,6 +578,13 @@ export interface FileRouteTypes {
     | '/admin/requests'
     | '/admin/subscription-plans'
     | '/admin/team'
+    | '/ground-handling/flights'
+    | '/ground-handling/reports'
+    | '/ground-handling/requests'
+    | '/ground-handling/services'
+    | '/ground-handling/staff'
+    | '/ground-handling/statements'
+    | '/ground-handling/travelers'
     | '/operator/fleet'
     | '/operator/statements'
     | '/operator/team'
@@ -555,6 +633,13 @@ export interface FileRouteTypes {
     | '/admin/requests'
     | '/admin/subscription-plans'
     | '/admin/team'
+    | '/ground-handling/flights'
+    | '/ground-handling/reports'
+    | '/ground-handling/requests'
+    | '/ground-handling/services'
+    | '/ground-handling/staff'
+    | '/ground-handling/statements'
+    | '/ground-handling/travelers'
     | '/operator/fleet'
     | '/operator/statements'
     | '/operator/team'
@@ -834,6 +919,55 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GroundHandlingIndexRouteImport
       parentRoute: typeof GroundHandlingRoute
     }
+    '/ground-handling/flights': {
+      id: '/ground-handling/flights'
+      path: '/flights'
+      fullPath: '/ground-handling/flights'
+      preLoaderRoute: typeof GroundHandlingFlightsRouteImport
+      parentRoute: typeof GroundHandlingRoute
+    }
+    '/ground-handling/reports': {
+      id: '/ground-handling/reports'
+      path: '/reports'
+      fullPath: '/ground-handling/reports'
+      preLoaderRoute: typeof GroundHandlingReportsRouteImport
+      parentRoute: typeof GroundHandlingRoute
+    }
+    '/ground-handling/requests': {
+      id: '/ground-handling/requests'
+      path: '/requests'
+      fullPath: '/ground-handling/requests'
+      preLoaderRoute: typeof GroundHandlingRequestsRouteImport
+      parentRoute: typeof GroundHandlingRoute
+    }
+    '/ground-handling/services': {
+      id: '/ground-handling/services'
+      path: '/services'
+      fullPath: '/ground-handling/services'
+      preLoaderRoute: typeof GroundHandlingServicesRouteImport
+      parentRoute: typeof GroundHandlingRoute
+    }
+    '/ground-handling/staff': {
+      id: '/ground-handling/staff'
+      path: '/staff'
+      fullPath: '/ground-handling/staff'
+      preLoaderRoute: typeof GroundHandlingStaffRouteImport
+      parentRoute: typeof GroundHandlingRoute
+    }
+    '/ground-handling/statements': {
+      id: '/ground-handling/statements'
+      path: '/statements'
+      fullPath: '/ground-handling/statements'
+      preLoaderRoute: typeof GroundHandlingStatementsRouteImport
+      parentRoute: typeof GroundHandlingRoute
+    }
+    '/ground-handling/travelers': {
+      id: '/ground-handling/travelers'
+      path: '/travelers'
+      fullPath: '/ground-handling/travelers'
+      preLoaderRoute: typeof GroundHandlingTravelersRouteImport
+      parentRoute: typeof GroundHandlingRoute
+    }
     '/operator/': {
       id: '/operator/'
       path: '/'
@@ -956,10 +1090,24 @@ const AdminRouteChildren: AdminRouteChildren = {
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface GroundHandlingRouteChildren {
+  GroundHandlingFlightsRoute: typeof GroundHandlingFlightsRoute
+  GroundHandlingReportsRoute: typeof GroundHandlingReportsRoute
+  GroundHandlingRequestsRoute: typeof GroundHandlingRequestsRoute
+  GroundHandlingServicesRoute: typeof GroundHandlingServicesRoute
+  GroundHandlingStaffRoute: typeof GroundHandlingStaffRoute
+  GroundHandlingStatementsRoute: typeof GroundHandlingStatementsRoute
+  GroundHandlingTravelersRoute: typeof GroundHandlingTravelersRoute
   GroundHandlingIndexRoute: typeof GroundHandlingIndexRoute
 }
 
 const GroundHandlingRouteChildren: GroundHandlingRouteChildren = {
+  GroundHandlingFlightsRoute: GroundHandlingFlightsRoute,
+  GroundHandlingReportsRoute: GroundHandlingReportsRoute,
+  GroundHandlingRequestsRoute: GroundHandlingRequestsRoute,
+  GroundHandlingServicesRoute: GroundHandlingServicesRoute,
+  GroundHandlingStaffRoute: GroundHandlingStaffRoute,
+  GroundHandlingStatementsRoute: GroundHandlingStatementsRoute,
+  GroundHandlingTravelersRoute: GroundHandlingTravelersRoute,
   GroundHandlingIndexRoute: GroundHandlingIndexRoute,
 }
 
