@@ -613,17 +613,25 @@ const en = {
     },
   },
   heroTrustStrip: {
-    fixedPrice: {
-      title: "Fixed price from the start",
-      text: "The price you see is what you pay — no haggling, no surprises.",
+    guaranteedSeat: {
+      title: "Guaranteed Seat",
+      text: "Book your seat in advance and travel with peace of mind.",
     },
-    freeCancellation: {
-      title: "Free cancellation up to 24 hours",
-      text: "Changed your mind? Cancel or edit for free up to a day before your trip.",
+    onTime: {
+      title: "On Time, Every Time",
+      text: "We value your time and ensure punctual pickups.",
     },
-    namedPickup: {
-      title: "Pickup with a sign bearing your name",
-      text: "A GoAir rep waits for you at arrivals with a sign bearing your name.",
+    safeComfortable: {
+      title: "Safe & Comfortable",
+      text: "Travel in modern vehicles with professional drivers.",
+    },
+    affordablePrices: {
+      title: "Affordable Prices",
+      text: "High quality service at the best price.",
+    },
+    support247: {
+      title: "24/7 Support",
+      text: "We're here to help you anytime, anywhere.",
     },
   },
   howItWorks: {
