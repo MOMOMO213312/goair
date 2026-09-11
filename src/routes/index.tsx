@@ -106,15 +106,9 @@ function Home() {
         <FlightPath className="pointer-events-none absolute inset-x-0 top-10 -z-10 h-24 w-full text-accent/40 sm:top-16 sm:h-32 [stroke-dasharray:1200] [stroke-dashoffset:1200] motion-safe:animate-[draw-route_1.8s_ease-out_forwards]" />
 
         <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-6 sm:pb-20 sm:pt-8">
-          {/* Search dock — docked to the physical top-left corner of the hero
-              photo. `ms-auto` (margin-inline-start) pushes it away from the
-              RTL start edge (right) so it hugs the true left side, in normal
-              document flow — no absolute positioning, so it can never
-              overlap the title block below it. */}
-          <div id="find-your-ride" className="mb-8 w-full scroll-mt-24">
-            <SearchWidget trips={trips} countries={countries} />
-          </div>
-
+          {/* Title block first, then the search bar below it — same order as
+              the reference layout: heading + subtitle, then a full-width
+              search bar underneath. */}
           <div className="max-w-2xl">
             <p className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1 text-xs font-bold text-primary-foreground">
               <Sparkles className="size-3.5 text-accent" />
@@ -126,27 +120,31 @@ function Home() {
             <p className="mt-4 max-w-md text-base leading-relaxed text-primary-foreground/90 sm:text-lg">
               {t("home.hero.subtitle")}
             </p>
+          </div>
 
-            <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4 border-t border-primary-foreground/15 pt-6">
-              {[
-                { value: `+${publicTrips.length}`, label: t("home.hero.statActiveRoutes") },
-                {
-                  value: String(countries.length),
-                  label:
-                    countries.length === 1
-                      ? t("home.hero.statCountrySingular")
-                      : t("home.hero.statCountryPlural"),
-                },
-                { value: "24/7", label: t("home.hero.statSupport") },
-              ].map((stat) => (
-                <div key={stat.label}>
-                  <p className="font-display text-2xl font-extrabold text-primary-foreground sm:text-3xl">
-                    {stat.value}
-                  </p>
-                  <p className="mt-0.5 text-xs text-primary-foreground/70">{stat.label}</p>
-                </div>
-              ))}
-            </div>
+          <div id="find-your-ride" className="mt-8 w-full scroll-mt-24">
+            <SearchWidget trips={trips} countries={countries} />
+          </div>
+
+          <div className="mt-8 flex max-w-2xl flex-wrap items-center gap-x-8 gap-y-4 border-t border-primary-foreground/15 pt-6">
+            {[
+              { value: `+${publicTrips.length}`, label: t("home.hero.statActiveRoutes") },
+              {
+                value: String(countries.length),
+                label:
+                  countries.length === 1
+                    ? t("home.hero.statCountrySingular")
+                    : t("home.hero.statCountryPlural"),
+              },
+              { value: "24/7", label: t("home.hero.statSupport") },
+            ].map((stat) => (
+              <div key={stat.label}>
+                <p className="font-display text-2xl font-extrabold text-primary-foreground sm:text-3xl">
+                  {stat.value}
+                </p>
+                <p className="mt-0.5 text-xs text-primary-foreground/70">{stat.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
