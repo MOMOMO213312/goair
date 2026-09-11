@@ -205,84 +205,55 @@ export function SearchWidget({
 
   return (
     <>
-    {/* Direction — the first decision, as two big visual cards instead of a
-        cramped One-way/Round-trip tab bar (GoAir only ever sells a
-        single-direction airport transfer, so this is the real fork). */}
-    <div className="mb-3 grid grid-cols-2 gap-3">
-      <button
-        type="button"
-        onClick={() => selectDirection("to_airport")}
-        aria-pressed={isDeparting}
-        className={cn(
-          "flex flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition-all sm:flex-row sm:gap-3 sm:p-5 sm:text-right",
-          isDeparting
-            ? "border-accent bg-card shadow-[var(--shadow-float)]"
-            : "border-white/30 bg-card/70 hover:border-accent/40",
-        )}
-      >
-        <span
-          className={cn(
-            "flex size-11 shrink-0 items-center justify-center rounded-xl",
-            isDeparting ? "bg-accent text-accent-foreground" : "bg-secondary text-primary",
-          )}
-        >
-          <PlaneTakeoff className="size-5" aria-hidden />
-        </span>
-        <span>
-          <span className="block font-display text-base font-extrabold text-primary sm:text-lg">
-            {t("searchWidget.directionToAirport.title")}
-          </span>
-          <span className="mt-0.5 block text-xs text-muted-foreground sm:text-sm">
-            {t("searchWidget.directionToAirport.subtitle")}
-          </span>
-        </span>
-      </button>
-
-      <button
-        type="button"
-        onClick={() => selectDirection("from_airport")}
-        aria-pressed={!isDeparting}
-        className={cn(
-          "flex flex-col items-center gap-2 rounded-2xl border-2 p-4 text-center transition-all sm:flex-row sm:gap-3 sm:p-5 sm:text-right",
-          !isDeparting
-            ? "border-accent bg-card shadow-[var(--shadow-float)]"
-            : "border-white/30 bg-card/70 hover:border-accent/40",
-        )}
-      >
-        <span
-          className={cn(
-            "flex size-11 shrink-0 items-center justify-center rounded-xl",
-            !isDeparting ? "bg-accent text-accent-foreground" : "bg-secondary text-primary",
-          )}
-        >
-          <PlaneLanding className="size-5" aria-hidden />
-        </span>
-        <span>
-          <span className="block font-display text-base font-extrabold text-primary sm:text-lg">
-            {t("searchWidget.directionFromAirport.title")}
-          </span>
-          <span className="mt-0.5 block text-xs text-muted-foreground sm:text-sm">
-            {t("searchWidget.directionFromAirport.subtitle")}
-          </span>
-        </span>
-      </button>
-    </div>
-
-    <form
-      onSubmit={onSubmit}
+    <div
       className={cn(
-        "rounded-2xl border border-white/30 bg-card/85 p-4 shadow-[var(--shadow-float)] backdrop-blur-xl sm:p-5",
+        "w-full rounded-2xl border border-white/30 bg-card/95 p-4 shadow-[var(--shadow-float)] backdrop-blur-xl sm:p-5",
         className,
       )}
     >
-      <p className="mb-3 flex items-center gap-2 font-display text-sm font-bold text-primary">
-        <Search className="size-4 text-accent" />
-        {isDeparting
-          ? t("searchWidget.formTitleToAirport")
-          : t("searchWidget.formTitleFromAirport")}
-      </p>
+      {/* Direction — compact segmented tabs, the same familiar shape as a
+          One-way / Round-trip switch, mapped onto GoAir's real fork: heading
+          to the airport vs. arriving at it (GoAir only ever sells a
+          single-direction transfer). */}
+      <div className="mb-4 inline-flex rounded-xl bg-secondary p-1">
+        <button
+          type="button"
+          onClick={() => selectDirection("to_airport")}
+          aria-pressed={isDeparting}
+          className={cn(
+            "flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-bold transition-colors",
+            isDeparting
+              ? "bg-card text-primary shadow-sm"
+              : "text-muted-foreground hover:text-primary",
+          )}
+        >
+          <PlaneTakeoff className="size-4 shrink-0" aria-hidden />
+          {t("searchWidget.directionToAirport.title")}
+        </button>
+        <button
+          type="button"
+          onClick={() => selectDirection("from_airport")}
+          aria-pressed={!isDeparting}
+          className={cn(
+            "flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-bold transition-colors",
+            !isDeparting
+              ? "bg-card text-primary shadow-sm"
+              : "text-muted-foreground hover:text-primary",
+          )}
+        >
+          <PlaneLanding className="size-4 shrink-0" aria-hidden />
+          {t("searchWidget.directionFromAirport.title")}
+        </button>
+      </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Fields — a single wide row on desktop (country, the two location
+          fields, date, seats, submit), stacking to one column on mobile.
+          This is the layout change: previously a narrow stacked card, now a
+          full-width horizontal bar. */}
+      <form
+        onSubmit={onSubmit}
+        className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1.1fr_1.3fr_1.3fr_1fr_0.8fr_auto] lg:items-end lg:gap-3"
+      >
         <div className="space-y-2">
           <Label className="flex items-center gap-1.5">
             <Globe2 className="size-3.5 text-muted-foreground" />
@@ -394,22 +365,22 @@ export function SearchWidget({
           />
         </div>
 
-        <div className="flex items-end">
+        <div>
           <Button
             type="submit"
             size="lg"
-            className="h-11 w-full bg-accent text-base font-bold text-accent-foreground hover:bg-accent/90"
+            className="h-11 w-full bg-accent text-base font-bold text-accent-foreground hover:bg-accent/90 lg:w-auto lg:px-6"
           >
-            <Plane className={cn("size-5", isDeparting ? "rotate-45" : "-rotate-45")} aria-hidden />
+            <Search className="size-5" aria-hidden />
             {t("searchWidget.submit")}
           </Button>
         </div>
-      </div>
+      </form>
 
       {/* Flight number — optional, so it stays a one-line link instead of a
-          permanent grid cell that pushes the whole widget taller. */}
+          permanent grid cell that pushes the whole bar taller. */}
       {showFlightField ? (
-        <div className="mt-3 space-y-2">
+        <div className="mt-3 max-w-sm space-y-2">
           <Label htmlFor="goair-flight" className="flex items-center gap-1.5">
             <PlaneTakeoff className="size-3.5 text-muted-foreground" />
             {t("searchWidget.flightNumberLabel")}{" "}
@@ -437,7 +408,7 @@ export function SearchWidget({
           {t("searchWidget.addFlightNumber")}
         </button>
       )}
-    </form>
+    </div>
 
     {quickRoutes.length > 0 ? (
       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -461,7 +432,7 @@ export function SearchWidget({
                 },
               })
             }
-            className="rounded-full border border-border bg-background px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:border-accent hover:text-accent"
+            className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-bold text-primary shadow-sm transition-colors hover:border-accent hover:text-accent"
           >
             {localize(trip.origin, trip.origin_en, language)} ← {localize(trip.destination, trip.destination_en, language)}
           </button>
