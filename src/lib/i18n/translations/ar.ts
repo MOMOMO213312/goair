@@ -271,6 +271,7 @@ const ar = {
       },
       added: "متضاف",
       add: "إضافة",
+      soldOut: "خلصت",
     },
     confirmStep: {
       title: "راجع بيانات حجزك",

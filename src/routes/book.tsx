@@ -17,6 +17,7 @@ import {
   createBookingSafe,
   createPrivateBookingSafe,
   fetchAddonServices,
+  fetchPublicGroundHandlingServices,
   fetchTrips,
   friendlyErrorMessage,
 } from "@/lib/goair";
@@ -91,16 +92,38 @@ function BookPage() {
   const [flight, setFlight] = useState(search.flight ?? "");
   const [busy, setBusy] = useState(false);
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
+  const [selectedGroundHandlingServiceIds, setSelectedGroundHandlingServiceIds] = useState<string[]>([]);
 
   const tripsQuery = useQuery({ queryKey: ["goair", "trips"], queryFn: fetchTrips });
   const trip = tripsQuery.data?.find((item) => item.id === search.tripId);
 
   const addonsQuery = useQuery({ queryKey: ["goair", "addon-services"], queryFn: fetchAddonServices });
   const selectedAddons = (addonsQuery.data ?? []).filter((a) => selectedAddonIds.includes(a.id));
-  const addonsTotal = selectedAddons.reduce((sum, a) => sum + a.priceUsd, 0);
+
+  // Named partner services for this trip's airport — only queried once the
+  // airport is known; empty result means the addons step falls back to the
+  // generic "airport" category automatically.
+  const groundHandlingQuery = useQuery({
+    queryKey: ["goair", "ground-handling-services", trip?.airport_code, search.date],
+    queryFn: () => fetchPublicGroundHandlingServices(trip!.airport_code, search.date),
+    enabled: Boolean(trip?.airport_code),
+  });
+  const groundHandlingServices = groundHandlingQuery.data ?? [];
+  const selectedGroundHandlingServices = groundHandlingServices.filter((s) =>
+    selectedGroundHandlingServiceIds.includes(s.id),
+  );
+  const addonsTotal =
+    selectedAddons.reduce((sum, a) => sum + a.priceUsd, 0) +
+    selectedGroundHandlingServices.reduce((sum, s) => sum + s.priceUsd, 0);
 
   function toggleAddon(id: string) {
     setSelectedAddonIds((current) =>
+      current.includes(id) ? current.filter((existing) => existing !== id) : [...current, id],
+    );
+  }
+
+  function toggleGroundHandlingService(id: string) {
+    setSelectedGroundHandlingServiceIds((current) =>
       current.includes(id) ? current.filter((existing) => existing !== id) : [...current, id],
     );
   }
@@ -139,6 +162,7 @@ function BookPage() {
             flightNumber: flight.trim() || null,
             luggageCount: luggage,
             addonIds: selectedAddonIds,
+            groundHandlingServiceIds: selectedGroundHandlingServiceIds,
           })
         : await createBookingSafe({
             tripId: search.tripId,
@@ -153,6 +177,7 @@ function BookPage() {
             flightNumber: flight.trim() || null,
             luggageCount: luggage,
             addonIds: selectedAddonIds,
+            groundHandlingServiceIds: selectedGroundHandlingServiceIds,
           });
       toast.success(isPrivate ? t("bookPage.privateBookingConfirmed") : t("bookPage.seatConfirmed"));
       navigate({ to: "/payment", search: { ticket: ticketCode } });
@@ -217,6 +242,9 @@ function BookPage() {
                   addonsLoading={addonsQuery.isLoading}
                   selectedAddonIds={selectedAddonIds}
                   onToggleAddon={toggleAddon}
+                  groundHandlingServices={groundHandlingServices}
+                  selectedGroundHandlingServiceIds={selectedGroundHandlingServiceIds}
+                  onToggleGroundHandlingService={toggleGroundHandlingService}
                   className="mt-6"
                 />
               </>
@@ -243,7 +271,10 @@ function BookPage() {
                 flight={flight}
                 luggage={luggage}
                 notes={extrasNotes}
-                addonNames={selectedAddons.map((a) => localize(a.name, a.nameEn, language))}
+                addonNames={[
+                  ...selectedAddons.map((a) => localize(a.name, a.nameEn, language)),
+                  ...selectedGroundHandlingServices.map((s) => `${s.name} (${s.partnerName})`),
+                ]}
                 onEditExtras={() => setPhase("extras")}
                 onEditPassengers={() => setPhase("passengers")}
                 onConfirm={onConfirm}

@@ -24,6 +24,7 @@ import {
 import {
   createBookingSafe,
   fetchAddonServices,
+  fetchPublicGroundHandlingServices,
   fetchPackageById,
   fetchScheduleOptions,
   fetchTrips,
@@ -117,6 +118,7 @@ function PackagePage() {
   const [flight, setFlight] = useState("");
   const [busy, setBusy] = useState(false);
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
+  const [selectedGroundHandlingServiceIds, setSelectedGroundHandlingServiceIds] = useState<string[]>([]);
 
   const visibleTrips = useMemo(
     () => filterPublicTrips(tripsQuery.data ?? [], countriesQuery.data ?? []),
@@ -156,7 +158,19 @@ function PackagePage() {
 
   const addonsQuery = useQuery({ queryKey: ["goair", "addon-services"], queryFn: fetchAddonServices });
   const selectedAddons = (addonsQuery.data ?? []).filter((a) => selectedAddonIds.includes(a.id));
-  const addonsTotal = selectedAddons.reduce((sum, a) => sum + a.priceUsd, 0);
+
+  const groundHandlingQuery = useQuery({
+    queryKey: ["goair", "ground-handling-services", trip?.airport_code, date],
+    queryFn: () => fetchPublicGroundHandlingServices(trip!.airport_code, date),
+    enabled: Boolean(trip?.airport_code),
+  });
+  const groundHandlingServices = groundHandlingQuery.data ?? [];
+  const selectedGroundHandlingServices = groundHandlingServices.filter((s) =>
+    selectedGroundHandlingServiceIds.includes(s.id),
+  );
+  const addonsTotal =
+    selectedAddons.reduce((sum, a) => sum + a.priceUsd, 0) +
+    selectedGroundHandlingServices.reduce((sum, s) => sum + s.priceUsd, 0);
 
   // A package's price already includes the transport — it's a complete
   // product, always the per-seat basis here (never the trip's raw seat price).
@@ -165,6 +179,12 @@ function PackagePage() {
 
   function toggleAddon(id: string) {
     setSelectedAddonIds((current) =>
+      current.includes(id) ? current.filter((existing) => existing !== id) : [...current, id],
+    );
+  }
+
+  function toggleGroundHandlingService(id: string) {
+    setSelectedGroundHandlingServiceIds((current) =>
       current.includes(id) ? current.filter((existing) => existing !== id) : [...current, id],
     );
   }
@@ -233,6 +253,7 @@ function PackagePage() {
         luggageCount: luggage,
         packageId: pkg?.id ?? null,
         addonIds: selectedAddonIds,
+        groundHandlingServiceIds: selectedGroundHandlingServiceIds,
       });
       toast.success(t("packagePage.bookingSuccess"));
       navigate({ to: "/payment", search: { ticket: ticketCode } });
@@ -468,6 +489,9 @@ function PackagePage() {
                   addonsLoading={addonsQuery.isLoading}
                   selectedAddonIds={selectedAddonIds}
                   onToggleAddon={toggleAddon}
+                  groundHandlingServices={groundHandlingServices}
+                  selectedGroundHandlingServiceIds={selectedGroundHandlingServiceIds}
+                  onToggleGroundHandlingService={toggleGroundHandlingService}
                   className="mt-6"
                 />
               </>
@@ -495,7 +519,10 @@ function PackagePage() {
                 luggage={luggage}
                 notes={extrasNotes}
                 {...(pkgName ? { packageName: pkgName } : {})}
-                addonNames={selectedAddons.map((a) => localize(a.name, a.nameEn, language))}
+                addonNames={[
+                  ...selectedAddons.map((a) => localize(a.name, a.nameEn, language)),
+                  ...selectedGroundHandlingServices.map((s) => `${s.name} (${s.partnerName})`),
+                ]}
                 onEditExtras={() => setPhase("extras")}
                 onEditPassengers={() => setPhase("passengers")}
                 onConfirm={onConfirm}

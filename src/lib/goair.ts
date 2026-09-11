@@ -90,6 +90,48 @@ export type AddonService = {
   imageUrl: string | null;
 };
 
+/** A specific named partner's service from their own catalog (`ground_handling_services`) for one airport — shown instead of the generic "airport" addon_services when the airport has any approved. */
+export type GroundHandlingPublicService = {
+  id: string;
+  partnerId: string;
+  partnerName: string;
+  name: string;
+  description: string | null;
+  terminal: string | null;
+  direction: "arrival" | "departure" | null;
+  operatingHoursStart: string | null;
+  operatingHoursEnd: string | null;
+  priceUsd: number;
+  dailyCapacity: number | null;
+  /** null = unlimited; otherwise how many bookings are still available for the given travel date. */
+  remainingCapacity: number | null;
+};
+
+export async function fetchPublicGroundHandlingServices(
+  airportCode: string,
+  travelDate?: string | null,
+): Promise<GroundHandlingPublicService[]> {
+  const { data, error } = await supabase.rpc("get_public_ground_handling_services", {
+    p_airport_code: airportCode,
+    ...(travelDate ? { p_travel_date: travelDate } : {}),
+  });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+    id: String(pick(row, ["id"])),
+    partnerId: String(pick(row, ["partner_id"])),
+    partnerName: String(pick(row, ["partner_name"]) ?? ""),
+    name: String(pick(row, ["name"]) ?? ""),
+    description: pick<string>(row, ["description"]),
+    terminal: pick<string>(row, ["terminal"]),
+    direction: pick<"arrival" | "departure">(row, ["direction"]),
+    operatingHoursStart: pick<string>(row, ["operating_hours_start"]),
+    operatingHoursEnd: pick<string>(row, ["operating_hours_end"]),
+    priceUsd: Number(pick(row, ["price_usd"]) ?? 0),
+    dailyCapacity: pick<number>(row, ["daily_capacity"]),
+    remainingCapacity: pick<number>(row, ["remaining_capacity"]),
+  }));
+}
+
 export async function fetchAddonServices(): Promise<AddonService[]> {
   const { data, error } = await supabase
     .from("addon_services")
@@ -217,6 +259,8 @@ export type CreatePrivateBookingInput = {
   packageId?: string | null;
   /** Selected individual add-on services (from `addon_services`) — flat amounts, saved to `booking_addon_services`. */
   addonIds?: string[];
+  /** Specific partner services (from `ground_handling_services`) the customer picked by name — price/partner resolved server-side. */
+  groundHandlingServiceIds?: string[];
   /** One name per seat, saved to `booking_passengers` — array length must exactly match `seatsCount`. */
   passengerNames?: string[] | null;
 };
@@ -239,6 +283,9 @@ export async function createPrivateBookingSafe(input: CreatePrivateBookingInput)
     ...(pendingReferralCode ? { p_referral_code: pendingReferralCode } : {}),
     ...(input.packageId ? { p_package_id: input.packageId } : {}),
     ...(input.addonIds && input.addonIds.length > 0 ? { p_addon_ids: input.addonIds } : {}),
+    ...(input.groundHandlingServiceIds && input.groundHandlingServiceIds.length > 0
+      ? { p_ground_handling_service_ids: input.groundHandlingServiceIds }
+      : {}),
     ...(input.passengerNames && input.passengerNames.length > 0
       ? { p_passenger_names: input.passengerNames }
       : {}),
@@ -457,6 +504,8 @@ export type CreateBookingInput = {
   packageId?: string | null;
   /** Selected individual add-on services (from `addon_services`) — flat amounts, saved to `booking_addon_services`. */
   addonIds?: string[];
+  /** Specific partner services (from `ground_handling_services`) the customer picked by name — price/partner resolved server-side. */
+  groundHandlingServiceIds?: string[];
   /**
    * One name per seat, saved to `booking_passengers` — for group bookings
    * where each seat is a named passenger. The DB rejects the call if the
@@ -506,6 +555,9 @@ export async function createBookingSafe(input: CreateBookingInput) {
     ...(pendingReferralCode ? { p_referral_code: pendingReferralCode } : {}),
     ...(input.packageId ? { p_package_id: input.packageId } : {}),
     ...(input.addonIds && input.addonIds.length > 0 ? { p_addon_ids: input.addonIds } : {}),
+    ...(input.groundHandlingServiceIds && input.groundHandlingServiceIds.length > 0
+      ? { p_ground_handling_service_ids: input.groundHandlingServiceIds }
+      : {}),
     ...(input.passengerNames && input.passengerNames.length > 0
       ? { p_passenger_names: input.passengerNames }
       : {}),

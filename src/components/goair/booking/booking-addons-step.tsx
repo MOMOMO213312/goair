@@ -30,7 +30,7 @@ import { Card } from "@/components/ui/card";
 import { useStockPhoto } from "@/hooks/use-stock-photo";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { localize } from "@/lib/i18n/localize";
-import type { AddonService, AddonServiceCategory } from "@/lib/goair";
+import type { AddonService, AddonServiceCategory, GroundHandlingPublicService } from "@/lib/goair";
 import { formatUsd } from "@/lib/goair";
 import { cn } from "@/lib/utils";
 
@@ -184,11 +184,106 @@ function AddonButton({
   );
 }
 
+/**
+ * A specific named partner's service (from their own catalog) — same card
+ * treatment as a generic add-on, plus the partner's name and a "sold out"
+ * state once `remainingCapacity` hits 0 for the trip's date.
+ */
+function PartnerServiceButton({
+  service,
+  isSelected,
+  onToggle,
+}: {
+  service: GroundHandlingPublicService;
+  isSelected: boolean;
+  onToggle: () => void;
+}) {
+  const { t } = useTranslation();
+  const soldOut = service.remainingCapacity !== null && service.remainingCapacity <= 0 && !isSelected;
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      disabled={soldOut}
+      aria-pressed={isSelected}
+      className={cn(
+        "group flex flex-col overflow-hidden rounded-xl border text-start transition-colors",
+        soldOut
+          ? "cursor-not-allowed border-border/60 opacity-60"
+          : isSelected
+            ? "border-accent bg-accent/5"
+            : "border-border/80 hover:border-accent/40",
+      )}
+    >
+      <span className="relative block aspect-[16/9] w-full shrink-0 overflow-hidden bg-secondary">
+        <span className="flex size-full items-center justify-center text-primary/40">
+          <Sparkles className="size-8" aria-hidden />
+        </span>
+        <span className="absolute inset-x-2 top-2 flex items-center justify-between">
+          <span className="rounded-lg bg-background/90 px-2 py-0.5 text-[11px] font-bold text-primary shadow-sm backdrop-blur">
+            {service.partnerName}
+          </span>
+          {isSelected ? (
+            <span className="flex size-7 items-center justify-center rounded-full bg-accent text-accent-foreground shadow-sm">
+              <Check className="size-4" aria-hidden />
+            </span>
+          ) : null}
+        </span>
+      </span>
+
+      <span className="flex flex-1 flex-col gap-1 p-3">
+        <span className="truncate font-display text-sm font-bold text-primary">{service.name}</span>
+        {service.description ? (
+          <span className="line-clamp-2 text-xs text-muted-foreground">{service.description}</span>
+        ) : null}
+        {service.terminal || service.direction ? (
+          <span className="text-[11px] text-muted-foreground">
+            {[service.terminal, service.direction].filter(Boolean).join(" · ")}
+          </span>
+        ) : null}
+
+        <span className="mt-auto flex items-center justify-between pt-2">
+          <span className="text-sm font-extrabold text-primary">+{formatUsd(service.priceUsd)}</span>
+          {soldOut ? (
+            <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-bold text-muted-foreground">
+              {t("booking.addonsStep.soldOut")}
+            </span>
+          ) : (
+            <span
+              className={cn(
+                "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold transition-colors",
+                isSelected ? "bg-accent text-accent-foreground" : "bg-secondary text-primary",
+              )}
+            >
+              {isSelected ? (
+                <>
+                  <Check className="size-3.5" aria-hidden />
+                  {t("booking.addonsStep.added")}
+                </>
+              ) : (
+                <>
+                  <Plus className="size-3.5" aria-hidden />
+                  {t("booking.addonsStep.add")}
+                </>
+              )}
+            </span>
+          )}
+        </span>
+      </span>
+    </button>
+  );
+}
+
 type BookingAddonsStepProps = {
   addons: AddonService[];
   addonsLoading: boolean;
   selectedAddonIds: string[];
   onToggleAddon: (id: string) => void;
+  /** Specific partner services for this trip's airport — shown instead of the generic "airport" category when the airport has any approved. */
+  groundHandlingServices?: GroundHandlingPublicService[];
+  selectedGroundHandlingServiceIds?: string[];
+  onToggleGroundHandlingService?: (id: string) => void;
   className?: string;
 };
 
@@ -203,6 +298,9 @@ export function BookingAddonsStep({
   addonsLoading,
   selectedAddonIds,
   onToggleAddon,
+  groundHandlingServices = [],
+  selectedGroundHandlingServiceIds = [],
+  onToggleGroundHandlingService,
   className,
 }: BookingAddonsStepProps) {
   const { t } = useTranslation();
@@ -213,7 +311,12 @@ export function BookingAddonsStep({
     destination: t("booking.addonsStep.categories.destination"),
   };
 
-  if (!addonsLoading && addons.length === 0) return null;
+  // The trip's airport has an approved partner catalog — show named
+  // partner services for "airport" instead of the generic ones (falls
+  // back to generic automatically wherever the partner catalog is empty).
+  const hasPartnerCatalog = groundHandlingServices.length > 0;
+
+  if (!addonsLoading && addons.length === 0 && !hasPartnerCatalog) return null;
 
   return (
     <Card className={cn("border-border/80 p-5 shadow-[var(--shadow-card)] sm:p-6", className)}>
@@ -229,6 +332,24 @@ export function BookingAddonsStep({
       ) : (
         <div className="mt-6 space-y-6">
           {ADDON_CATEGORY_ORDER.map((category) => {
+            if (category === "airport" && hasPartnerCatalog) {
+              return (
+                <div key={category}>
+                  <h3 className="text-xs font-bold text-muted-foreground">{ADDON_CATEGORY_LABEL[category]}</h3>
+                  <div className="mt-2.5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {groundHandlingServices.map((service) => (
+                      <PartnerServiceButton
+                        key={service.id}
+                        service={service}
+                        isSelected={selectedGroundHandlingServiceIds.includes(service.id)}
+                        onToggle={() => onToggleGroundHandlingService?.(service.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+
             const items = addons.filter((a) => a.category === category);
             if (items.length === 0) return null;
             return (

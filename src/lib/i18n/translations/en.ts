@@ -278,6 +278,7 @@ const en = {
       },
       added: "Added",
       add: "Add",
+      soldOut: "Sold out",
     },
     confirmStep: {
       title: "Review your booking",
