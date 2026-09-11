@@ -1,6 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -18,33 +17,48 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import {
   adminCreateGroundHandlingPartner,
   adminDeleteGroundHandlingPartner,
+  adminGenerateGroundHandlingStatement,
   adminListGroundHandlingPartners,
   adminListGroundHandlingRequests,
+  adminListGroundHandlingServices,
+  adminListGroundHandlingStatements,
+  adminReviewGroundHandlingService,
   adminUpdateGroundHandlingPartner,
+  adminUpdateGroundHandlingStatement,
+  formatGroundHandlingDate,
+  groundHandlingServiceStatusLabel,
+  groundHandlingStatementStatusLabel,
   groundHandlingStatusLabel,
-  isAdminAuthError,
-  type GroundHandlingPartnerRow,
-} from "@/lib/admin";
+  REQUEST_STATUS_ORDER,
+  type GroundHandlingPartner,
+  type GroundHandlingRequestStatus,
+  type GroundHandlingServiceStatus,
+  type GroundHandlingStatementStatus,
+} from "@/lib/ground-handling";
+import { isAdminAuthError } from "@/lib/admin";
 import { useAdminToken } from "@/lib/admin-session";
 import { adminInvitePortalOwner } from "@/lib/portal-members";
 
 export const Route = createFileRoute("/admin/ground-handling")({
   head: () => ({
-    meta: [
-      { title: "شركاء التشغيل الأرضي — لوحة تشغيل GoAir" },
-      { name: "robots", content: "noindex" },
-    ],
+    meta: [{ title: "التشغيل الأرضي — لوحة تشغيل GoAir" }, { name: "robots", content: "noindex" }],
   }),
   component: AdminGroundHandlingPage,
 });
 
 function AdminGroundHandlingPage() {
   const token = useAdminToken();
-  const queryClient = useQueryClient();
-  const [createOpen, setCreateOpen] = useState(false);
-  const [requestsStatus, setRequestsStatus] = useState<string | null>(null);
 
   const partnersQuery = useQuery({
     queryKey: ["admin-ground-handling-partners", token],
@@ -53,120 +67,92 @@ function AdminGroundHandlingPage() {
     enabled: Boolean(token),
   });
 
-  const requestsQuery = useQuery({
-    queryKey: ["admin-ground-handling-requests", token, requestsStatus],
-    queryFn: () => adminListGroundHandlingRequests(token, requestsStatus),
-    retry: false,
-    enabled: Boolean(token),
-  });
-
   if (!token) return null;
   if (partnersQuery.isPending) return <AdminLoading />;
   if (partnersQuery.isError) {
-    return isAdminAuthError(partnersQuery.error) ? <AdminAuthError /> : <AdminAuthError message="حصل خطأ مؤقت." />;
+    return isAdminAuthError(partnersQuery.error) ? (
+      <AdminAuthError />
+    ) : (
+      <AdminAuthError message="حصل خطأ مؤقت." />
+    );
   }
 
   const partners = partnersQuery.data ?? [];
-  const requests = requestsQuery.data ?? [];
-
-  function invalidatePartners() {
-    queryClient.invalidateQueries({ queryKey: ["admin-ground-handling-partners", token] });
-  }
 
   return (
-    <div className="space-y-10">
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-lg font-extrabold text-primary">
-            شركاء التشغيل الأرضي ({partners.length})
-          </h2>
-          <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="bg-primary font-bold text-primary-foreground hover:bg-primary/90">
-                إضافة شريك
-              </Button>
-            </DialogTrigger>
-            <CreatePartnerDialog
-              token={token}
-              onDone={() => {
-                setCreateOpen(false);
-                invalidatePartners();
-              }}
-            />
-          </Dialog>
-        </div>
+    <Tabs defaultValue="partners">
+      <TabsList>
+        <TabsTrigger value="partners">الشركاء ({partners.length})</TabsTrigger>
+        <TabsTrigger value="requests">طلبات الخدمات</TabsTrigger>
+        <TabsTrigger value="services">مراجعة الخدمات</TabsTrigger>
+        <TabsTrigger value="statements">التسويات المالية</TabsTrigger>
+      </TabsList>
 
-        {partners.length === 0 ? (
-          <Card className="rounded-xl border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            مفيش شركاء تشغيل أرضي لسه.
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {partners.map((partner) => (
-              <PartnerCard key={partner.id} partner={partner} token={token} onDone={invalidatePartners} />
-            ))}
-          </div>
-        )}
-      </section>
+      <TabsContent value="partners">
+        <PartnersTab token={token} partners={partners} onRefresh={() => partnersQuery.refetch()} />
+      </TabsContent>
+      <TabsContent value="requests">
+        <RequestsTab token={token} />
+      </TabsContent>
+      <TabsContent value="services">
+        <ServicesReviewTab token={token} partners={partners} />
+      </TabsContent>
+      <TabsContent value="statements">
+        <StatementsTab token={token} partners={partners} />
+      </TabsContent>
+    </Tabs>
+  );
+}
 
-      <section>
-        <h2 className="mb-3 font-display text-lg font-extrabold text-primary">طلبات الخدمات الإضافية</h2>
-        <div className="mb-3 flex flex-wrap gap-2">
-          {[
-            { value: null, label: "الكل" },
-            { value: "pending", label: "مطلوبة" },
-            { value: "in_progress", label: "جاري التجهيز" },
-            { value: "done", label: "تمت" },
-            { value: "cancelled", label: "ملغاة" },
-          ].map((tab) => (
-            <button
-              key={tab.label}
-              onClick={() => setRequestsStatus(tab.value)}
-              className={`rounded-lg border px-3 py-1.5 text-sm font-bold ${
-                requestsStatus === tab.value
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border text-muted-foreground hover:bg-muted"
-              }`}
+// ---------------------------------------------------------------------------
+// تبويب: الشركاء
+// ---------------------------------------------------------------------------
+
+function PartnersTab({
+  token,
+  partners,
+  onRefresh,
+}: {
+  token: string;
+  partners: GroundHandlingPartner[];
+  onRefresh: () => void;
+}) {
+  const [createOpen, setCreateOpen] = useState(false);
+
+  return (
+    <div>
+      <div className="mb-3 mt-4 flex items-center justify-between">
+        <h2 className="font-display text-lg font-extrabold text-primary">شركاء التشغيل الأرضي</h2>
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogTrigger asChild>
+            <Button
+              size="sm"
+              className="bg-primary font-bold text-primary-foreground hover:bg-primary/90"
             >
-              {tab.label}
-            </button>
+              إضافة شريك
+            </Button>
+          </DialogTrigger>
+          <CreatePartnerDialog
+            token={token}
+            onDone={() => {
+              setCreateOpen(false);
+              onRefresh();
+            }}
+          />
+        </Dialog>
+      </div>
+
+      {partners.length === 0 ? (
+        <Card className="rounded-xl border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          مفيش شركاء تشغيل أرضي لسه.
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {partners.map((partner) => (
+            <PartnerCard key={partner.id} partner={partner} token={token} onDone={onRefresh} />
           ))}
         </div>
-
-        {requestsQuery.isPending ? (
-          <AdminLoading />
-        ) : requests.length === 0 ? (
-          <Card className="rounded-xl border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-            مفيش طلبات في القسم ده.
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {requests.map((req) => (
-              <Card key={req.requestId} className="rounded-xl border-border/80 p-4 shadow-[var(--shadow-card)]">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="font-display text-base font-bold text-primary">{req.serviceName}</p>
-                    <p className="mt-0.5 text-sm text-muted-foreground">
-                      {req.passengerName} — {req.phoneNumber}
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {req.origin} ← {req.destination}
-                      {req.airportCode ? ` · ${req.airportCode}` : ""}
-                      {req.partnerName ? ` · الشريك: ${req.partnerName}` : " · لسه ما اتوزعتش على شريك"}
-                    </p>
-                    {req.partnerNotes ? (
-                      <p className="mt-1 text-sm text-primary">ملاحظات: {req.partnerNotes}</p>
-                    ) : null}
-                  </div>
-                  <span className="shrink-0 rounded-full bg-mist px-3 py-1 text-xs font-bold text-primary">
-                    {groundHandlingStatusLabel(req.status)}
-                  </span>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </section>
+      )}
     </div>
   );
 }
@@ -187,14 +173,14 @@ function CreatePartnerDialog({ token, onDone }: { token: string; onDone: () => v
     }
     setBusy(true);
     try {
-      const created = await adminCreateGroundHandlingPartner(token, {
+      await adminCreateGroundHandlingPartner(token, {
         name: name.trim(),
         airportCode: airportCode.trim(),
         country: country.trim() || null,
         contactEmail: contactEmail.trim() || null,
         contactPhone: contactPhone.trim() || null,
       });
-      toast.success(`تم إنشاء الشريك. رمز الدخول: ${created.accessToken}`);
+      toast.success("تم إنشاء الشريك — دلوقتي تقدر تعمله دعوة حساب دخول من كارت الشريك.");
       onDone();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "حصل خطأ.");
@@ -216,7 +202,12 @@ function CreatePartnerDialog({ token, onDone }: { token: string; onDone: () => v
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label htmlFor="gh-airport">كود المطار</Label>
-            <Input id="gh-airport" dir="ltr" value={airportCode} onChange={(e) => setAirportCode(e.target.value)} />
+            <Input
+              id="gh-airport"
+              dir="ltr"
+              value={airportCode}
+              onChange={(e) => setAirportCode(e.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="gh-country">الدولة (اختياري)</Label>
@@ -226,15 +217,28 @@ function CreatePartnerDialog({ token, onDone }: { token: string; onDone: () => v
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label htmlFor="gh-email">إيميل التواصل (اختياري)</Label>
-            <Input id="gh-email" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
+            <Input
+              id="gh-email"
+              type="email"
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="gh-phone">تليفون التواصل (اختياري)</Label>
-            <Input id="gh-phone" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
+            <Input
+              id="gh-phone"
+              value={contactPhone}
+              onChange={(e) => setContactPhone(e.target.value)}
+            />
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit" disabled={busy} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">
+          <Button
+            type="submit"
+            disabled={busy}
+            className="bg-accent font-bold text-accent-foreground hover:bg-accent/90"
+          >
             {busy ? "جاري الحفظ..." : "إنشاء"}
           </Button>
         </DialogFooter>
@@ -248,18 +252,13 @@ function PartnerCard({
   token,
   onDone,
 }: {
-  partner: GroundHandlingPartnerRow;
+  partner: GroundHandlingPartner;
   token: string;
   onDone: () => void;
 }) {
   const [editOpen, setEditOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-
-  function copyToken() {
-    navigator.clipboard.writeText(partner.accessToken);
-    toast.success("تم نسخ رمز الدخول.");
-  }
 
   async function toggleActive() {
     setBusy(true);
@@ -299,7 +298,8 @@ function PartnerCard({
     <Card className="flex flex-col gap-3 rounded-xl border-border/80 p-4 shadow-[var(--shadow-card)] sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0">
         <p className="font-display text-base font-bold text-primary">
-          {partner.name} {!partner.isActive ? <span className="text-destructive">(غير مفعّل)</span> : null}
+          {partner.name}{" "}
+          {!partner.isActive ? <span className="text-destructive">(غير مفعّل)</span> : null}
         </p>
         <p className="mt-0.5 text-sm text-muted-foreground">
           {partner.airportCode}
@@ -312,12 +312,6 @@ function PartnerCard({
             {partner.contactPhone ?? ""}
           </p>
         ) : null}
-        <button
-          onClick={copyToken}
-          className="mt-1 flex items-center gap-1 text-xs font-bold text-accent hover:underline"
-        >
-          <Copy className="size-3" /> نسخ رمز الدخول
-        </button>
       </div>
       <div className="flex shrink-0 flex-wrap gap-2">
         <Button size="sm" variant="outline" disabled={busy} onClick={toggleActive}>
@@ -329,10 +323,7 @@ function PartnerCard({
               دعوة حساب دخول
             </Button>
           </DialogTrigger>
-          <InvitePartnerOwnerDialog
-            partner={partner}
-            onDone={() => setInviteOpen(false)}
-          />
+          <InvitePartnerOwnerDialog partner={partner} onDone={() => setInviteOpen(false)} />
         </Dialog>
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
           <DialogTrigger asChild>
@@ -361,7 +352,7 @@ function InvitePartnerOwnerDialog({
   partner,
   onDone,
 }: {
-  partner: GroundHandlingPartnerRow;
+  partner: GroundHandlingPartner;
   onDone: () => void;
 }) {
   const [email, setEmail] = useState(partner.contactEmail ?? "");
@@ -397,8 +388,8 @@ function InvitePartnerOwnerDialog({
         <DialogTitle>دعوة حساب دخول لـ {partner.name}</DialogTitle>
       </DialogHeader>
       <p className="text-sm text-muted-foreground">
-        هينشئ حساب Supabase Auth (owner) لبوابة التشغيل الأرضي — الشريك هيدخل بالإيميل
-        والباسورد دول بدل رمز الدخول القديم.
+        هينشئ حساب Supabase Auth (owner) لبوابة التشغيل الأرضي — الشريك هيدخل بالإيميل والباسورد
+        دول.
       </p>
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-2">
@@ -424,7 +415,11 @@ function InvitePartnerOwnerDialog({
           />
         </div>
         <DialogFooter>
-          <Button type="submit" disabled={busy} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">
+          <Button
+            type="submit"
+            disabled={busy}
+            className="bg-accent font-bold text-accent-foreground hover:bg-accent/90"
+          >
             {busy ? "جاري الإنشاء..." : "إنشاء الحساب"}
           </Button>
         </DialogFooter>
@@ -438,7 +433,7 @@ function EditPartnerDialog({
   token,
   onDone,
 }: {
-  partner: GroundHandlingPartnerRow;
+  partner: GroundHandlingPartner;
   token: string;
   onDone: () => void;
 }) {
@@ -483,29 +478,653 @@ function EditPartnerDialog({
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label htmlFor="edit-gh-airport">كود المطار</Label>
-            <Input id="edit-gh-airport" dir="ltr" value={airportCode} onChange={(e) => setAirportCode(e.target.value)} />
+            <Input
+              id="edit-gh-airport"
+              dir="ltr"
+              value={airportCode}
+              onChange={(e) => setAirportCode(e.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-gh-country">الدولة</Label>
-            <Input id="edit-gh-country" value={country} onChange={(e) => setCountry(e.target.value)} />
+            <Input
+              id="edit-gh-country"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+            />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label htmlFor="edit-gh-email">إيميل التواصل</Label>
-            <Input id="edit-gh-email" type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
+            <Input
+              id="edit-gh-email"
+              type="email"
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-gh-phone">تليفون التواصل</Label>
-            <Input id="edit-gh-phone" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
+            <Input
+              id="edit-gh-phone"
+              value={contactPhone}
+              onChange={(e) => setContactPhone(e.target.value)}
+            />
           </div>
         </div>
         <DialogFooter>
-          <Button type="submit" disabled={busy} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">
+          <Button
+            type="submit"
+            disabled={busy}
+            className="bg-accent font-bold text-accent-foreground hover:bg-accent/90"
+          >
             {busy ? "جاري الحفظ..." : "حفظ"}
           </Button>
         </DialogFooter>
       </form>
     </DialogContent>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// تبويب: طلبات الخدمات
+// ---------------------------------------------------------------------------
+
+function RequestsTab({ token }: { token: string }) {
+  const [status, setStatus] = useState<GroundHandlingRequestStatus | null>(null);
+
+  const requestsQuery = useQuery({
+    queryKey: ["admin-ground-handling-requests", token, status],
+    queryFn: () => adminListGroundHandlingRequests(token, status),
+    retry: false,
+  });
+
+  const requests = requestsQuery.data ?? [];
+
+  return (
+    <div className="mt-4">
+      <div className="mb-3 flex flex-wrap gap-2">
+        <FilterPill active={status === null} onClick={() => setStatus(null)} label="الكل" />
+        {REQUEST_STATUS_ORDER.map((s) => (
+          <FilterPill
+            key={s}
+            active={status === s}
+            onClick={() => setStatus(s)}
+            label={groundHandlingStatusLabel(s)}
+          />
+        ))}
+      </div>
+
+      {requestsQuery.isPending ? (
+        <AdminLoading />
+      ) : requestsQuery.isError ? (
+        <Card className="rounded-xl border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          حصل خطأ في تحميل الطلبات.
+        </Card>
+      ) : requests.length === 0 ? (
+        <Card className="rounded-xl border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          مفيش طلبات في القسم ده.
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {requests.map((req) => (
+            <Card
+              key={req.requestId}
+              className="rounded-xl border-border/80 p-4 shadow-[var(--shadow-card)]"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-display text-base font-bold text-primary">
+                    {req.serviceName}{" "}
+                    {req.isUrgent ? <span className="text-destructive">· عاجل</span> : null}
+                  </p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    {req.passengerName} — {req.phoneNumber}
+                  </p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {req.origin} ← {req.destination}
+                    {req.airportName ? ` · ${req.airportName}` : ""}
+                    {req.flightNumber ? ` · رحلة ${req.flightNumber}` : ""}
+                    {" · "}
+                    {req.partnerName}
+                  </p>
+                  {req.assignedStaffName ? (
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      الموظف المسؤول: {req.assignedStaffName}
+                    </p>
+                  ) : null}
+                  {req.partnerNotes ? (
+                    <p className="mt-1 text-sm text-primary">ملاحظات: {req.partnerNotes}</p>
+                  ) : null}
+                </div>
+                <span className="shrink-0 rounded-full bg-mist px-3 py-1 text-xs font-bold text-primary">
+                  {groundHandlingStatusLabel(req.status)}
+                </span>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FilterPill({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-lg border px-3 py-1.5 text-sm font-bold ${
+        active
+          ? "border-primary bg-primary text-primary-foreground"
+          : "border-border text-muted-foreground hover:bg-muted"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// تبويب: مراجعة الخدمات (طابور الاعتماد)
+// ---------------------------------------------------------------------------
+
+const SERVICE_STATUS_TABS: { value: GroundHandlingServiceStatus | null; label: string }[] = [
+  { value: "pending_review", label: "قيد المراجعة" },
+  { value: null, label: "الكل" },
+  { value: "approved", label: "معتمدة" },
+  { value: "rejected", label: "مرفوضة" },
+  { value: "paused", label: "متوقفة مؤقتًا" },
+  { value: "deletion_requested", label: "طلب حذف" },
+];
+
+function ServicesReviewTab({
+  token,
+  partners,
+}: {
+  token: string;
+  partners: GroundHandlingPartner[];
+}) {
+  const [status, setStatus] = useState<GroundHandlingServiceStatus | null>("pending_review");
+  const [partnerId, setPartnerId] = useState<string>("all");
+  const [rejectTarget, setRejectTarget] = useState<{ id: string; name: string } | null>(null);
+  const [rejectNotes, setRejectNotes] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const servicesQuery = useQuery({
+    queryKey: ["admin-ground-handling-services", token, partnerId, status],
+    queryFn: () =>
+      adminListGroundHandlingServices(token, partnerId === "all" ? null : partnerId, status),
+    retry: false,
+  });
+
+  const services = servicesQuery.data ?? [];
+
+  function refresh() {
+    queryClient.invalidateQueries({ queryKey: ["admin-ground-handling-services", token] });
+  }
+
+  async function approve(serviceId: string) {
+    setBusyId(serviceId);
+    try {
+      await adminReviewGroundHandlingService(token, serviceId, "approve");
+      toast.success("تمت الموافقة على الخدمة.");
+      refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function submitReject(e: React.FormEvent) {
+    e.preventDefault();
+    if (!rejectTarget) return;
+    if (!rejectNotes.trim()) {
+      toast.error("لازم تكتب سبب الرفض عشان الشريك يعرف يعدّل.");
+      return;
+    }
+    setBusyId(rejectTarget.id);
+    try {
+      await adminReviewGroundHandlingService(token, rejectTarget.id, "reject", rejectNotes.trim());
+      toast.success("تم رفض الخدمة وإرسال السبب للشريك.");
+      setRejectTarget(null);
+      setRejectNotes("");
+      refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  return (
+    <div className="mt-4">
+      <div className="mb-3 flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap gap-2">
+          {SERVICE_STATUS_TABS.map((tab) => (
+            <FilterPill
+              key={tab.label}
+              active={status === tab.value}
+              onClick={() => setStatus(tab.value)}
+              label={tab.label}
+            />
+          ))}
+        </div>
+        <Select value={partnerId} onValueChange={setPartnerId}>
+          <SelectTrigger className="w-auto min-w-40">
+            <SelectValue placeholder="كل الشركاء" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">كل الشركاء</SelectItem>
+            {partners.map((p) => (
+              <SelectItem key={p.id} value={p.id}>
+                {p.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {servicesQuery.isPending ? (
+        <AdminLoading />
+      ) : servicesQuery.isError ? (
+        <Card className="rounded-xl border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          حصل خطأ في تحميل الخدمات.
+        </Card>
+      ) : services.length === 0 ? (
+        <Card className="rounded-xl border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          مفيش خدمات في القسم ده.
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {services.map((s) => (
+            <Card
+              key={s.id}
+              className="rounded-xl border-border/80 p-4 shadow-[var(--shadow-card)]"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-display text-base font-bold text-primary">{s.name}</p>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    {s.partnerName} · {s.airportCode}
+                    {s.terminal ? ` · صالة ${s.terminal}` : ""}
+                    {s.direction ? ` · ${s.direction === "arrival" ? "وصول" : "مغادرة"}` : ""}
+                  </p>
+                  {s.description ? (
+                    <p className="mt-1 text-sm text-muted-foreground">{s.description}</p>
+                  ) : null}
+                  {s.requirements ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      المتطلبات: {s.requirements}
+                    </p>
+                  ) : null}
+                  <p className="mt-1 text-sm font-bold text-primary">{s.priceUsd.toFixed(2)}$</p>
+                  {s.status === "rejected" && s.adminNotes ? (
+                    <p className="mt-1 text-sm text-destructive">
+                      سبب الرفض السابق: {s.adminNotes}
+                    </p>
+                  ) : null}
+                </div>
+                <div className="flex shrink-0 flex-col items-end gap-2">
+                  <span className="rounded-full bg-mist px-3 py-1 text-xs font-bold text-primary">
+                    {groundHandlingServiceStatusLabel(s.status)}
+                    {s.pendingAction ? " (قيد المراجعة)" : ""}
+                  </span>
+                  {s.status === "pending_review" || s.status === "deletion_requested" ? (
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        disabled={busyId === s.id}
+                        onClick={() => approve(s.id)}
+                        className="bg-accent font-bold text-accent-foreground hover:bg-accent/90"
+                      >
+                        موافقة
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busyId === s.id}
+                        className="text-destructive hover:bg-destructive/10"
+                        onClick={() => {
+                          setRejectTarget({ id: s.id, name: s.name });
+                          setRejectNotes("");
+                        }}
+                      >
+                        رفض
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Dialog open={Boolean(rejectTarget)} onOpenChange={(open) => !open && setRejectTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>رفض خدمة: {rejectTarget?.name}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={submitReject} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="reject-notes">سبب الرفض (هيظهر للشريك)</Label>
+              <Textarea
+                id="reject-notes"
+                value={rejectNotes}
+                onChange={(e) => setRejectNotes(e.target.value)}
+                rows={4}
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="submit"
+                disabled={busyId === rejectTarget?.id}
+                className="bg-destructive font-bold text-destructive-foreground hover:bg-destructive/90"
+              >
+                تأكيد الرفض
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// تبويب: التسويات المالية
+// ---------------------------------------------------------------------------
+
+function StatementsTab({ token, partners }: { token: string; partners: GroundHandlingPartner[] }) {
+  const [partnerId, setPartnerId] = useState<string>("all");
+  const [generateOpen, setGenerateOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  const statementsQuery = useQuery({
+    queryKey: ["admin-ground-handling-statements", token, partnerId],
+    queryFn: () => adminListGroundHandlingStatements(token, partnerId === "all" ? null : partnerId),
+    retry: false,
+  });
+
+  const statements = statementsQuery.data ?? [];
+
+  function refresh() {
+    queryClient.invalidateQueries({ queryKey: ["admin-ground-handling-statements", token] });
+  }
+
+  return (
+    <div className="mt-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <Select value={partnerId} onValueChange={setPartnerId}>
+          <SelectTrigger className="w-auto min-w-40">
+            <SelectValue placeholder="كل الشركاء" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">كل الشركاء</SelectItem>
+            {partners.map((p) => (
+              <SelectItem key={p.id} value={p.id}>
+                {p.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Dialog open={generateOpen} onOpenChange={setGenerateOpen}>
+          <DialogTrigger asChild>
+            <Button
+              size="sm"
+              className="bg-primary font-bold text-primary-foreground hover:bg-primary/90"
+            >
+              توليد تسوية جديدة
+            </Button>
+          </DialogTrigger>
+          <GenerateStatementDialog
+            token={token}
+            partners={partners}
+            onDone={() => {
+              setGenerateOpen(false);
+              refresh();
+            }}
+          />
+        </Dialog>
+      </div>
+
+      {statementsQuery.isPending ? (
+        <AdminLoading />
+      ) : statementsQuery.isError ? (
+        <Card className="rounded-xl border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          حصل خطأ في تحميل التسويات.
+        </Card>
+      ) : statements.length === 0 ? (
+        <Card className="rounded-xl border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          مفيش تسويات لسه.
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {statements.map((st) => (
+            <StatementCard key={st.id} statement={st} token={token} onDone={refresh} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GenerateStatementDialog({
+  token,
+  partners,
+  onDone,
+}: {
+  token: string;
+  partners: GroundHandlingPartner[];
+  onDone: () => void;
+}) {
+  const [partnerId, setPartnerId] = useState<string>(partners[0]?.id ?? "");
+  const [periodStart, setPeriodStart] = useState("");
+  const [periodEnd, setPeriodEnd] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!partnerId || !periodStart || !periodEnd) {
+      toast.error("اختار الشريك وحدد فترة التسوية.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await adminGenerateGroundHandlingStatement(token, partnerId, periodStart, periodEnd);
+      toast.success("تم توليد التسوية.");
+      onDone();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>توليد تسوية مالية</DialogTitle>
+      </DialogHeader>
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label>الشريك</Label>
+          <Select value={partnerId} onValueChange={setPartnerId}>
+            <SelectTrigger>
+              <SelectValue placeholder="اختار شريك" />
+            </SelectTrigger>
+            <SelectContent>
+              {partners.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <Label htmlFor="period-start">من تاريخ</Label>
+            <Input
+              id="period-start"
+              type="date"
+              value={periodStart}
+              onChange={(e) => setPeriodStart(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="period-end">إلى تاريخ</Label>
+            <Input
+              id="period-end"
+              type="date"
+              value={periodEnd}
+              onChange={(e) => setPeriodEnd(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button
+            type="submit"
+            disabled={busy}
+            className="bg-accent font-bold text-accent-foreground hover:bg-accent/90"
+          >
+            {busy ? "جاري التوليد..." : "توليد"}
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
+  );
+}
+
+const STATEMENT_STATUS_OPTIONS: GroundHandlingStatementStatus[] = ["draft", "sent", "paid"];
+
+function StatementCard({
+  statement,
+  token,
+  onDone,
+}: {
+  statement: {
+    id: string;
+    partnerName: string;
+    periodStart: string;
+    periodEnd: string;
+    totalCompleted: number;
+    totalDueUsd: number;
+    paidUsd: number;
+    remainingUsd: number;
+    status: GroundHandlingStatementStatus;
+  };
+  token: string;
+  onDone: () => void;
+}) {
+  const [editOpen, setEditOpen] = useState(false);
+  const [status, setStatus] = useState<GroundHandlingStatementStatus>(statement.status);
+  const [paidUsd, setPaidUsd] = useState(String(statement.paidUsd));
+  const [busy, setBusy] = useState(false);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const paidValue = Number(paidUsd);
+    if (Number.isNaN(paidValue) || paidValue < 0) {
+      toast.error("اكتب مبلغ صحيح.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await adminUpdateGroundHandlingStatement(token, statement.id, status, paidValue);
+      toast.success("تم التحديث.");
+      setEditOpen(false);
+      onDone();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="flex flex-col gap-3 rounded-xl border-border/80 p-4 shadow-[var(--shadow-card)] sm:flex-row sm:items-start sm:justify-between">
+      <div className="min-w-0">
+        <p className="font-display text-base font-bold text-primary">{statement.partnerName}</p>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          {formatGroundHandlingDate(statement.periodStart)} —{" "}
+          {formatGroundHandlingDate(statement.periodEnd)}
+        </p>
+        <p className="mt-1 text-sm">
+          {statement.totalCompleted} خدمة مكتملة · مستحق {statement.totalDueUsd.toFixed(2)}$ · مدفوع{" "}
+          {statement.paidUsd.toFixed(2)}$ ·{" "}
+          <span className="font-bold text-primary">متبقي {statement.remainingUsd.toFixed(2)}$</span>
+        </p>
+      </div>
+      <div className="flex shrink-0 flex-col items-end gap-2">
+        <span className="rounded-full bg-mist px-3 py-1 text-xs font-bold text-primary">
+          {groundHandlingStatementStatusLabel(statement.status)}
+        </span>
+        <Dialog open={editOpen} onOpenChange={setEditOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" variant="outline">
+              تحديث الحالة/المدفوع
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>تحديث تسوية {statement.partnerName}</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={onSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label>الحالة</Label>
+                <Select
+                  value={status}
+                  onValueChange={(v) => setStatus(v as GroundHandlingStatementStatus)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATEMENT_STATUS_OPTIONS.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {groundHandlingStatementStatusLabel(s)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="paid-usd">المبلغ المدفوع (دولار)</Label>
+                <Input
+                  id="paid-usd"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  dir="ltr"
+                  value={paidUsd}
+                  onChange={(e) => setPaidUsd(e.target.value)}
+                />
+              </div>
+              <DialogFooter>
+                <Button
+                  type="submit"
+                  disabled={busy}
+                  className="bg-accent font-bold text-accent-foreground hover:bg-accent/90"
+                >
+                  {busy ? "جاري الحفظ..." : "حفظ"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </Card>
   );
 }
