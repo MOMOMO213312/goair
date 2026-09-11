@@ -7,9 +7,11 @@ import heroImage from "@/assets/hero-goair-van.png";
 import { AnnouncementTicker } from "@/components/goair/announcement-ticker";
 import { BeforeYouLand } from "@/components/goair/before-you-land";
 import { BusinessPromoBanner } from "@/components/goair/business-promo-banner";
+import { ChooseYourJourneySection } from "@/components/goair/choose-your-journey-section";
 import { CoverageCountriesSection } from "@/components/goair/coverage-countries-section";
-import { DealsTeaser } from "@/components/goair/deals-teaser";
 import { ExploreRoutesSection } from "@/components/goair/explore-routes-section";
+import { FinalCtaSection } from "@/components/goair/final-cta-section";
+import { GoairServicesSection } from "@/components/goair/goair-services-section";
 import { HeroTrustStrip } from "@/components/goair/hero-trust-strip";
 import { HeroImageCarousel } from "@/components/hero-image-carousel";
 import { HowItWorks } from "@/components/goair/how-it-works";
@@ -158,6 +160,9 @@ function Home() {
           destinations grid, three views of the same data). Filterable by airport. */}
       <ExploreRoutesSection trips={trips} countries={countries} />
 
+      {/* GOAIR Services — real add-on catalog, Airport Transfer as the hero tile */}
+      <GoairServicesSection />
+
       {/* How GoAir works */}
       <HowItWorks />
 
@@ -167,8 +172,8 @@ function Home() {
       {/* Operational highlights */}
       <ServiceHighlights />
 
-      {/* GOAIR Deals — teaser for the real packages/add-ons page */}
-      <DealsTeaser />
+      {/* Choose Your Journey — packages/add-ons reframed as travel experiences */}
+      <ChooseYourJourneySection />
 
       {/* FAQ */}
       <section className="mx-auto max-w-3xl px-4 py-14 sm:py-16">
@@ -191,6 +196,9 @@ function Home() {
 
       {/* Countries GoAir covers today — real footprint, not a borrowed big number */}
       <CoverageCountriesSection trips={trips} countries={countries} />
+
+      {/* Closing beat for the consumer journey, before the B2B banner */}
+      <FinalCtaSection />
 
       {/* For travel agencies & airlines */}
       <BusinessPromoBanner />

@@ -691,6 +691,25 @@ const en = {
     sectionDescription: "Extra add-ons you can attach to your booking — at a fixed price.",
     seeAll: "See all packages",
   },
+  goairServices: {
+    sectionTitle: "What can you book with GoAir?",
+    sectionDescription: "Not just a ride — arrange your whole airport journey in one place.",
+    transferTitle: "Airport Transfer",
+    transferDescription: "Shared or private, to and from any airport GoAir covers, at a fixed per-seat price.",
+    transferCta: "Book your ride",
+  },
+  chooseYourJourney: {
+    sectionTitle: "Choose Your Journey",
+    sectionDescription: "From a simple ride to a full arrival experience — pick what fits you.",
+    mostRequested: "Most requested",
+    explore: "Explore",
+    seeAll: "See all journeys",
+  },
+  finalCta: {
+    title: "Ready to move?",
+    subtitle: "Your airport journey is one booking away.",
+    cta: "Search your ride",
+  },
   coverageCountries: {
     sectionTitle: "Countries we currently cover ({{count}})",
     sectionDescription:

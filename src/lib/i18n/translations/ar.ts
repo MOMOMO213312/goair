@@ -666,6 +666,25 @@ const ar = {
     sectionDescription: "باقات إضافية تقدر تضيفها لحجزك — بسعر ثابت.",
     seeAll: "شوف كل الباقات",
   },
+  goairServices: {
+    sectionTitle: "إيه اللي تقدر تحجزه مع GoAir؟",
+    sectionDescription: "مش بس نقل — نظم رحلتك بالمطار كاملة من مكان واحد.",
+    transferTitle: "نقل المطار",
+    transferDescription: "مشترك أو خاص، من وإلى أي مطار بتغطيه GoAir، بسعر ثابت لكل مقعد.",
+    transferCta: "احجز رحلتك",
+  },
+  chooseYourJourney: {
+    sectionTitle: "اختار رحلتك",
+    sectionDescription: "من رحلة بسيطة لتجربة استقبال كاملة — اختار اللي يناسبك.",
+    mostRequested: "الأكثر طلبًا",
+    explore: "اكتشف",
+    seeAll: "شوف كل الرحلات",
+  },
+  finalCta: {
+    title: "جاهز تتحرك؟",
+    subtitle: "رحلتك بالمطار بقت على بعد حجز واحد بس.",
+    cta: "ابحث عن رحلتك",
+  },
   coverageCountries: {
     sectionTitle: "الدول اللي بنغطيها دلوقتي ({{count}})",
     sectionDescription: "GoAir شغالة في الوجهات دي حاليًا، وبتوسّع تدريجيًا لدول جديدة.",
