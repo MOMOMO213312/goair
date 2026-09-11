@@ -128,8 +128,10 @@ export function SearchResultCard({
       <RouteImage image={image} cityLabel={cityLabel} className="h-20 w-full md:hidden" />
 
       <div className="flex flex-col md:flex-row">
-        {/* Side: image desktop */}
-        <div className="hidden border-l border-border md:block md:w-56 lg:w-64">
+        {/* Side: image desktop — capped height so it stays a photo, not a
+            tall strip stretched to match however long the content column
+            happens to be. */}
+        <div className="hidden self-start overflow-hidden border-l border-border md:block md:h-64 md:w-56 lg:h-72 lg:w-64">
           <RouteImage image={image} cityLabel={cityLabel} className="h-full w-full" />
         </div>
 
