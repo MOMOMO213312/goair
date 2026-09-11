@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
+import { supabase } from "./supabase";
 import {
+  GROUND_HANDLING_RPC_TOKEN,
   clearGroundHandlingToken,
   getGroundHandlingDashboard,
   getStoredGroundHandlingToken,
@@ -13,7 +15,7 @@ type GroundHandlingSessionContextValue = {
   state: GroundHandlingSessionState;
   token: string | null;
   signIn: (token: string) => void;
-  signOut: () => void;
+  signOut: () => Promise<void>;
 };
 
 const GroundHandlingSessionContext = createContext<GroundHandlingSessionContextValue | null>(null);
@@ -23,25 +25,51 @@ export function GroundHandlingSessionProvider({ children }: { children: ReactNod
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    const stored = getStoredGroundHandlingToken();
-    if (!stored) {
-      setState("signed-out");
-      return;
-    }
     let cancelled = false;
-    getGroundHandlingDashboard(stored)
-      .then(() => {
+
+    async function checkSession() {
+      // Prefer a real Supabase Auth session (email + password login).
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session) {
+        const { data, error } = await supabase.rpc("ground_handling_check_session");
+        if (cancelled) return;
+        if (!error && data) {
+          setToken(GROUND_HANDLING_RPC_TOKEN);
+          setState("authorized");
+          return;
+        }
+      }
+
+      // Fall back to the legacy static-token login.
+      const stored = getStoredGroundHandlingToken();
+      if (!stored) {
+        if (!cancelled) setState("signed-out");
+        return;
+      }
+      try {
+        await getGroundHandlingDashboard(stored);
         if (cancelled) return;
         setToken(stored);
         setState("authorized");
-      })
-      .catch(() => {
+      } catch {
         if (cancelled) return;
         clearGroundHandlingToken();
-        setState("invalid");
-      });
+        setState(session ? "signed-out" : "invalid");
+      }
+    }
+
+    checkSession();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      checkSession();
+    });
+
     return () => {
       cancelled = true;
+      listener.subscription.unsubscribe();
     };
   }, []);
 
@@ -51,7 +79,8 @@ export function GroundHandlingSessionProvider({ children }: { children: ReactNod
     setState("authorized");
   }
 
-  function signOut() {
+  async function signOut() {
+    await supabase.auth.signOut();
     clearGroundHandlingToken();
     setToken(null);
     setState("signed-out");

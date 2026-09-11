@@ -3,6 +3,12 @@ import { supabase } from "./supabase";
 export const GROUND_HANDLING_AUTH_ERROR = "رمز الدخول غير صحيح أو الحساب غير مفعّل";
 const GROUND_HANDLING_STORAGE_KEY = "goair_ground_handling_token";
 
+// RPC functions still take a p_access_token parameter for backward
+// compatibility with the old static-token system. Once a real Supabase Auth
+// session is confirmed, the database resolves the ground handling partner
+// from auth.uid() instead, so we just send this placeholder.
+export const GROUND_HANDLING_RPC_TOKEN = "session-auth";
+
 export function isGroundHandlingAuthError(error: unknown): boolean {
   return error instanceof Error && error.message === GROUND_HANDLING_AUTH_ERROR;
 }
