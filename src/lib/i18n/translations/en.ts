@@ -246,6 +246,7 @@ const en = {
       tierPremiumBadge: "First Class",
       tierStandardName: "Standard",
       tierPremiumName: "Comfort",
+      serviceHighlights: "Service highlights",
     },
   },
   bookPage: {

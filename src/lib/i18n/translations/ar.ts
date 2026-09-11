@@ -241,6 +241,7 @@ const ar = {
       tierPremiumBadge: "درجة أولى",
       tierStandardName: "قياسي",
       tierPremiumName: "مريح",
+      serviceHighlights: "مميزات الخدمة",
     },
   },
   bookPage: {

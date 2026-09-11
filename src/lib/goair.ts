@@ -231,6 +231,14 @@ export type PrivateOption = {
   capacity: number;
   maxLuggage: number | null;
   priceUsd: number;
+  /** Presentation-only overrides from vehicle_class_presentation (null when a class has no dedicated entry, e.g. van/hiace which are standard-only) — a specific model name/photo/highlight list so standard vs premium don't just differ by badge and price. Not tied to real fleet inventory. */
+  presentationId: string | null;
+  modelNameAr: string | null;
+  modelNameEn: string | null;
+  photoQuery: string | null;
+  imageUrl: string | null;
+  highlightsAr: string[];
+  highlightsEn: string[];
 };
 
 export async function fetchPrivateTripOptions(tripId: string): Promise<PrivateOption[]> {
@@ -245,6 +253,13 @@ export async function fetchPrivateTripOptions(tripId: string): Promise<PrivateOp
     capacity: Number(pick(row, ["capacity"]) ?? 0),
     maxLuggage: pick<number>(row, ["max_luggage"]),
     priceUsd: Number(pick(row, ["price_usd"]) ?? 0),
+    presentationId: pick<string>(row, ["presentation_id"]),
+    modelNameAr: pick<string>(row, ["model_name_ar"]),
+    modelNameEn: pick<string>(row, ["model_name_en"]),
+    photoQuery: pick<string>(row, ["photo_query"]),
+    imageUrl: pick<string>(row, ["image_url"]),
+    highlightsAr: (pick<string[]>(row, ["highlights_ar"]) ?? []) as string[],
+    highlightsEn: (pick<string[]>(row, ["highlights_en"]) ?? []) as string[],
   }));
 }
 

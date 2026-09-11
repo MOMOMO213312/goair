@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Briefcase, Lock, Sparkle, Users } from "lucide-react";
+import { Briefcase, CalendarX2, ChevronDown, Lock, MapPin, Sparkle, UserRound, Users } from "lucide-react";
 
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useStockPhoto } from "@/hooks/use-stock-photo";
 import type { PrivateOption, Trip } from "@/lib/goair";
 import { fetchPrivateTripOptions, formatUsd } from "@/lib/goair";
@@ -45,14 +47,20 @@ function PrivateOptionCard({
   date: string;
   seats: number;
 }) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const [highlightsOpen, setHighlightsOpen] = useState(false);
   const isPremium = option.vehicleClass === "premium";
   const dotCount = Math.min(option.capacity, 6);
-  // Real photo priority: cached DB image (once resolved, shared by every
-  // card for this vehicle tier across the whole site) -> live Pexels
-  // resolution via resolve-stock-photo (cached back for next time) ->
-  // local static asset while that resolves or if it's ever unavailable.
-  const photo = useStockPhoto("vehicle_types", option.vehicleTypeId, null) ?? getVehicleImageByCode(option.vehicleCode);
+  const modelName = (language === "ar" ? option.modelNameAr : option.modelNameEn) ?? option.vehicleLabelAr;
+  const highlights = language === "ar" ? option.highlightsAr : option.highlightsEn;
+  // Real photo priority: dedicated per-class presentation photo (standard vs
+  // premium look like different cars) -> generic per-vehicle-type photo for
+  // classes with no presentation override (van/hiace) -> local static asset.
+  // Both hooks are always called (rules of hooks) — the presentation one is
+  // simply disabled (empty id) when this option has no presentation row.
+  const presentationPhoto = useStockPhoto("vehicle_class_presentation", option.presentationId ?? "", option.imageUrl);
+  const genericPhoto = useStockPhoto("vehicle_types", option.vehicleTypeId, null);
+  const photo = presentationPhoto ?? genericPhoto ?? getVehicleImageByCode(option.vehicleCode);
 
   return (
     <div
@@ -80,14 +88,7 @@ function PrivateOptionCard({
             {t("search.privateBooking.recommended")}
           </span>
         ) : null}
-        <h3 className="absolute inset-x-0 bottom-0 p-4 font-display text-base font-extrabold text-white">
-          {option.vehicleLabelAr}
-          {showTier ? (
-            <span className="ms-1 font-normal text-white/80">
-              · {isPremium ? t("search.privateBooking.tierPremiumName") : t("search.privateBooking.tierStandardName")}
-            </span>
-          ) : null}
-        </h3>
+        <h3 className="absolute inset-x-0 bottom-0 p-4 font-display text-base font-extrabold text-white">{modelName}</h3>
       </div>
 
       <div className="flex flex-1 flex-col p-5">
@@ -95,7 +96,7 @@ function PrivateOptionCard({
           {getVehicleBlurb(t, option.vehicleCode) ?? t("search.privateBooking.upToPassengers", { count: option.capacity })}
         </p>
 
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
           <div className="flex items-center -space-x-1 space-x-reverse">
             {Array.from({ length: dotCount }).map((_, i) => (
               <Users key={i} className="size-3.5 text-accent" aria-hidden />
@@ -110,7 +111,41 @@ function PrivateOptionCard({
               {t("search.privateBooking.upToLuggage", { count: option.maxLuggage })}
             </span>
           ) : null}
+          {trip.distance_km != null ? (
+            <span className="flex items-center gap-1 text-xs font-bold text-muted-foreground">
+              <MapPin className="size-3.5 text-muted-foreground/70" aria-hidden />
+              {t("search.filters.distanceKm", { km: trip.distance_km })}
+            </span>
+          ) : null}
         </div>
+
+        {/* Same trust perks as the shared-ride cards, for a consistent promise across booking types */}
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarX2 className="size-3.5 text-accent" aria-hidden />
+            {t("search.resultCard.freeCancellation")}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <UserRound className="size-3.5 text-accent" aria-hidden />
+            {t("search.resultCard.namedPickup")}
+          </span>
+        </div>
+
+        {highlights.length > 0 ? (
+          <Collapsible open={highlightsOpen} onOpenChange={setHighlightsOpen} className="mt-3 border-t border-border pt-3">
+            <CollapsibleTrigger className="flex w-full items-center justify-between text-xs font-bold text-primary">
+              {t("search.privateBooking.serviceHighlights")}
+              <ChevronDown className={cn("size-3.5 transition-transform", highlightsOpen ? "rotate-180" : "")} aria-hidden />
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2 space-y-1">
+              {highlights.map((line, i) => (
+                <p key={i} className="text-xs leading-relaxed text-muted-foreground">
+                  · {line}
+                </p>
+              ))}
+            </CollapsibleContent>
+          </Collapsible>
+        ) : null}
 
         <div className="mt-4 flex items-baseline justify-between border-t border-border pt-4">
           <span className="text-xs font-bold text-muted-foreground">{t("search.privateBooking.fullVehiclePrice")}</span>
@@ -130,12 +165,7 @@ function PrivateOptionCard({
             bookingType: "private",
             vehicleTypeId: option.vehicleTypeId,
           }}
-          className={cn(
-            "mt-5 inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-bold transition-colors",
-            isRecommended
-              ? "bg-accent text-accent-foreground hover:bg-accent/90"
-              : "bg-primary text-primary-foreground hover:bg-primary/90",
-          )}
+          className="mt-5 inline-flex items-center justify-center rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-foreground transition-colors hover:bg-accent/90"
         >
           {t("search.privateBooking.bookPrivateFor", { destination })}
         </Link>
