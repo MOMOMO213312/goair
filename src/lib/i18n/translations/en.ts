@@ -247,6 +247,7 @@ const en = {
       tierStandardName: "Standard",
       tierPremiumName: "Comfort",
       serviceHighlights: "Service highlights",
+      freeCancellationBanner: "Free cancellation up to 24 hours before your trip",
     },
   },
   bookPage: {

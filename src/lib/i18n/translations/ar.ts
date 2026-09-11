@@ -242,6 +242,7 @@ const ar = {
       tierStandardName: "قياسي",
       tierPremiumName: "مريح",
       serviceHighlights: "مميزات الخدمة",
+      freeCancellationBanner: "إلغاء مجاني حتى 24 ساعة قبل رحلتك",
     },
   },
   bookPage: {
