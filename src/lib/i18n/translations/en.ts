@@ -66,8 +66,8 @@ const en = {
     },
     hero: {
       badge: "Egypt & Lebanon — available now",
-      title: "Your trip starts here",
-      subtitle: "Complete travel solutions designed for every journey",
+      title: "Your Airport Ride, Made Simple.",
+      subtitle: "Comfortable shared rides to Cairo, Sphinx and Borg El Arab Airports.",
       imageAlt: "Airport runway at sunset",
       statActiveRoutes: "active route",
       statCountrySingular: "country available now",
