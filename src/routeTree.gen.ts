@@ -49,6 +49,7 @@ import { Route as GroundHandlingRequestsRouteImport } from './routes/ground-hand
 import { Route as GroundHandlingServicesRouteImport } from './routes/ground-handling.services'
 import { Route as GroundHandlingStaffRouteImport } from './routes/ground-handling.staff'
 import { Route as GroundHandlingStatementsRouteImport } from './routes/ground-handling.statements'
+import { Route as GroundHandlingTeamRouteImport } from './routes/ground-handling.team'
 import { Route as GroundHandlingTravelersRouteImport } from './routes/ground-handling.travelers'
 import { Route as OperatorIndexRouteImport } from './routes/operator.index'
 import { Route as OperatorFleetRouteImport } from './routes/operator.fleet'
@@ -264,6 +265,11 @@ const GroundHandlingStatementsRoute =
     path: '/statements',
     getParentRoute: () => GroundHandlingRoute,
   } as any)
+const GroundHandlingTeamRoute = GroundHandlingTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => GroundHandlingRoute,
+} as any)
 const GroundHandlingTravelersRoute = GroundHandlingTravelersRouteImport.update({
   id: '/travelers',
   path: '/travelers',
@@ -369,6 +375,7 @@ export interface FileRoutesByFullPath {
   '/ground-handling/services': typeof GroundHandlingServicesRoute
   '/ground-handling/staff': typeof GroundHandlingStaffRoute
   '/ground-handling/statements': typeof GroundHandlingStatementsRoute
+  '/ground-handling/team': typeof GroundHandlingTeamRoute
   '/ground-handling/travelers': typeof GroundHandlingTravelersRoute
   '/operator/fleet': typeof OperatorFleetRoute
   '/operator/statements': typeof OperatorStatementsRoute
@@ -420,6 +427,7 @@ export interface FileRoutesByTo {
   '/ground-handling/services': typeof GroundHandlingServicesRoute
   '/ground-handling/staff': typeof GroundHandlingStaffRoute
   '/ground-handling/statements': typeof GroundHandlingStatementsRoute
+  '/ground-handling/team': typeof GroundHandlingTeamRoute
   '/ground-handling/travelers': typeof GroundHandlingTravelersRoute
   '/operator/fleet': typeof OperatorFleetRoute
   '/operator/statements': typeof OperatorStatementsRoute
@@ -476,6 +484,7 @@ export interface FileRoutesById {
   '/ground-handling/services': typeof GroundHandlingServicesRoute
   '/ground-handling/staff': typeof GroundHandlingStaffRoute
   '/ground-handling/statements': typeof GroundHandlingStatementsRoute
+  '/ground-handling/team': typeof GroundHandlingTeamRoute
   '/ground-handling/travelers': typeof GroundHandlingTravelersRoute
   '/operator/fleet': typeof OperatorFleetRoute
   '/operator/statements': typeof OperatorStatementsRoute
@@ -533,6 +542,7 @@ export interface FileRouteTypes {
     | '/ground-handling/services'
     | '/ground-handling/staff'
     | '/ground-handling/statements'
+    | '/ground-handling/team'
     | '/ground-handling/travelers'
     | '/operator/fleet'
     | '/operator/statements'
@@ -584,6 +594,7 @@ export interface FileRouteTypes {
     | '/ground-handling/services'
     | '/ground-handling/staff'
     | '/ground-handling/statements'
+    | '/ground-handling/team'
     | '/ground-handling/travelers'
     | '/operator/fleet'
     | '/operator/statements'
@@ -639,6 +650,7 @@ export interface FileRouteTypes {
     | '/ground-handling/services'
     | '/ground-handling/staff'
     | '/ground-handling/statements'
+    | '/ground-handling/team'
     | '/ground-handling/travelers'
     | '/operator/fleet'
     | '/operator/statements'
@@ -961,6 +973,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GroundHandlingStatementsRouteImport
       parentRoute: typeof GroundHandlingRoute
     }
+    '/ground-handling/team': {
+      id: '/ground-handling/team'
+      path: '/team'
+      fullPath: '/ground-handling/team'
+      preLoaderRoute: typeof GroundHandlingTeamRouteImport
+      parentRoute: typeof GroundHandlingRoute
+    }
     '/ground-handling/travelers': {
       id: '/ground-handling/travelers'
       path: '/travelers'
@@ -1096,6 +1115,7 @@ interface GroundHandlingRouteChildren {
   GroundHandlingServicesRoute: typeof GroundHandlingServicesRoute
   GroundHandlingStaffRoute: typeof GroundHandlingStaffRoute
   GroundHandlingStatementsRoute: typeof GroundHandlingStatementsRoute
+  GroundHandlingTeamRoute: typeof GroundHandlingTeamRoute
   GroundHandlingTravelersRoute: typeof GroundHandlingTravelersRoute
   GroundHandlingIndexRoute: typeof GroundHandlingIndexRoute
 }
@@ -1107,6 +1127,7 @@ const GroundHandlingRouteChildren: GroundHandlingRouteChildren = {
   GroundHandlingServicesRoute: GroundHandlingServicesRoute,
   GroundHandlingStaffRoute: GroundHandlingStaffRoute,
   GroundHandlingStatementsRoute: GroundHandlingStatementsRoute,
+  GroundHandlingTeamRoute: GroundHandlingTeamRoute,
   GroundHandlingTravelersRoute: GroundHandlingTravelersRoute,
   GroundHandlingIndexRoute: GroundHandlingIndexRoute,
 }

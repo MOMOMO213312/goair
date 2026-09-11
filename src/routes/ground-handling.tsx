@@ -46,13 +46,16 @@ function GroundHandlingLayout() {
     { to: "/ground-handling/staff", label: "الموظفون" },
     { to: "/ground-handling/reports", label: "التقارير" },
     { to: "/ground-handling/statements", label: "التسويات المالية" },
+    { to: "/ground-handling/team", label: "الأعضاء" },
   ];
 
   return (
     <div className="bg-mist/30 pb-16 pt-6 sm:pt-8">
       <div className="mx-auto max-w-6xl px-4">
         <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="font-display text-2xl font-extrabold text-primary">بوابة GOAIR للخدمات الأرضية</h1>
+          <h1 className="font-display text-2xl font-extrabold text-primary">
+            بوابة GOAIR للخدمات الأرضية
+          </h1>
           <button
             onClick={() => signOut()}
             className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground hover:bg-muted"
