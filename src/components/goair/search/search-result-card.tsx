@@ -1,11 +1,10 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Briefcase, CalendarX2, Info, MapPin, UserRound } from "lucide-react";
+import { ArrowLeft, Briefcase, CalendarX2, Info, MapPin, Sparkle, UserRound } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { DestinationPlaceholder } from "@/components/goair/destination-placeholder";
 import { FlightPath } from "@/components/flight-path";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -118,164 +117,132 @@ export function SearchResultCard({
       : false;
 
   return (
-    <Card
+    <div
       className={cn(
-        "overflow-hidden border-border/80 shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-float)]",
+        "flex flex-col overflow-hidden rounded-2xl border border-border/80 bg-card shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-float)] sm:flex-row",
         className,
       )}
     >
-      {/* Mobile: compact top image */}
-      <RouteImage image={image} cityLabel={cityLabel} className="h-20 w-full md:hidden" />
+      {/* Photo — fixed-width column with a badge overlay, same treatment as
+          the private-booking cards, instead of a tall strip stretched to
+          match the content column's height. */}
+      <div className="relative h-44 w-full shrink-0 overflow-hidden sm:h-auto sm:w-48 md:w-56">
+        <RouteImage image={image} cityLabel={cityLabel} className="size-full" />
+        <span className="absolute start-3 top-3 inline-flex items-center rounded-full bg-secondary px-2.5 py-1 text-[11px] font-bold text-secondary-foreground">
+          {trip.airport_code}
+        </span>
+      </div>
 
-      <div className="flex flex-col md:flex-row">
-        {/* Side: image desktop — capped height so it stays a photo, not a
-            tall strip stretched to match however long the content column
-            happens to be. */}
-        <div className="hidden self-start overflow-hidden border-l border-border md:block md:h-64 md:w-56 lg:h-72 lg:w-64">
-          <RouteImage image={image} cityLabel={cityLabel} className="h-full w-full" />
+      {/* Details — the middle column. */}
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-3 p-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <h3 className="font-display text-base font-extrabold leading-snug text-primary sm:text-lg">
+            {originLabel}
+            <ArrowLeft className="mx-1.5 inline size-4 text-accent" aria-hidden />
+            {destLabel}
+          </h3>
+          <span className="inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-accent-foreground">
+            <Sparkle className="size-3" aria-hidden />
+            {t("search.resultCard.shared")}
+          </span>
         </div>
 
-        {/* Main content */}
-        <div className="flex min-w-0 flex-1 flex-col p-5 sm:p-6">
-          {/* Route header */}
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span className="rounded-md bg-secondary px-2 py-0.5 font-bold text-primary">
-                  {trip.airport_code}
-                </span>
-                <span>{getCountryLabel(trip.country, language)}</span>
-              </div>
-              <h3 className="mt-2 font-display text-lg font-extrabold leading-snug text-primary sm:text-xl">
-                {originLabel}
-                <ArrowLeft className="mx-1.5 inline size-4 text-accent" aria-hidden />
-                {destLabel}
-              </h3>
-            </div>
-          </div>
+        <p className="text-sm leading-relaxed text-muted-foreground">{getCountryLabel(trip.country, language)}</p>
 
-          {/* Route visual — horizontal on md+ */}
-          <div className="mt-4 hidden items-center gap-3 md:flex">
-            <div className="text-center">
-              <p className="text-[10px] font-bold uppercase text-muted-foreground">{t("search.resultCard.airport")}</p>
-              <p className="mt-1 font-display text-sm font-bold text-primary">{trip.airport_code}</p>
-            </div>
-            <div className="relative min-w-0 flex-1 px-2">
-              <FlightPath className="h-8 w-full text-accent/50" />
-            </div>
-            <div className="max-w-[8rem] text-center">
-              <p className="text-[10px] font-bold uppercase text-muted-foreground">{t("search.resultCard.destination")}</p>
-              <p className="mt-1 truncate font-display text-sm font-bold text-primary">
-                {destLabel}
-              </p>
-            </div>
-          </div>
-
-          {/* Details row */}
-          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
-            <div className="flex items-center gap-2">
-              <span className="flex size-9 items-center justify-center rounded-lg bg-secondary text-primary">
-                <UserRound className="size-4" aria-hidden />
-              </span>
-              <div>
-                <p className="text-[10px] font-bold text-muted-foreground">{t("search.resultCard.tripType")}</p>
-                <p className="font-display text-base font-extrabold text-primary">{t("search.resultCard.shared")}</p>
-              </div>
-            </div>
-
-            {maxLuggage != null ? (
-              <div className="flex items-center gap-2">
-                <span className="flex size-9 items-center justify-center rounded-lg bg-secondary text-primary">
-                  <Briefcase className="size-4" aria-hidden />
-                </span>
-                <div>
-                  <p className="text-[10px] font-bold text-muted-foreground">{t("search.resultCard.luggage")}</p>
-                  <p className="font-display text-base font-extrabold text-primary">
-                    {t("search.resultCard.upToLuggage", { count: maxLuggage })}
-                  </p>
-                </div>
-              </div>
-            ) : null}
-
-            {trip.distance_km != null ? (
-              <div className="flex items-center gap-2">
-                <span className="flex size-9 items-center justify-center rounded-lg bg-secondary text-primary">
-                  <MapPin className="size-4" aria-hidden />
-                </span>
-                <div>
-                  <p className="text-[10px] font-bold text-muted-foreground">{t("search.resultCard.distance")}</p>
-                  <p className="font-display text-base font-bold text-primary">
-                    {t("search.filters.distanceKm", { km: trip.distance_km })}
-                  </p>
-                </div>
-              </div>
-            ) : null}
-          </div>
-
-          {/* Included perks */}
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <CalendarX2 className="size-3.5 text-accent" aria-hidden />
-              {t("search.resultCard.freeCancellation")}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          {maxLuggage != null ? (
+            <span className="flex items-center gap-1 text-xs font-bold text-muted-foreground">
+              <Briefcase className="size-3.5 text-muted-foreground/70" aria-hidden />
+              {t("search.resultCard.upToLuggage", { count: maxLuggage })}
             </span>
-            <span className="inline-flex items-center gap-1.5">
-              <UserRound className="size-3.5 text-accent" aria-hidden />
-              {t("search.resultCard.namedPickup")}
+          ) : null}
+          {trip.distance_km != null ? (
+            <span className="flex items-center gap-1 text-xs font-bold text-muted-foreground">
+              <MapPin className="size-3.5 text-muted-foreground/70" aria-hidden />
+              {t("search.filters.distanceKm", { km: trip.distance_km })}
             </span>
+          ) : null}
+        </div>
+
+        {/* Route visual — horizontal on md+, kept as its own row since it
+            needs more width than the perk chips above. */}
+        <div className="hidden items-center gap-3 md:flex">
+          <div className="text-center">
+            <p className="text-[10px] font-bold uppercase text-muted-foreground">{t("search.resultCard.airport")}</p>
+            <p className="mt-1 font-display text-sm font-bold text-primary">{trip.airport_code}</p>
           </div>
-
-          {/* Single time picker — not a row per departure */}
-          <div className="mt-5 rounded-xl border border-border/80 bg-mist/20 p-4">
-            <Label className="text-xs font-bold text-primary">{t("search.resultCard.pickTime")}</Label>
-            <Select value={selectedScheduleId ?? ""} onValueChange={setSelectedScheduleId}>
-              <SelectTrigger className="mt-1.5 bg-card">
-                <SelectValue placeholder={t("search.resultCard.pickTimePlaceholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                {options.map((option) => (
-                  <SelectItem
-                    key={option.scheduleId}
-                    value={option.scheduleId}
-                    disabled={!option.isAvailable}
-                  >
-                    {formatTime(option.departureTime) || option.departureTime.slice(0, 5)}
-                    {!option.isAvailable ? t("search.resultCard.full") : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {notEnough ? (
-              <p className="mt-2 flex items-center gap-1 text-xs font-medium text-destructive">
-                <Info className="size-3 shrink-0" aria-hidden />
-                {t("search.resultCard.notEnoughSeats")}
-              </p>
-            ) : hasFallback ? (
-              <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-                <Info className="size-3 shrink-0" aria-hidden />
-                {t("search.resultCard.seatConfirmedOnBooking")}
-              </p>
-            ) : null}
-
-            <div className="mt-4 flex items-center justify-between gap-4">
-              <PriceBlock
-                pricePerSeat={selectedOption?.pricePerSeat ?? 0}
-                total={(selectedOption?.pricePerSeat ?? 0) * seats}
-                seats={seats}
-              />
-              <BookButton
-                trip={trip}
-                option={selectedOption}
-                seats={seats}
-                travelDate={travelDate}
-                disabled={!selectedOption || notEnough}
-                flight={flight}
-              />
-            </div>
+          <div className="relative min-w-0 flex-1 px-2">
+            <FlightPath className="h-8 w-full text-accent/50" />
           </div>
+          <div className="max-w-[8rem] text-center">
+            <p className="text-[10px] font-bold uppercase text-muted-foreground">{t("search.resultCard.destination")}</p>
+            <p className="mt-1 truncate font-display text-sm font-bold text-primary">{destLabel}</p>
+          </div>
+        </div>
+
+        {/* Same trust perks as the private-booking cards, for a consistent promise across booking types */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs font-medium text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <CalendarX2 className="size-3.5 text-accent" aria-hidden />
+            {t("search.resultCard.freeCancellation")}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <UserRound className="size-3.5 text-accent" aria-hidden />
+            {t("search.resultCard.namedPickup")}
+          </span>
+        </div>
+
+        {/* Single time picker — not a row per departure */}
+        <div className="border-t border-border pt-3">
+          <Label className="text-xs font-bold text-primary">{t("search.resultCard.pickTime")}</Label>
+          <Select value={selectedScheduleId ?? ""} onValueChange={setSelectedScheduleId}>
+            <SelectTrigger className="mt-1.5 bg-card">
+              <SelectValue placeholder={t("search.resultCard.pickTimePlaceholder")} />
+            </SelectTrigger>
+            <SelectContent>
+              {options.map((option) => (
+                <SelectItem key={option.scheduleId} value={option.scheduleId} disabled={!option.isAvailable}>
+                  {formatTime(option.departureTime) || option.departureTime.slice(0, 5)}
+                  {!option.isAvailable ? t("search.resultCard.full") : ""}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {notEnough ? (
+            <p className="mt-2 flex items-center gap-1 text-xs font-medium text-destructive">
+              <Info className="size-3 shrink-0" aria-hidden />
+              {t("search.resultCard.notEnoughSeats")}
+            </p>
+          ) : hasFallback ? (
+            <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+              <Info className="size-3 shrink-0" aria-hidden />
+              {t("search.resultCard.seatConfirmedOnBooking")}
+            </p>
+          ) : null}
         </div>
       </div>
-    </Card>
+
+      {/* Price + CTA — its own column on desktop, divided from the details
+          by a border, matching the private-booking layout so price and the
+          booking action are the first thing the eye lands on. */}
+      <div className="flex shrink-0 flex-col items-center justify-center gap-2 border-t border-border p-5 text-center sm:w-52 sm:border-t-0 sm:border-s sm:border-border">
+        <PriceBlock
+          pricePerSeat={selectedOption?.pricePerSeat ?? 0}
+          total={(selectedOption?.pricePerSeat ?? 0) * seats}
+          seats={seats}
+        />
+        <BookButton
+          trip={trip}
+          option={selectedOption}
+          seats={seats}
+          travelDate={travelDate}
+          disabled={!selectedOption || notEnough}
+          flight={flight}
+          className="mt-1 w-full"
+        />
+      </div>
+    </div>
   );
 }
 
@@ -290,14 +257,12 @@ function PriceBlock({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="text-left sm:text-right">
-      <p className="text-xs text-muted-foreground">
+    <div className="text-center">
+      <span className="text-xs font-bold text-muted-foreground">
         {formatUsd(pricePerSeat)} {t("search.resultCard.perSeat")}
         {seats > 1 ? t("search.resultCard.seatsCount", { count: seats }) : ""}
-      </p>
-      <p className="font-display text-xl font-extrabold text-accent sm:text-2xl">
-        {formatUsd(total)}
-      </p>
+      </span>
+      <p className="font-display text-2xl font-extrabold text-accent">{formatUsd(total)}</p>
     </div>
   );
 }
@@ -322,7 +287,7 @@ function BookButton({
   const { t } = useTranslation();
   if (disabled || !option) {
     return (
-      <Button disabled className={cn("h-11 shrink-0 font-bold", className)}>
+      <Button disabled className={cn("h-11 font-bold", className)}>
         {t("search.resultCard.noSeatsAvailable")}
       </Button>
     );
@@ -331,10 +296,7 @@ function BookButton({
   return (
     <Button
       asChild
-      className={cn(
-        "h-11 shrink-0 bg-accent text-base font-bold text-accent-foreground hover:bg-accent/90",
-        className,
-      )}
+      className={cn("h-11 bg-accent text-base font-bold text-accent-foreground hover:bg-accent/90", className)}
     >
       <Link
         to="/book"
