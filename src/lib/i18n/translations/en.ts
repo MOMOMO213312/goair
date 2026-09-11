@@ -242,6 +242,10 @@ const en = {
       vehicleBlurbCar: "Up to 4 passengers — faster and more private for a family or small group.",
       vehicleBlurbVan: "Up to 8 passengers — the whole vehicle for your group, no sharing.",
       vehicleBlurbHiace: "Up to 14 passengers — best for tour groups and companies.",
+      tierStandardBadge: "Best Value",
+      tierPremiumBadge: "First Class",
+      tierStandardName: "Standard",
+      tierPremiumName: "Comfort",
     },
   },
   bookPage: {

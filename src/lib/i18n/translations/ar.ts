@@ -237,6 +237,10 @@ const ar = {
       vehicleBlurbCar: "لغاية 4 ركاب — أسرع وأخصوصية لعيلة أو مجموعة صغيرة.",
       vehicleBlurbVan: "لغاية 8 ركاب — العربية كلها لمجموعتك من غير مشاركة حد.",
       vehicleBlurbHiace: "لغاية 14 راكب — أنسب لمجموعات السياحة والشركات.",
+      tierStandardBadge: "الأفضل قيمة",
+      tierPremiumBadge: "درجة أولى",
+      tierStandardName: "قياسي",
+      tierPremiumName: "مريح",
     },
   },
   bookPage: {

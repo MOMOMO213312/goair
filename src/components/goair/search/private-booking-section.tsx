@@ -30,6 +30,7 @@ type PrivateBookingSectionProps = {
 function PrivateOptionCard({
   option,
   isRecommended,
+  showTier,
   destination,
   trip,
   date,
@@ -37,12 +38,15 @@ function PrivateOptionCard({
 }: {
   option: PrivateOption;
   isRecommended: boolean;
+  /** True when a sibling card exists for the same vehicle type in a different class — that's the only case where standard vs premium needs to be badged. */
+  showTier: boolean;
   destination: string;
   trip: Trip;
   date: string;
   seats: number;
 }) {
   const { t } = useTranslation();
+  const isPremium = option.vehicleClass === "premium";
   const dotCount = Math.min(option.capacity, 6);
   // Real photo priority: cached DB image (once resolved, shared by every
   // card for this vehicle tier across the whole site) -> live Pexels
@@ -60,6 +64,16 @@ function PrivateOptionCard({
       <div className="relative aspect-[4/3] w-full overflow-hidden">
         <img src={photo} alt="" loading="lazy" className="size-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent" />
+        {showTier ? (
+          <span
+            className={cn(
+              "absolute left-3 top-3 inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold",
+              isPremium ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground",
+            )}
+          >
+            {isPremium ? t("search.privateBooking.tierPremiumBadge") : t("search.privateBooking.tierStandardBadge")}
+          </span>
+        ) : null}
         {isRecommended ? (
           <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-accent px-2.5 py-1 text-[11px] font-bold text-accent-foreground">
             <Sparkle className="size-3" aria-hidden />
@@ -68,6 +82,11 @@ function PrivateOptionCard({
         ) : null}
         <h3 className="absolute inset-x-0 bottom-0 p-4 font-display text-base font-extrabold text-white">
           {option.vehicleLabelAr}
+          {showTier ? (
+            <span className="ms-1 font-normal text-white/80">
+              · {isPremium ? t("search.privateBooking.tierPremiumName") : t("search.privateBooking.tierStandardName")}
+            </span>
+          ) : null}
         </h3>
       </div>
 
@@ -150,6 +169,16 @@ export function PrivateBookingSection({ trip, destination, date, seats, classNam
     : options.reduce((best, option) => (option.capacity > best.capacity ? option : best))
   ).tripOptionId;
 
+  // A vehicle type only needs a tier badge when it actually has more than one
+  // class in this result set (e.g. car: standard + premium) — otherwise a
+  // lone "Standard" chip on the one-and-only hiace option is just noise.
+  const classesByVehicleType = new Map<string, Set<string>>();
+  for (const option of options) {
+    const set = classesByVehicleType.get(option.vehicleTypeId) ?? new Set<string>();
+    set.add(option.vehicleClass);
+    classesByVehicleType.set(option.vehicleTypeId, set);
+  }
+
   return (
     <section id={id} className={cn("scroll-mt-20 mt-8", className)}>
       <div className="flex items-center gap-2">
@@ -170,6 +199,7 @@ export function PrivateBookingSection({ trip, destination, date, seats, classNam
             key={option.tripOptionId}
             option={option}
             isRecommended={option.tripOptionId === recommendedId}
+            showTier={(classesByVehicleType.get(option.vehicleTypeId)?.size ?? 1) > 1}
             destination={destination}
             trip={trip}
             date={date}

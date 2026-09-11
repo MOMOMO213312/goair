@@ -226,6 +226,8 @@ export type PrivateOption = {
   vehicleTypeId: string;
   vehicleCode: string;
   vehicleLabelAr: string;
+  /** standard | premium — same vehicle type can have two priced tiers (see `estimate_private_price`); the UI must badge these distinctly since label/photo are otherwise identical. */
+  vehicleClass: "standard" | "premium";
   capacity: number;
   maxLuggage: number | null;
   priceUsd: number;
@@ -239,6 +241,7 @@ export async function fetchPrivateTripOptions(tripId: string): Promise<PrivateOp
     vehicleTypeId: String(pick(row, ["vehicle_type_id"])),
     vehicleCode: String(pick(row, ["vehicle_code"]) ?? ""),
     vehicleLabelAr: String(pick(row, ["vehicle_label_ar"]) ?? ""),
+    vehicleClass: pick(row, ["vehicle_class"]) === "premium" ? "premium" : "standard",
     capacity: Number(pick(row, ["capacity"]) ?? 0),
     maxLuggage: pick<number>(row, ["max_luggage"]),
     priceUsd: Number(pick(row, ["price_usd"]) ?? 0),
