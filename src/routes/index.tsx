@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Sparkles } from "lucide-react";
+import { Rocket, Sparkles } from "lucide-react";
 
 import heroImage from "@/assets/hero-goair-van.png";
 import { AnnouncementTicker } from "@/components/goair/announcement-ticker";
@@ -112,10 +112,16 @@ function Home() {
               the reference layout: heading + subtitle, then a full-width
               search bar underneath. */}
           <div className="max-w-2xl">
-            <p className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1 text-xs font-bold text-primary-foreground">
-              <Sparkles className="size-3.5 text-accent" />
-              {t("home.hero.badge")}
-            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1 text-xs font-bold text-primary-foreground">
+                <Sparkles className="size-3.5 text-accent" />
+                {t("home.hero.badge")}
+              </p>
+              <p className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-bold text-accent">
+                <Rocket className="size-3.5" />
+                {t("home.hero.preLaunchBadge")}
+              </p>
+            </div>
             <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.1] text-primary-foreground sm:text-6xl">
               {t("home.hero.title")}
             </h1>
