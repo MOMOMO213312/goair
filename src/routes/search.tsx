@@ -1,3 +1,4 @@
+import { CalendarX2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
@@ -250,14 +251,20 @@ function SearchPage() {
               {/* Results list */}
               <div className="min-w-0 space-y-4">
                 {visibleOptions.length > 0 ? (
-                  <SearchResultCard
-                    trip={trip!}
-                    options={visibleOptions}
-                    seats={params.seats}
-                    travelDate={params.date}
-                    flight={params.flight}
-                    vehicleTypesById={vehicleTypesById}
-                  />
+                  <>
+                    <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
+                      <CalendarX2 className="size-4 shrink-0" aria-hidden />
+                      {t("search.privateBooking.freeCancellationBanner")}
+                    </div>
+                    <SearchResultCard
+                      trip={trip!}
+                      options={visibleOptions}
+                      seats={params.seats}
+                      travelDate={params.date}
+                      flight={params.flight}
+                      vehicleTypesById={vehicleTypesById}
+                    />
+                  </>
                 ) : (
                   <Card className="border-dashed p-8 text-center">
                     <SearchEmptyState

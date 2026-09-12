@@ -382,11 +382,9 @@ const en = {
     },
     trustPanel: {
       title: "Why book with GoAir",
-      point1: "Fixed price from the start — no surprises at payment",
-      point2: "Free cancellation up to 24 hours before the trip",
-      point3: "No extra card fees — all fees included",
-      point4: "Meet & greet with a sign bearing your name at the airport",
-      point5: "Professional drivers and regularly inspected vehicles",
+      fixedPrice: "Fixed price from the start — no surprises at payment",
+      noCardFees: "No extra card fees — all fees included",
+      vettedDrivers: "Professional drivers and regularly inspected vehicles",
     },
   },
   payment: {

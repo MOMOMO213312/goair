@@ -1,35 +1,38 @@
-import { BadgeCheck, CalendarX2, CreditCard, type LucideIcon, ShieldCheck, UserRound } from "lucide-react";
+import { BadgeCheck, CreditCard, type LucideIcon, ShieldCheck } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/utils";
 
-const POINT_ICONS: LucideIcon[] = [BadgeCheck, CalendarX2, CreditCard, UserRound, ShieldCheck];
-const POINT_KEYS = ["point1", "point2", "point3", "point4", "point5"] as const;
+const POINTS: { key: "fixedPrice" | "noCardFees" | "vettedDrivers"; icon: LucideIcon }[] = [
+  { key: "fixedPrice", icon: BadgeCheck },
+  { key: "noCardFees", icon: CreditCard },
+  { key: "vettedDrivers", icon: ShieldCheck },
+];
 
 /**
- * Trust/reassurance sidebar shown next to the booking flow — same role as
- * the "Why book with us" panel on major transfer-booking sites, but with
- * GoAir's own real, documented guarantees (no borrowed copy).
+ * Trust/reassurance panel shown next to the booking flow. Deliberately only
+ * carries guarantees that AREN'T already repeated on every trip/vehicle card
+ * (free cancellation, named pickup) — a sidebar that just echoes what's
+ * already on screen reads as filler, not reassurance. Three, said with more
+ * visual weight, beats five that duplicate.
  */
 export function BookingTrustPanel({ className }: { className?: string }) {
   const { t } = useTranslation();
   return (
     <Card className={cn("border-border/80 p-5 shadow-[var(--shadow-card)] sm:p-6", className)}>
       <h2 className="font-display text-sm font-extrabold text-primary">{t("booking.trustPanel.title")}</h2>
-      <ul className="mt-4 space-y-3.5">
-        {POINT_KEYS.map((key, index) => {
-          const Icon = POINT_ICONS[index] ?? ShieldCheck;
-          const label = t(`booking.trustPanel.${key}` as const);
-          return (
-            <li key={key} className="flex items-start gap-2.5">
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
-                <Icon className="size-4" aria-hidden />
-              </span>
-              <span className="text-xs leading-relaxed text-muted-foreground">{label}</span>
-            </li>
-          );
-        })}
+      <ul className="mt-4 space-y-4">
+        {POINTS.map(({ key, icon: Icon }) => (
+          <li key={key} className="flex items-center gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent/15 text-accent">
+              <Icon className="size-5" aria-hidden />
+            </span>
+            <span className="text-sm font-medium leading-relaxed text-foreground/90">
+              {t(`booking.trustPanel.${key}` as const)}
+            </span>
+          </li>
+        ))}
       </ul>
     </Card>
   );
