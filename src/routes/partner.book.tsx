@@ -18,6 +18,8 @@ import { getPartnerDashboard, isPartnerAuthError } from "@/lib/partner";
 import {
   createBookingSafe,
   createPrivateBookingSafe,
+  fetchActivePackages,
+  fetchAddonServices,
   fetchPrivateTripOptions,
   fetchScheduleOptions,
   fetchTrips,
@@ -25,6 +27,8 @@ import {
   formatTime,
   formatUsd,
   friendlyErrorMessage,
+  type AddonService,
+  type PackageTier,
   type PrivateOption,
 } from "@/lib/goair";
 
@@ -84,6 +88,8 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
     queryFn: () => fetchVisibleCountries(tripsQuery.data ?? []),
     enabled: Boolean(tripsQuery.data),
   });
+  const packagesQuery = useQuery({ queryKey: ["goair", "packages"], queryFn: fetchActivePackages });
+  const addonsQuery = useQuery({ queryKey: ["goair", "addon-services"], queryFn: fetchAddonServices });
 
   const [mode, setMode] = useState<BookingMode>("single");
   const [groupType, setGroupType] = useState<GroupType>("shared");
@@ -99,6 +105,9 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
   const [phone, setPhone] = useState("");
   const [seats, setSeats] = useState(1);
   const [flight, setFlight] = useState("");
+
+  const [packageId, setPackageId] = useState("");
+  const [addonIds, setAddonIds] = useState<string[]>([]);
 
   const [listNames, setListNames] = useState(false);
   const [passengerNamesText, setPassengerNamesText] = useState("");
@@ -149,6 +158,26 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
   const parsedNames = useMemo(() => parsePassengerNames(passengerNamesText), [passengerNamesText]);
   const namesMatchSeats = parsedNames.length === seats;
 
+  function toggleAddon(id: string) {
+    setAddonIds((prev) => (prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]));
+  }
+
+  const packages = packagesQuery.data ?? [];
+  const addons = addonsQuery.data ?? [];
+  const selectedPackage = packages.find((p) => p.id === packageId);
+  const selectedAddons = addons.filter((a) => addonIds.includes(a.id));
+  const addonsTotal = selectedAddons.reduce((sum, a) => sum + a.priceUsd, 0);
+
+  /** Rough estimate only — the DB (create_booking_safe / create_private_booking_safe) computes and stores the real total. */
+  const estimatedTotal = useMemo(() => {
+    const baseUnit = isPrivate ? selectedVehicle?.priceUsd : selectedSchedule?.pricePerSeat;
+    if (baseUnit == null) return null;
+    const rideTotal = selectedPackage
+      ? selectedPackage.priceUsd * seats
+      : baseUnit * (isPrivate ? 1 : seats);
+    return rideTotal + addonsTotal;
+  }, [isPrivate, selectedVehicle, selectedSchedule, selectedPackage, seats, addonsTotal]);
+
   async function submit(event: React.FormEvent) {
     event.preventDefault();
 
@@ -190,6 +219,8 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
             flightNumber: flight.trim() || null,
             luggageCount: 0,
             referralCodeOverride: referralCode,
+            packageId: packageId || null,
+            ...(addonIds.length > 0 ? { addonIds } : {}),
             passengerNames,
           })
         : await createBookingSafe({
@@ -205,6 +236,8 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
             flightNumber: flight.trim() || null,
             luggageCount: 0,
             referralCodeOverride: referralCode,
+            packageId: packageId || null,
+            ...(addonIds.length > 0 ? { addonIds } : {}),
             passengerNames,
           });
       setResult(ticketCode);
@@ -386,6 +419,66 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
         <Field label="رقم رحلة الطيران (اختياري)">
           <Input value={flight} onChange={(e) => setFlight(e.target.value)} placeholder="MSXXX" />
         </Field>
+
+        <Field label="باقة إضافية (اختياري)">
+          <Select value={packageId} onValueChange={(v) => setPackageId(v === "none" ? "" : v)}>
+            <SelectTrigger>
+              <SelectValue placeholder={packagesQuery.isFetching ? "جاري التحميل..." : "من غير باقة"} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">من غير باقة</SelectItem>
+              {packages.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name} — {formatUsd(p.priceUsd)}/{isPrivate ? "الحجز" : "راكب"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedPackage ? (
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              اختيار باقة بيستبدل سعر المقعد العادي بسعر الباقة — مش بيتضاف عليه.
+            </p>
+          ) : null}
+        </Field>
+
+        <div className="space-y-2 sm:col-span-2">
+          <Label>خدمات إضافية (اختياري)</Label>
+          {addonsQuery.isFetching ? (
+            <p className="text-xs text-muted-foreground">جاري التحميل...</p>
+          ) : addons.length === 0 ? (
+            <p className="text-xs text-muted-foreground">مفيش خدمات إضافية متاحة حاليًا.</p>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {addons.map((addon: AddonService) => (
+                <label
+                  key={addon.id}
+                  className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-sm transition-colors ${
+                    addonIds.includes(addon.id) ? "border-accent bg-accent/5" : "border-border"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={addonIds.includes(addon.id)}
+                    onChange={() => toggleAddon(addon.id)}
+                    className="mt-0.5 size-4 rounded border-border accent-accent"
+                  />
+                  <span className="flex-1">
+                    <span className="block font-bold text-primary">{addon.name}</span>
+                    <span className="block text-xs text-muted-foreground">{formatUsd(addon.priceUsd)}</span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {estimatedTotal != null ? (
+          <div className="rounded-lg border border-dashed border-accent/40 bg-accent/5 p-3 text-sm sm:col-span-2">
+            <span className="font-bold text-primary">الإجمالي التقديري: </span>
+            <span className="font-bold text-accent">{formatUsd(estimatedTotal)}</span>
+            <span className="mr-1 text-xs text-muted-foreground"> — القيمة الفعلية بتتحسب وتتأكد من السيرفر عند الحجز.</span>
+          </div>
+        ) : null}
 
         <div className="space-y-3 rounded-lg border border-dashed border-border p-4 sm:col-span-2">
           <label className="flex cursor-pointer items-center gap-2">

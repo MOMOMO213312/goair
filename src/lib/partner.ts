@@ -156,6 +156,59 @@ export async function getPartnerBookings(
   }));
 }
 
+export type PartnerSubscription = {
+  id: string;
+  subscriptionCode: string;
+  fullName: string;
+  phoneNumber: string;
+  planName: string;
+  status: string;
+  startsAt: string | null;
+  endsAt: string | null;
+  expectedTotalUsd: number;
+  commissionUsd: number;
+  createdAt: string | null;
+};
+
+/** Subscriptions (recurring plans) this partner sold — a revenue stream separate from trip bookings/commission. */
+export async function getPartnerSubscriptions(
+  token: string,
+  from: string | null,
+  to: string | null,
+): Promise<PartnerSubscription[]> {
+  const { data, error } = await supabase.rpc("get_business_subscriptions", {
+    p_access_token: token,
+    p_from: from,
+    p_to: to,
+  });
+  if (error) throwPartnerRpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map((row, index) => ({
+    id: String(row["subscription_id"] ?? index),
+    subscriptionCode: String(row["subscription_code"] ?? "—"),
+    fullName: String(row["full_name"] ?? "—"),
+    phoneNumber: String(row["phone_number"] ?? "—"),
+    planName: String(row["plan_name"] ?? "—"),
+    status: String(row["status"] ?? "—"),
+    startsAt: (row["starts_at"] as string | null) ?? null,
+    endsAt: (row["ends_at"] as string | null) ?? null,
+    expectedTotalUsd: num(row["expected_total_usd"]),
+    commissionUsd: num(row["commission_usd"]),
+    createdAt: (row["created_at"] as string | null) ?? null,
+  }));
+}
+
+export function subscriptionStatusLabel(status: string) {
+  const key = status.toLowerCase();
+  const map: Record<string, string> = {
+    pending_payment: "بانتظار الدفع",
+    active: "مفعّل",
+    expired: "منتهي",
+    cancelled: "ملغي",
+    canceled: "ملغي",
+  };
+  return map[key] ?? status;
+}
+
 export async function submitCapacityForecast(params: {
   token: string;
   periodStart: string;

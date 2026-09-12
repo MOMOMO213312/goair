@@ -1034,11 +1034,19 @@ export async function createSubscriptionSafe(input: {
   planId: string;
   fullName: string;
   phoneNumber: string;
+  /**
+   * Explicit referral code to attribute this subscription sale to — used by
+   * the partner quick-sell tool. Subscriptions are a revenue stream separate
+   * from trip bookings, so this is tracked on `customer_subscriptions` via
+   * `sales_partner_id`/`sales_partner_type`, not on `booking`.
+   */
+  referralCodeOverride?: string | null;
 }): Promise<{ subscriptionId: string; subscriptionCode: string; expectedTotalUsd: number }> {
   const { data, error } = await supabase.rpc("create_subscription_safe", {
     p_plan_id: input.planId,
     p_full_name: input.fullName,
     p_phone_number: input.phoneNumber,
+    ...(input.referralCodeOverride ? { p_referral_code: input.referralCodeOverride } : {}),
   });
   if (error) throw new Error(error.message);
   const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;

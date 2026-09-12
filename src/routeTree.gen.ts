@@ -63,6 +63,7 @@ import { Route as PartnerBookRouteImport } from './routes/partner.book'
 import { Route as PartnerBookingsRouteImport } from './routes/partner.bookings'
 import { Route as PartnerCapacityRouteImport } from './routes/partner.capacity'
 import { Route as PartnerStatementsRouteImport } from './routes/partner.statements'
+import { Route as PartnerSubscriptionsRouteImport } from './routes/partner.subscriptions'
 import { Route as PartnerTeamRouteImport } from './routes/partner.team'
 import { Route as PartnerTermsRouteImport } from './routes/partner.terms'
 import { Route as RentalProviderIndexRouteImport } from './routes/rental-provider.index'
@@ -341,6 +342,11 @@ const PartnerStatementsRoute = PartnerStatementsRouteImport.update({
   path: '/statements',
   getParentRoute: () => PartnerRoute,
 } as any)
+const PartnerSubscriptionsRoute = PartnerSubscriptionsRouteImport.update({
+  id: '/subscriptions',
+  path: '/subscriptions',
+  getParentRoute: () => PartnerRoute,
+} as any)
 const PartnerTeamRoute = PartnerTeamRouteImport.update({
   id: '/team',
   path: '/team',
@@ -423,6 +429,7 @@ export interface FileRoutesByFullPath {
   '/partner/bookings': typeof PartnerBookingsRoute
   '/partner/capacity': typeof PartnerCapacityRoute
   '/partner/statements': typeof PartnerStatementsRoute
+  '/partner/subscriptions': typeof PartnerSubscriptionsRoute
   '/partner/team': typeof PartnerTeamRoute
   '/partner/terms': typeof PartnerTermsRoute
   '/rental-provider/bookings': typeof RentalProviderBookingsRoute
@@ -480,6 +487,7 @@ export interface FileRoutesByTo {
   '/partner/bookings': typeof PartnerBookingsRoute
   '/partner/capacity': typeof PartnerCapacityRoute
   '/partner/statements': typeof PartnerStatementsRoute
+  '/partner/subscriptions': typeof PartnerSubscriptionsRoute
   '/partner/team': typeof PartnerTeamRoute
   '/partner/terms': typeof PartnerTermsRoute
   '/rental-provider/bookings': typeof RentalProviderBookingsRoute
@@ -543,6 +551,7 @@ export interface FileRoutesById {
   '/partner/bookings': typeof PartnerBookingsRoute
   '/partner/capacity': typeof PartnerCapacityRoute
   '/partner/statements': typeof PartnerStatementsRoute
+  '/partner/subscriptions': typeof PartnerSubscriptionsRoute
   '/partner/team': typeof PartnerTeamRoute
   '/partner/terms': typeof PartnerTermsRoute
   '/rental-provider/bookings': typeof RentalProviderBookingsRoute
@@ -607,6 +616,7 @@ export interface FileRouteTypes {
     | '/partner/bookings'
     | '/partner/capacity'
     | '/partner/statements'
+    | '/partner/subscriptions'
     | '/partner/team'
     | '/partner/terms'
     | '/rental-provider/bookings'
@@ -664,6 +674,7 @@ export interface FileRouteTypes {
     | '/partner/bookings'
     | '/partner/capacity'
     | '/partner/statements'
+    | '/partner/subscriptions'
     | '/partner/team'
     | '/partner/terms'
     | '/rental-provider/bookings'
@@ -726,6 +737,7 @@ export interface FileRouteTypes {
     | '/partner/bookings'
     | '/partner/capacity'
     | '/partner/statements'
+    | '/partner/subscriptions'
     | '/partner/team'
     | '/partner/terms'
     | '/rental-provider/bookings'
@@ -1142,6 +1154,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartnerStatementsRouteImport
       parentRoute: typeof PartnerRoute
     }
+    '/partner/subscriptions': {
+      id: '/partner/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/partner/subscriptions'
+      preLoaderRoute: typeof PartnerSubscriptionsRouteImport
+      parentRoute: typeof PartnerRoute
+    }
     '/partner/team': {
       id: '/partner/team'
       path: '/team'
@@ -1276,6 +1295,7 @@ interface PartnerRouteChildren {
   PartnerBookingsRoute: typeof PartnerBookingsRoute
   PartnerCapacityRoute: typeof PartnerCapacityRoute
   PartnerStatementsRoute: typeof PartnerStatementsRoute
+  PartnerSubscriptionsRoute: typeof PartnerSubscriptionsRoute
   PartnerTeamRoute: typeof PartnerTeamRoute
   PartnerTermsRoute: typeof PartnerTermsRoute
   PartnerIndexRoute: typeof PartnerIndexRoute
@@ -1286,6 +1306,7 @@ const PartnerRouteChildren: PartnerRouteChildren = {
   PartnerBookingsRoute: PartnerBookingsRoute,
   PartnerCapacityRoute: PartnerCapacityRoute,
   PartnerStatementsRoute: PartnerStatementsRoute,
+  PartnerSubscriptionsRoute: PartnerSubscriptionsRoute,
   PartnerTeamRoute: PartnerTeamRoute,
   PartnerTermsRoute: PartnerTermsRoute,
   PartnerIndexRoute: PartnerIndexRoute,

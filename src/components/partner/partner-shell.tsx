@@ -6,6 +6,7 @@ import {
   FileText,
   LayoutDashboard,
   ScrollText,
+  Sparkles,
   Users,
 } from "lucide-react";
 
@@ -19,6 +20,7 @@ const NAV = [
   { to: "/partner", label: "نظرة عامة", exact: true, icon: LayoutDashboard },
   { to: "/partner/book", label: "احجز لعميل", icon: CalendarRange },
   { to: "/partner/bookings", label: "الحجوزات", icon: CalendarRange },
+  { to: "/partner/subscriptions", label: "الاشتراكات", icon: Sparkles },
   { to: "/partner/statements", label: "كشوف الحساب", icon: ScrollText },
   { to: "/partner/capacity", label: "التوقعات", icon: BarChart3 },
   { to: "/partner/terms", label: "شروط الشراكة", icon: FileText },
