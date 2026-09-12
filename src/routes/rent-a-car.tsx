@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { RoadRoute } from "@/components/road-route";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -51,6 +52,11 @@ import { cn } from "@/lib/utils";
 
 const pageMeta = translations[DEFAULT_LANGUAGE].rentACarPage.meta;
 
+// Real, freely-licensed (Unsplash) highway photo — same hotlinking pattern
+// used for the homepage/explore hero imagery (see trip-media.ts / index.tsx).
+const rentalHeroImage =
+  "https://images.unsplash.com/photo-1776142519355-641c5b7d5df0?q=80&w=1920&auto=format&fit=crop";
+
 export const Route = createFileRoute("/rent-a-car")({
   head: () => ({
     meta: [
@@ -75,6 +81,8 @@ const CATEGORY_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   luxury: Gem,
 };
 
+/** Same divided-row language as the site-wide `HeroTrustStrip` (homepage/
+ * explore hero) instead of this page's old boxed icon cards. */
 function TrustStrip() {
   const { t } = useTranslation();
   const items = [
@@ -84,19 +92,19 @@ function TrustStrip() {
     { icon: Sparkles, label: t("rentACarPage.trustRange") },
   ];
   return (
-    <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-      {items.map(({ icon: Icon, label }) => (
-        <div
-          key={label}
-          className="flex items-center gap-2 rounded-xl border border-border/70 bg-mist/30 p-3"
-        >
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            <Icon className="size-4" aria-hidden />
-          </span>
-          <span className="text-xs font-semibold leading-tight text-primary">{label}</span>
-        </div>
-      ))}
-    </div>
+    <section className="border-b border-border bg-background">
+      <div className="goair-container grid grid-cols-1 gap-y-5 divide-y divide-border py-6 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-6 sm:divide-y-0 sm:py-7 lg:grid-cols-4 lg:divide-x lg:divide-y-0 lg:divide-x-reverse lg:gap-x-0">
+        {items.map(({ icon: Icon, label }) => (
+          <div
+            key={label}
+            className="flex items-center gap-3 pt-5 first:pt-0 sm:pt-0 lg:px-5 lg:first:ps-0 lg:last:pe-0"
+          >
+            <Icon className="size-6 shrink-0 text-accent" strokeWidth={1.75} aria-hidden />
+            <p className="text-sm font-bold leading-tight text-primary">{label}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -174,217 +182,294 @@ function RentACarPage() {
     setPhase("browse");
   }
 
+  const heroStats = [
+    { value: String(vehiclesQuery.data?.length ?? 0), label: t("rentACarPage.heroStatVehicles") },
+    {
+      value: String(categoriesQuery.data?.length ?? 0),
+      label: t("rentACarPage.heroStatCategories"),
+    },
+    { value: String(RENTAL_COUNTRIES.length), label: t("rentACarPage.heroStatCountries") },
+  ];
+
   return (
-    <div className="goair-section">
-      <div className="goair-container max-w-6xl">
-        {phase === "browse" ? (
-          <>
-            <h1 className="font-display text-2xl font-extrabold text-primary sm:text-3xl">
-              {t("rentACarPage.title")}
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">{t("rentACarPage.subtitle")}</p>
+    <>
+      {phase === "browse" ? (
+        <>
+          {/* Hero — same dark navy→violet treatment + animated route line as
+              the airport-transfer hero/explore pages, so this page reads as
+              part of the same site rather than a bolted-on module. */}
+          <section className="relative isolate overflow-hidden bg-gradient-to-b from-primary to-violet-deep pb-16 pt-10 sm:pb-20 sm:pt-14">
+            <img
+              src={rentalHeroImage}
+              alt=""
+              loading="eager"
+              className="absolute inset-0 -z-10 size-full object-cover opacity-25"
+            />
+            <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/90 to-violet-deep/90" />
+            <RoadRoute className="pointer-events-none absolute inset-x-0 top-6 h-16 w-full text-accent/25 sm:top-10 sm:h-24 [stroke-dasharray:1200] [stroke-dashoffset:1200] motion-safe:animate-[draw-route_1.8s_ease-out_forwards]" />
 
-            <TrustStrip />
-
-            <div className="mt-6 flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setCategoryFilter("all")}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-bold transition-colors",
-                  categoryFilter === "all"
-                    ? "border-accent bg-accent text-accent-foreground"
-                    : "border-border/80 text-muted-foreground hover:border-accent/50",
-                )}
-              >
-                {t("rentACarPage.categoryAll")}
-              </button>
-              {(categoriesQuery.data ?? []).map((category) => {
-                const Icon = CATEGORY_ICONS[category.code] ?? Car;
-                const active = categoryFilter === category.id;
-                return (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => setCategoryFilter(category.id)}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-bold transition-colors",
-                      active
-                        ? "border-accent bg-accent text-accent-foreground"
-                        : "border-border/80 text-muted-foreground hover:border-accent/50",
-                    )}
-                  >
-                    <Icon className="size-3.5" aria-hidden />
-                    {localize(category.label_ar, category.label_en, language)}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <Select value={countryFilter} onValueChange={setCountryFilter}>
-                <SelectTrigger className="w-auto min-w-40">
-                  <SelectValue placeholder={t("rentACarPage.filterAllCountries")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("rentACarPage.filterAllCountries")}</SelectItem>
-                  {RENTAL_COUNTRIES.map((country) => (
-                    <SelectItem key={country} value={country}>
-                      {country}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={transmissionFilter} onValueChange={setTransmissionFilter}>
-                <SelectTrigger className="w-auto min-w-40">
-                  <SelectValue placeholder={t("rentACarPage.filterTransmission")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("rentACarPage.filterAllTransmissions")}</SelectItem>
-                  <SelectItem value="automatic">{t("rentACarPage.transmissionAutomatic")}</SelectItem>
-                  <SelectItem value="manual">{t("rentACarPage.transmissionManual")}</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={fuelFilter} onValueChange={setFuelFilter}>
-                <SelectTrigger className="w-auto min-w-40">
-                  <SelectValue placeholder={t("rentACarPage.filterFuelType")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("rentACarPage.filterAllFuelTypes")}</SelectItem>
-                  <SelectItem value="petrol">{t("rentACarPage.fuelPetrol")}</SelectItem>
-                  <SelectItem value="diesel">{t("rentACarPage.fuelDiesel")}</SelectItem>
-                  <SelectItem value="hybrid">{t("rentACarPage.fuelHybrid")}</SelectItem>
-                  <SelectItem value="electric">{t("rentACarPage.fuelElectric")}</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-                <SelectTrigger className="w-auto min-w-40">
-                  <SelectValue placeholder={t("rentACarPage.sortLabel")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">{t("rentACarPage.sortNewest")}</SelectItem>
-                  <SelectItem value="price_asc">{t("rentACarPage.sortPriceAsc")}</SelectItem>
-                  <SelectItem value="price_desc">{t("rentACarPage.sortPriceDesc")}</SelectItem>
-                </SelectContent>
-              </Select>
-
-              {filtersActive ? (
-                <button
-                  type="button"
-                  onClick={clearFilters}
-                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-primary"
-                >
-                  <RotateCcw className="size-3.5" aria-hidden />
-                  {t("rentACarPage.clearFilters")}
-                </button>
-              ) : null}
-
-              {!vehiclesQuery.isPending && !vehiclesQuery.isError ? (
-                <span className="text-sm text-muted-foreground">
-                  {t("rentACarPage.resultsCount").replace(
-                    "{count}",
-                    String(visibleVehicles.length),
-                  )}
-                </span>
-              ) : null}
-            </div>
-
-            {vehiclesQuery.isPending ? (
-              <p className="mt-10 text-center text-sm text-muted-foreground">
-                {t("rentACarPage.loading")}
+            <div className="goair-container relative">
+              <p className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1 text-xs font-bold text-primary-foreground">
+                <Sparkles className="size-3.5 text-accent" aria-hidden />
+                {t("rentACarPage.heroBadge")}
               </p>
-            ) : vehiclesQuery.isError ? (
-              <div className="mt-10 flex flex-col items-center gap-3 text-center">
-                <AlertTriangle className="size-8 text-destructive" aria-hidden />
-                <p className="text-sm text-muted-foreground">{t("rentACarPage.errorLoading")}</p>
-                <Button variant="outline" onClick={() => vehiclesQuery.refetch()}>
-                  {t("rentACarPage.retryButton")}
-                </Button>
-              </div>
-            ) : visibleVehicles.length === 0 ? (
-              <div className="mt-10 flex flex-col items-center gap-3 text-center">
-                <p className="text-sm text-muted-foreground">
-                  {hasAnyVehicles ? t("rentACarPage.noResultsForFilter") : t("rentACarPage.empty")}
-                </p>
-                {hasAnyVehicles ? (
-                  <Button variant="outline" onClick={clearFilters}>
-                    {t("rentACarPage.clearFilters")}
-                  </Button>
-                ) : null}
-              </div>
-            ) : (
-              <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {visibleVehicles.map((vehicle) => (
-                  <RentalVehicleCard
-                    key={vehicle.id}
-                    vehicle={vehicle}
-                    language={language}
-                    onSelect={() => onSelectVehicle(vehicle)}
-                  />
+              <h1 className="mt-5 max-w-xl font-display text-3xl font-extrabold leading-[1.15] text-primary-foreground sm:text-5xl">
+                {t("rentACarPage.title")}
+              </h1>
+              <p className="mt-4 max-w-lg text-sm leading-relaxed text-primary-foreground/85 sm:text-base">
+                {t("rentACarPage.subtitle")}
+              </p>
+
+              <div className="mt-8 flex max-w-lg flex-wrap items-center gap-x-8 gap-y-4 border-t border-primary-foreground/15 pt-6">
+                {heroStats.map((stat) => (
+                  <div key={stat.label}>
+                    <p className="font-display text-2xl font-extrabold text-primary-foreground sm:text-3xl">
+                      {stat.value}
+                    </p>
+                    <p className="mt-0.5 text-xs text-primary-foreground/70">{stat.label}</p>
+                  </div>
                 ))}
               </div>
-            )}
-
-            <div className="mt-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-border/80 p-4 text-sm">
-              <span className="text-muted-foreground">{t("rentACarPage.becomePartnerCta")}</span>
-              <Link to="/rent-your-car" className="font-bold text-accent hover:underline">
-                {t("rentACarPage.becomePartnerLink")}
-              </Link>
             </div>
-          </>
-        ) : null}
+          </section>
 
-        {phase === "book" && selectedVehicle ? (
-          <div className="mx-auto max-w-4xl">
-            <BookingForm
-              vehicle={selectedVehicle}
-              language={language}
-              onBack={() => setPhase("browse")}
-              onDone={onBookingDone}
-            />
-          </div>
-        ) : null}
+          {/* Floating filter panel docked over the hero's bottom edge —
+              same "floating over the fold" language as the homepage
+              SearchWidget, instead of plain filters sitting under a plain
+              heading. */}
+          <div className="goair-container relative -mt-10 z-10 sm:-mt-12">
+            <div className="rounded-2xl border border-white/30 bg-card/95 p-4 shadow-[var(--shadow-float)] backdrop-blur-xl sm:p-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCategoryFilter("all")}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-bold transition-colors",
+                    categoryFilter === "all"
+                      ? "border-accent bg-accent text-accent-foreground"
+                      : "border-border/80 text-muted-foreground hover:border-accent/50",
+                  )}
+                >
+                  {t("rentACarPage.categoryAll")}
+                </button>
+                {(categoriesQuery.data ?? []).map((category) => {
+                  const Icon = CATEGORY_ICONS[category.code] ?? Car;
+                  const active = categoryFilter === category.id;
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => setCategoryFilter(category.id)}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-bold transition-colors",
+                        active
+                          ? "border-accent bg-accent text-accent-foreground"
+                          : "border-border/80 text-muted-foreground hover:border-accent/50",
+                      )}
+                    >
+                      <Icon className="size-3.5" aria-hidden />
+                      {localize(category.label_ar, category.label_en, language)}
+                    </button>
+                  );
+                })}
+              </div>
 
-        {phase === "confirm" ? (
-          <div className="mx-auto max-w-lg py-16 text-center">
-            <CheckCircle2 className="mx-auto size-14 text-accent" />
-            <h1 className="mt-4 font-display text-2xl font-extrabold text-primary">
-              {t("rentACarPage.successTitle")}
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground">{t("rentACarPage.successBody")}</p>
-            <Button
-              className="mt-6 bg-accent font-bold text-accent-foreground hover:bg-accent/90"
-              onClick={onBookAnother}
-            >
-              {t("rentACarPage.bookAnother")}
-            </Button>
+              <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border/70 pt-4">
+                <Select value={countryFilter} onValueChange={setCountryFilter}>
+                  <SelectTrigger className="w-auto min-w-40">
+                    <SelectValue placeholder={t("rentACarPage.filterAllCountries")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("rentACarPage.filterAllCountries")}</SelectItem>
+                    {RENTAL_COUNTRIES.map((country) => (
+                      <SelectItem key={country} value={country}>
+                        {country}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={transmissionFilter} onValueChange={setTransmissionFilter}>
+                  <SelectTrigger className="w-auto min-w-40">
+                    <SelectValue placeholder={t("rentACarPage.filterTransmission")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("rentACarPage.filterAllTransmissions")}</SelectItem>
+                    <SelectItem value="automatic">{t("rentACarPage.transmissionAutomatic")}</SelectItem>
+                    <SelectItem value="manual">{t("rentACarPage.transmissionManual")}</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={fuelFilter} onValueChange={setFuelFilter}>
+                  <SelectTrigger className="w-auto min-w-40">
+                    <SelectValue placeholder={t("rentACarPage.filterFuelType")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t("rentACarPage.filterAllFuelTypes")}</SelectItem>
+                    <SelectItem value="petrol">{t("rentACarPage.fuelPetrol")}</SelectItem>
+                    <SelectItem value="diesel">{t("rentACarPage.fuelDiesel")}</SelectItem>
+                    <SelectItem value="hybrid">{t("rentACarPage.fuelHybrid")}</SelectItem>
+                    <SelectItem value="electric">{t("rentACarPage.fuelElectric")}</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                  <SelectTrigger className="w-auto min-w-40">
+                    <SelectValue placeholder={t("rentACarPage.sortLabel")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="newest">{t("rentACarPage.sortNewest")}</SelectItem>
+                    <SelectItem value="price_asc">{t("rentACarPage.sortPriceAsc")}</SelectItem>
+                    <SelectItem value="price_desc">{t("rentACarPage.sortPriceDesc")}</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {filtersActive ? (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="inline-flex items-center gap-1.5 text-sm font-semibold text-muted-foreground hover:text-primary"
+                  >
+                    <RotateCcw className="size-3.5" aria-hidden />
+                    {t("rentACarPage.clearFilters")}
+                  </button>
+                ) : null}
+
+                {!vehiclesQuery.isPending && !vehiclesQuery.isError ? (
+                  <span className="text-sm text-muted-foreground">
+                    {t("rentACarPage.resultsCount").replace(
+                      "{count}",
+                      String(visibleVehicles.length),
+                    )}
+                  </span>
+                ) : null}
+              </div>
+            </div>
           </div>
-        ) : null}
-      </div>
-    </div>
+
+          <div className="pt-10 sm:pt-8">
+            <TrustStrip />
+          </div>
+
+          <div className="goair-section">
+            <div className="goair-container max-w-6xl">
+              {vehiclesQuery.isPending ? (
+                <p className="text-center text-sm text-muted-foreground">
+                  {t("rentACarPage.loading")}
+                </p>
+              ) : vehiclesQuery.isError ? (
+                <div className="flex flex-col items-center gap-3 text-center">
+                  <AlertTriangle className="size-8 text-destructive" aria-hidden />
+                  <p className="text-sm text-muted-foreground">{t("rentACarPage.errorLoading")}</p>
+                  <Button variant="outline" onClick={() => vehiclesQuery.refetch()}>
+                    {t("rentACarPage.retryButton")}
+                  </Button>
+                </div>
+              ) : visibleVehicles.length === 0 ? (
+                <div className="flex flex-col items-center gap-3 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    {hasAnyVehicles ? t("rentACarPage.noResultsForFilter") : t("rentACarPage.empty")}
+                  </p>
+                  {hasAnyVehicles ? (
+                    <Button variant="outline" onClick={clearFilters}>
+                      {t("rentACarPage.clearFilters")}
+                    </Button>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {visibleVehicles.map((vehicle) => (
+                    <RentalVehicleCard
+                      key={vehicle.id}
+                      vehicle={vehicle}
+                      language={language}
+                      onSelect={() => onSelectVehicle(vehicle)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-border/80 p-4 text-sm">
+                <span className="text-muted-foreground">{t("rentACarPage.becomePartnerCta")}</span>
+                <Link to="/rent-your-car" className="font-bold text-accent hover:underline">
+                  {t("rentACarPage.becomePartnerLink")}
+                </Link>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : null}
+
+      {phase === "book" && selectedVehicle ? (
+        <div className="goair-section">
+          <div className="goair-container max-w-6xl">
+            <div className="mx-auto max-w-4xl">
+              <BookingForm
+                vehicle={selectedVehicle}
+                language={language}
+                onBack={() => setPhase("browse")}
+                onDone={onBookingDone}
+              />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {phase === "confirm" ? (
+        <div className="goair-section">
+          <div className="goair-container max-w-6xl">
+            <div className="mx-auto max-w-lg py-16 text-center">
+              <CheckCircle2 className="mx-auto size-14 text-accent" />
+              <h1 className="mt-4 font-display text-2xl font-extrabold text-primary">
+                {t("rentACarPage.successTitle")}
+              </h1>
+              <p className="mt-2 text-sm text-muted-foreground">{t("rentACarPage.successBody")}</p>
+              <Button
+                className="mt-6 bg-accent font-bold text-accent-foreground hover:bg-accent/90"
+                onClick={onBookAnother}
+              >
+                {t("rentACarPage.bookAnother")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }
 
-function RentalVehiclePhoto({ vehicle }: { vehicle: RentalVehicle }) {
+function RentalVehiclePhoto({
+  vehicle,
+  categoryLabel,
+}: {
+  vehicle: RentalVehicle;
+  categoryLabel: string | null;
+}) {
   const photo = vehicle.photos[0];
-  if (photo) {
-    return (
-      <img
-        src={photo}
-        alt={vehicle.makeModel}
-        loading="lazy"
-        className="aspect-[16/10] w-full object-cover"
-      />
-    );
-  }
   return (
-    <div className="flex aspect-[16/10] w-full items-center justify-center bg-gradient-to-br from-secondary to-mist">
-      <span className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <Car className="size-5" />
-      </span>
+    <div className="relative aspect-[16/10] w-full overflow-hidden">
+      {photo ? (
+        <img
+          src={photo}
+          alt={vehicle.makeModel}
+          loading="lazy"
+          className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+      ) : (
+        <div className="flex size-full items-center justify-center bg-gradient-to-br from-secondary to-mist">
+          <span className="flex size-11 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Car className="size-5" />
+          </span>
+        </div>
+      )}
+      {/* Category badge on the photo itself — same "badge over the hero
+          image" language as global rental sites, instead of sitting in the
+          text block below. */}
+      {categoryLabel ? (
+        <span className="absolute start-3 top-3 inline-flex w-fit items-center rounded-full bg-ink/70 px-2.5 py-1 text-xs font-bold text-primary-foreground backdrop-blur-sm">
+          {categoryLabel}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -436,14 +521,9 @@ function RentalVehicleCard({
   ].filter((spec) => spec != null);
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm">
-      <RentalVehiclePhoto vehicle={vehicle} />
+    <div className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-[var(--shadow-float)]">
+      <RentalVehiclePhoto vehicle={vehicle} categoryLabel={categoryLabel} />
       <div className="flex flex-1 flex-col p-5">
-        {categoryLabel ? (
-          <span className="mb-2 inline-flex w-fit items-center rounded-full bg-secondary px-2.5 py-1 text-xs font-bold text-primary">
-            {categoryLabel}
-          </span>
-        ) : null}
         <h3 className="font-display text-lg font-extrabold text-primary">{vehicle.makeModel}</h3>
         {vehicle.description ? (
           <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{vehicle.description}</p>
@@ -474,33 +554,39 @@ function RentalVehicleCard({
             : t("rentACarPage.insuranceNotIncluded")}
         </span>
 
-        <div className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-          {vehicle.hourlyRateUsd != null ? (
-            <span className="text-sm font-bold text-accent">
-              {formatUsd(vehicle.hourlyRateUsd)}
-              <span className="text-xs font-medium text-muted-foreground">
-                {t("rentACarPage.perHour")}
+        {/* Daily rate is the headline number — same weight global rental
+            sites give their per-day price — with hourly/multi-day as
+            secondary context underneath rather than three equal-weight
+            figures in a row. */}
+        <div className="mt-4 flex flex-1 items-end justify-between gap-3 border-t border-border/70 pt-4">
+          <div>
+            <p className="font-display text-2xl font-extrabold text-primary">
+              {formatUsd(vehicle.dailyRateUsd)}
+              <span className="ms-1 text-xs font-medium text-muted-foreground">
+                {t("rentACarPage.perDay")}
               </span>
-            </span>
-          ) : null}
-          <span className="text-sm font-bold text-accent">
-            {formatUsd(vehicle.dailyRateUsd)}
-            <span className="text-xs font-medium text-muted-foreground">
-              {t("rentACarPage.perDay")}
-            </span>
-          </span>
-          {vehicle.multiDayRateUsd != null ? (
-            <span className="text-sm font-bold text-accent">
-              {formatUsd(vehicle.multiDayRateUsd)}
-              <span className="text-xs font-medium text-muted-foreground">
-                {t("rentACarPage.perMultiDay")}
-              </span>
-            </span>
-          ) : null}
+            </p>
+            {vehicle.hourlyRateUsd != null || vehicle.multiDayRateUsd != null ? (
+              <p className="mt-0.5 flex flex-wrap gap-x-2 text-xs font-semibold text-muted-foreground">
+                {vehicle.hourlyRateUsd != null ? (
+                  <span>
+                    {formatUsd(vehicle.hourlyRateUsd)}
+                    {t("rentACarPage.perHour")}
+                  </span>
+                ) : null}
+                {vehicle.multiDayRateUsd != null ? (
+                  <span>
+                    {formatUsd(vehicle.multiDayRateUsd)}
+                    {t("rentACarPage.perMultiDay")}
+                  </span>
+                ) : null}
+              </p>
+            ) : null}
+          </div>
         </div>
 
         <Button
-          className="mt-5 w-full bg-primary font-bold text-primary-foreground hover:bg-primary/90"
+          className="mt-4 w-full bg-primary font-bold text-primary-foreground hover:bg-primary/90"
           onClick={onSelect}
         >
           {t("rentACarPage.bookButton")}
