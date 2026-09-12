@@ -42,7 +42,7 @@ import {
   uploadRentalVehiclePhotos,
   type RentalProviderVehicle,
 } from "@/lib/rental-provider";
-import { fetchRentalPickupAreas, fetchRentalVehicleCategories } from "@/lib/goair";
+import { fetchRentalPickupAreas, fetchRentalVehicleCategories, RENTAL_CITIES_BY_COUNTRY } from "@/lib/goair";
 
 export const Route = createFileRoute("/rental-provider/vehicles")({
   head: () => ({ meta: [{ title: "عرباتي — بوابة مزوّد التأجير" }, { name: "robots", content: "noindex" }] }),
@@ -298,10 +298,13 @@ function VehiclePhotoPicker({
 }
 
 const PICKUP_AREA_OTHER = "__other__";
+const CITY_OTHER = "__other_city__";
 
-// City + pickup-area picker shared between the add and edit dialogs. The
-// area list is preset per (country, city); if the city has no presets yet
-// (or the provider picks "منطقة تانية"), we fall back to free text.
+// City + pickup-area picker shared between the add and edit dialogs. City
+// is a dropdown of every Egypt/Lebanon city (RENTAL_CITIES_BY_COUNTRY) with
+// a free-text fallback for anywhere not listed. The area list is preset per
+// (country, city); if the city has no presets yet (or the provider picks
+// "منطقة تانية"), we fall back to free text there too.
 function PickupAreaFields({
   country,
   city,
@@ -320,34 +323,59 @@ function PickupAreaFields({
   onPickupAreaCustomChange: (v: string) => void;
 }) {
   const trimmedCity = city.trim();
+  const cityOptions = RENTAL_CITIES_BY_COUNTRY[country] ?? [];
+  const cityIsPreset = cityOptions.includes(trimmedCity);
+  const showCustomCity = trimmedCity !== "" && !cityIsPreset;
+
   const areasQuery = useQuery({
     queryKey: ["rental-pickup-areas", country, trimmedCity],
     queryFn: () => fetchRentalPickupAreas(country, trimmedCity),
     enabled: Boolean(country && trimmedCity),
   });
   const areas = areasQuery.data ?? [];
-  const showCustom = !pickupAreaId; // no preset selected yet -> free text
+  const showCustomArea = !pickupAreaId; // no preset selected yet -> free text
 
   return (
     <div className="space-y-3 rounded-lg border border-border/70 p-3">
       <div className="space-y-2">
-        <Label htmlFor="city">المدينة</Label>
-        <Input
-          id="city"
-          placeholder="مثال: القاهرة"
-          value={city}
-          onChange={(e) => {
-            onCityChange(e.target.value);
+        <Label>المدينة</Label>
+        <Select
+          value={cityIsPreset ? trimmedCity : trimmedCity ? CITY_OTHER : ""}
+          onValueChange={(v) => {
             onPickupAreaIdChange(null);
             onPickupAreaCustomChange("");
+            onCityChange(v === CITY_OTHER ? "" : v);
           }}
-        />
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="اختار المدينة" />
+          </SelectTrigger>
+          <SelectContent>
+            {cityOptions.map((c) => (
+              <SelectItem key={c} value={c}>
+                {c}
+              </SelectItem>
+            ))}
+            <SelectItem value={CITY_OTHER}>مدينة تانية...</SelectItem>
+          </SelectContent>
+        </Select>
+        {showCustomCity ? (
+          <Input
+            placeholder="اكتب اسم المدينة"
+            value={city}
+            onChange={(e) => {
+              onCityChange(e.target.value);
+              onPickupAreaIdChange(null);
+              onPickupAreaCustomChange("");
+            }}
+          />
+        ) : null}
       </div>
       {trimmedCity ? (
         <div className="space-y-2">
           <Label>منطقة الاستلام المعتادة (اختياري)</Label>
           <Select
-            value={pickupAreaId ?? (showCustom ? PICKUP_AREA_OTHER : "")}
+            value={pickupAreaId ?? (showCustomArea ? PICKUP_AREA_OTHER : "")}
             onValueChange={(v) => {
               if (v === PICKUP_AREA_OTHER) {
                 onPickupAreaIdChange(null);
@@ -369,7 +397,7 @@ function PickupAreaFields({
               <SelectItem value={PICKUP_AREA_OTHER}>منطقة تانية...</SelectItem>
             </SelectContent>
           </Select>
-          {showCustom ? (
+          {showCustomArea ? (
             <Input
               placeholder="اكتب اسم المنطقة"
               value={pickupAreaCustom}
