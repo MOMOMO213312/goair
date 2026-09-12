@@ -1,7 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { usePartnerToken } from "@/lib/partner-session";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import {
   BookingStatusBadge,
@@ -12,8 +13,17 @@ import {
   PartnerTempError,
 } from "@/components/partner/partner-shell";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -23,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  cancelBusinessBooking,
   exportPartnerBookingsCsv,
   formatDate,
   formatPartnerMoney,
@@ -31,8 +42,10 @@ import {
   isPartnerAuthError,
   partnerDirectionLabel,
   todayIso,
+  type PartnerBooking,
 } from "@/lib/partner";
 import { Download } from "lucide-react";
+import { friendlyErrorMessage } from "@/lib/goair";
 
 export const Route = createFileRoute("/partner/bookings")({
   head: () => ({
@@ -46,16 +59,42 @@ export const Route = createFileRoute("/partner/bookings")({
   component: BookingsPage,
 });
 
+/** Statuses that can't be cancelled again — mirrors the DB's own guard. */
+function isCancellable(status: string) {
+  const normalized = status.toLowerCase();
+  return normalized !== "cancelled" && normalized !== "canceled";
+}
+
 function BookingsPage() {
   const token = usePartnerToken();
+  const queryClient = useQueryClient();
   const [range, setRange] = useState({ from: isoDaysAgo(30), to: todayIso() });
   const [applied, setApplied] = useState({ from: isoDaysAgo(30), to: todayIso() });
+  const [cancelTarget, setCancelTarget] = useState<PartnerBooking | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
 
   const query = useQuery({
     queryKey: ["partner-bookings", token, applied.from, applied.to],
     queryFn: () => getPartnerBookings(token, applied.from || null, applied.to || null),
     retry: false,
     enabled: Boolean(token),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: () => cancelBusinessBooking(token, cancelTarget!.id, cancelReason.trim() || null),
+    onSuccess: (didCancel) => {
+      if (!didCancel) {
+        toast.error("الحجز ده مش تبع حسابك أو اتلغى بالفعل.");
+        return;
+      }
+      toast.success("تم إلغاء الحجز.");
+      setCancelTarget(null);
+      setCancelReason("");
+      queryClient.invalidateQueries({ queryKey: ["partner-bookings"] });
+    },
+    onError: (error) => {
+      toast.error(friendlyErrorMessage(error, "لم نتمكن من إلغاء الحجز."));
+    },
   });
 
   if (!token) return <PartnerAuthError />;
@@ -132,6 +171,7 @@ function BookingsPage() {
                 <TableHead className="text-right">مرحلة الرحلة</TableHead>
                 <TableHead className="text-right">إجمالي الحجز</TableHead>
                 <TableHead className="text-right">العمولة</TableHead>
+                <TableHead className="text-right">إجراءات</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -169,12 +209,83 @@ function BookingsPage() {
                   </TableCell>
                   <TableCell>{formatPartnerMoney(row.expectedTotalUsd)}</TableCell>
                   <TableCell className="font-bold text-accent">{formatPartnerMoney(row.commissionUsd)}</TableCell>
+                  <TableCell>
+                    {isCancellable(row.status) ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => {
+                          setCancelReason("");
+                          setCancelTarget(row);
+                        }}
+                      >
+                        إلغاء
+                      </Button>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
       )}
+
+      <Dialog
+        open={Boolean(cancelTarget)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCancelTarget(null);
+            setCancelReason("");
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>إلغاء الحجز</DialogTitle>
+            <DialogDescription>
+              {cancelTarget
+                ? `${cancelTarget.fullName} — ${cancelTarget.origin} ← ${cancelTarget.destination} — ${formatDate(cancelTarget.travelDate)}`
+                : ""}
+              {" — الإجراء ده نهائي."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="cancel-reason">سبب الإلغاء (اختياري)</Label>
+            <Textarea
+              id="cancel-reason"
+              value={cancelReason}
+              onChange={(event) => setCancelReason(event.target.value)}
+              placeholder="اكتب سبب الإلغاء..."
+              rows={3}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCancelTarget(null);
+                setCancelReason("");
+              }}
+              disabled={cancelMutation.isPending}
+            >
+              تراجع
+            </Button>
+            <Button
+              className="bg-destructive font-bold text-destructive-foreground hover:bg-destructive/90"
+              disabled={cancelMutation.isPending}
+              onClick={() => cancelMutation.mutate()}
+            >
+              {cancelMutation.isPending ? "جاري الإلغاء..." : "تأكيد الإلغاء"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PartnerSection>
   );
 }
