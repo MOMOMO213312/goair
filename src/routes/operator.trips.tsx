@@ -1,13 +1,16 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, Users, X } from "lucide-react";
+import { Check, Clock, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { useOperatorToken } from "@/lib/operator-session";
 import { OperatorAuthError, OperatorLoading, OperatorSection } from "@/components/operator/operator-shell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   formatOperatorMoney,
   getOperatorTrips,
@@ -15,8 +18,25 @@ import {
   isOperatorAuthError,
   operatorSetTripStatus,
   OPERATOR_TRIP_STATUS_LABELS,
+  OPERATOR_STATUS_TRANSITIONS,
+  OPERATOR_STATUSES_REQUIRING_NOTE,
+  OPERATOR_TERMINAL_STATUSES,
   type OperatorTrip,
+  type OperatorTripStatus,
 } from "@/lib/operator";
+
+const STATUS_BADGE_CLASS: Record<string, string> = {
+  accepted: "text-emerald-600",
+  on_the_way: "text-blue-600",
+  picked_up: "text-blue-700",
+  completed: "text-emerald-700",
+  rejected: "text-destructive",
+  cancelled: "text-destructive",
+  no_show: "text-destructive",
+  delayed: "text-amber-600",
+  vehicle_issue: "text-amber-700",
+  driver_change: "text-amber-700",
+};
 
 const PASSENGER_STATUS_LABELS: Record<string, string> = {
   confirmed: "مؤكد",
@@ -40,8 +60,9 @@ function TripsPage() {
   if (q.isError) return isOperatorAuthError(q.error) ? <OperatorAuthError /> : <OperatorAuthError message="حصل خطأ مؤقت." />;
 
   const trips = q.data ?? [];
+  const [statusTrip, setStatusTrip] = useState<OperatorTrip | null>(null);
 
-  async function respondToTrip(assignmentId: string, status: "accepted" | "rejected") {
+  async function respondPending(assignmentId: string, status: "accepted" | "rejected") {
     setUpdatingId(assignmentId);
     try {
       await operatorSetTripStatus(token, assignmentId, status);
@@ -49,6 +70,20 @@ function TripsPage() {
       toast.success(status === "accepted" ? "تم قبول الرحلة." : "تم رفض الرحلة.");
     } catch {
       toast.error("حصل خطأ مؤقت. حاول تاني.");
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  async function submitStatusChange(assignmentId: string, status: OperatorTripStatus, note: string) {
+    setUpdatingId(assignmentId);
+    try {
+      await operatorSetTripStatus(token, assignmentId, status, note);
+      await qc.invalidateQueries({ queryKey: ["operator-trips", token] });
+      toast.success("تم تحديث حالة الرحلة.");
+      setStatusTrip(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "حصل خطأ مؤقت. حاول تاني.");
     } finally {
       setUpdatingId(null);
     }
@@ -90,7 +125,7 @@ function TripsPage() {
                           size="sm"
                           className="h-7 gap-1 px-2"
                           disabled={updatingId === t.assignmentId}
-                          onClick={() => respondToTrip(t.assignmentId, "accepted")}
+                          onClick={() => respondPending(t.assignmentId, "accepted")}
                         >
                           <Check className="h-3.5 w-3.5" />
                           قبول
@@ -100,22 +135,32 @@ function TripsPage() {
                           size="sm"
                           className="h-7 gap-1 px-2 text-destructive"
                           disabled={updatingId === t.assignmentId}
-                          onClick={() => respondToTrip(t.assignmentId, "rejected")}
+                          onClick={() => respondPending(t.assignmentId, "rejected")}
                         >
                           <X className="h-3.5 w-3.5" />
                           رفض
                         </Button>
                       </div>
                     ) : (
-                      <span
-                        className={
-                          t.operatorStatus === "accepted"
-                            ? "text-xs font-bold text-emerald-600"
-                            : "text-xs font-bold text-destructive"
-                        }
-                      >
-                        {OPERATOR_TRIP_STATUS_LABELS[t.operatorStatus] ?? t.operatorStatus}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className={`text-xs font-bold ${STATUS_BADGE_CLASS[t.operatorStatus] ?? "text-muted-foreground"}`}>
+                          {OPERATOR_TRIP_STATUS_LABELS[t.operatorStatus] ?? t.operatorStatus}
+                        </span>
+                        {t.statusNote ? (
+                          <span className="text-xs text-muted-foreground">{t.statusNote}</span>
+                        ) : null}
+                        {!OPERATOR_TERMINAL_STATUSES.has(t.operatorStatus) ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-6 gap-1 px-2 text-xs"
+                            onClick={() => setStatusTrip(t)}
+                          >
+                            <Clock className="h-3 w-3" />
+                            تحديث الحالة
+                          </Button>
+                        ) : null}
+                      </div>
                     )}
                   </TableCell>
                   <TableCell>
@@ -131,7 +176,103 @@ function TripsPage() {
         </div>
       )}
       <PassengerDialog trip={activeTrip} token={token} onClose={() => setActiveTrip(null)} />
+      <StatusUpdateDialog
+        trip={statusTrip}
+        updating={updatingId === statusTrip?.assignmentId}
+        onClose={() => setStatusTrip(null)}
+        onSubmit={submitStatusChange}
+      />
     </OperatorSection>
+  );
+}
+
+function StatusUpdateDialog({
+  trip,
+  updating,
+  onClose,
+  onSubmit,
+}: {
+  trip: OperatorTrip | null;
+  updating: boolean;
+  onClose: () => void;
+  onSubmit: (assignmentId: string, status: OperatorTripStatus, note: string) => void;
+}) {
+  const [selected, setSelected] = useState<OperatorTripStatus | null>(null);
+  const [note, setNote] = useState("");
+
+  const options = trip ? OPERATOR_STATUS_TRANSITIONS[trip.operatorStatus] ?? [] : [];
+  const needsNote = selected ? OPERATOR_STATUSES_REQUIRING_NOTE.has(selected) : false;
+
+  function handleOpenChange(open: boolean) {
+    if (!open) {
+      setSelected(null);
+      setNote("");
+      onClose();
+    }
+  }
+
+  function submit() {
+    if (!trip || !selected) return;
+    if (needsNote && !note.trim()) return;
+    onSubmit(trip.assignmentId, selected, note.trim());
+  }
+
+  return (
+    <Dialog open={Boolean(trip)} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>تحديث حالة الرحلة</DialogTitle>
+          <DialogDescription>
+            {trip ? `${trip.origin} ← ${trip.destination} — ${trip.travelDate}` : ""}
+            {trip ? ` — الحالة الحالية: ${OPERATOR_TRIP_STATUS_LABELS[trip.operatorStatus] ?? trip.operatorStatus}` : ""}
+          </DialogDescription>
+        </DialogHeader>
+
+        {options.length === 0 ? (
+          <p className="text-sm text-muted-foreground">مفيش تحديثات تانية متاحة للرحلة دي.</p>
+        ) : (
+          <div className="space-y-4">
+            <RadioGroup value={selected ?? ""} onValueChange={(v) => setSelected(v as OperatorTripStatus)}>
+              <div className="grid gap-2">
+                {options.map((opt) => (
+                  <label
+                    key={opt}
+                    className={`flex cursor-pointer items-center gap-2 rounded-lg border p-2.5 text-sm transition-colors ${
+                      selected === opt ? "border-accent bg-accent/5" : "border-border"
+                    }`}
+                  >
+                    <RadioGroupItem value={opt} id={`status-${opt}`} />
+                    <span className="font-bold text-primary">{OPERATOR_TRIP_STATUS_LABELS[opt] ?? opt}</span>
+                  </label>
+                ))}
+              </div>
+            </RadioGroup>
+
+            {needsNote ? (
+              <div className="space-y-1.5">
+                <Label>السبب / ملاحظة (مطلوب)</Label>
+                <Textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="اكتب سبب التأخير/المشكلة..."
+                  rows={3}
+                />
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button
+            disabled={!selected || (needsNote && !note.trim()) || updating}
+            onClick={submit}
+            className="bg-accent font-bold text-accent-foreground hover:bg-accent/90"
+          >
+            {updating ? "جاري الحفظ..." : "حفظ"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
