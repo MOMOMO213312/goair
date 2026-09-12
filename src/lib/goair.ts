@@ -271,6 +271,8 @@ export type CreatePrivateBookingInput = {
   seatsCount: number;
   fullName: string;
   phoneNumber: string;
+  /** Optional — when present, a booking-confirmation email is sent after the booking is created. */
+  customerEmail?: string | null;
   flightNumber: string | null;
   luggageCount: number;
   referralCodeOverride?: string | null;
@@ -307,6 +309,9 @@ export async function createPrivateBookingSafe(input: CreatePrivateBookingInput)
     ...(input.passengerNames && input.passengerNames.length > 0
       ? { p_passenger_names: input.passengerNames }
       : {}),
+    ...(input.customerEmail && input.customerEmail.trim()
+      ? { p_customer_email: input.customerEmail.trim() }
+      : {}),
   });
 
   if (error) throw new Error(error.message);
@@ -315,6 +320,7 @@ export async function createPrivateBookingSafe(input: CreatePrivateBookingInput)
   if (!ticketCode)
     throw new Error("تم إنشاء الحجز لكن لم يرجع كود التذكرة — كلمنا فورًا على الدعم.");
   clearStoredReferralCode();
+  sendBookingConfirmationEmail(input.customerEmail, ticketCode);
   return { ticketCode, raw: row };
 }
 
@@ -508,6 +514,8 @@ export type CreateBookingInput = {
   seatsCount: number;
   fullName: string;
   phoneNumber: string;
+  /** Optional — when present, a booking-confirmation email is sent after the booking is created. */
+  customerEmail?: string | null;
   flightNumber: string | null;
   luggageCount: number;
   /**
@@ -579,6 +587,9 @@ export async function createBookingSafe(input: CreateBookingInput) {
     ...(input.passengerNames && input.passengerNames.length > 0
       ? { p_passenger_names: input.passengerNames }
       : {}),
+    ...(input.customerEmail && input.customerEmail.trim()
+      ? { p_customer_email: input.customerEmail.trim() }
+      : {}),
   };
 
   let { data, error } = await supabase.rpc("create_booking_safe", {
@@ -605,7 +616,25 @@ export async function createBookingSafe(input: CreateBookingInput) {
   if (!ticketCode)
     throw new Error("تم إنشاء الحجز لكن لم يرجع كود التذكرة — كلمنا فورًا على الدعم.");
   clearStoredReferralCode();
+  sendBookingConfirmationEmail(input.customerEmail, ticketCode);
   return { ticketCode, raw: row };
+}
+
+/**
+ * Fire-and-forget call to the `send-booking-confirmation` Edge Function.
+ * No-op when no email was given; never blocks or fails the booking flow —
+ * any error here is only logged, not thrown.
+ */
+function sendBookingConfirmationEmail(email: string | null | undefined, ticketCode: string) {
+  const trimmed = email?.trim();
+  if (!trimmed) return;
+  supabase.functions
+    .invoke("send-booking-confirmation", {
+      body: { ticketCode, email: trimmed },
+    })
+    .catch((error) => {
+      console.error("send-booking-confirmation failed", error);
+    });
 }
 
 export type BookingRecord = Record<string, unknown> & {
