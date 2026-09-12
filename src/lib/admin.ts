@@ -862,6 +862,11 @@ export type AdminRentalVehicle = {
   multiDayRateUsd: number | null;
   multiDayThresholdDays: number;
   minRentalHours: number;
+  transmission: "automatic" | "manual";
+  fuelType: "petrol" | "diesel" | "hybrid" | "electric";
+  seats: number | null;
+  dailyMileageLimitKm: number | null;
+  insuranceIncluded: boolean;
   approvalStatus: string;
   adminNotes: string | null;
   isActive: boolean;
@@ -886,6 +891,13 @@ function mapAdminRentalVehicle(row: Record<string, unknown>): AdminRentalVehicle
     multiDayRateUsd: row["multi_day_rate_usd"] == null ? null : Number(row["multi_day_rate_usd"]),
     multiDayThresholdDays: Number(row["multi_day_threshold_days"] ?? 3),
     minRentalHours: Number(row["min_rental_hours"] ?? 3),
+    transmission: row["transmission"] === "manual" ? "manual" : "automatic",
+    fuelType: (["petrol", "diesel", "hybrid", "electric"] as const).includes(row["fuel_type"] as never)
+      ? (row["fuel_type"] as AdminRentalVehicle["fuelType"])
+      : "petrol",
+    seats: row["seats"] == null ? null : Number(row["seats"]),
+    dailyMileageLimitKm: row["daily_mileage_limit_km"] == null ? null : Number(row["daily_mileage_limit_km"]),
+    insuranceIncluded: Boolean(row["insurance_included"] ?? true),
     approvalStatus: String(row["approval_status"] ?? "pending_review"),
     adminNotes: (row["admin_notes"] as string | null) ?? null,
     isActive: Boolean(row["is_active"]),
@@ -914,6 +926,11 @@ export async function adminUpdateRentalVehicle(
     multiDayRateUsd: number | null;
     multiDayThresholdDays: number;
     minRentalHours: number;
+    transmission: "automatic" | "manual";
+    fuelType: "petrol" | "diesel" | "hybrid" | "electric";
+    seats: number | null;
+    dailyMileageLimitKm: number | null;
+    insuranceIncluded: boolean;
     approvalStatus: string;
     adminNotes: string | null;
     isActive: boolean;
@@ -934,6 +951,11 @@ export async function adminUpdateRentalVehicle(
     p_approval_status: vehicle.approvalStatus,
     p_admin_notes: vehicle.adminNotes,
     p_is_active: vehicle.isActive,
+    p_transmission: vehicle.transmission,
+    p_fuel_type: vehicle.fuelType,
+    p_seats: vehicle.seats,
+    p_daily_mileage_limit_km: vehicle.dailyMileageLimitKm,
+    p_insurance_included: vehicle.insuranceIncluded,
   });
   if (error) rpcError(error);
 }
@@ -953,6 +975,11 @@ export async function adminAddRentalVehicle(
     multiDayRateUsd: number | null;
     multiDayThresholdDays: number;
     minRentalHours: number;
+    transmission: "automatic" | "manual";
+    fuelType: "petrol" | "diesel" | "hybrid" | "electric";
+    seats: number | null;
+    dailyMileageLimitKm: number | null;
+    insuranceIncluded: boolean;
   },
 ): Promise<string> {
   const { data, error } = await supabase.rpc("admin_add_rental_vehicle", {
@@ -969,6 +996,11 @@ export async function adminAddRentalVehicle(
     p_multi_day_rate_usd: params.multiDayRateUsd,
     p_multi_day_threshold_days: params.multiDayThresholdDays,
     p_min_rental_hours: params.minRentalHours,
+    p_transmission: params.transmission,
+    p_fuel_type: params.fuelType,
+    p_seats: params.seats,
+    p_daily_mileage_limit_km: params.dailyMileageLimitKm,
+    p_insurance_included: params.insuranceIncluded,
   });
   if (error) rpcError(error);
   return String(data);

@@ -30,6 +30,16 @@ export const Route = createFileRoute("/admin/rental-vehicles")({
 });
 
 const COUNTRIES: string[] = ["مصر", "لبنان"];
+const TRANSMISSIONS = [
+  { value: "automatic", label: "أوتوماتيك" },
+  { value: "manual", label: "عادي" },
+] as const;
+const FUEL_TYPES = [
+  { value: "petrol", label: "بنزين" },
+  { value: "diesel", label: "ديزل" },
+  { value: "hybrid", label: "هايبرد" },
+  { value: "electric", label: "كهربائي" },
+] as const;
 
 function emptyNewVehicleForm() {
   return {
@@ -43,6 +53,11 @@ function emptyNewVehicleForm() {
     hourlyRate: "",
     dailyRate: "",
     multiDayRate: "",
+    transmission: "automatic" as "automatic" | "manual",
+    fuelType: "petrol" as "petrol" | "diesel" | "hybrid" | "electric",
+    seats: "",
+    dailyMileageLimitKm: "",
+    insuranceIncluded: true,
   };
 }
 
@@ -98,6 +113,11 @@ function RentalVehiclesAdminPage() {
         multiDayRateUsd: newForm.multiDayRate.trim() ? Number(newForm.multiDayRate) : null,
         multiDayThresholdDays: 3,
         minRentalHours: 3,
+        transmission: newForm.transmission,
+        fuelType: newForm.fuelType,
+        seats: newForm.seats.trim() ? Number(newForm.seats) : null,
+        dailyMileageLimitKm: newForm.dailyMileageLimitKm.trim() ? Number(newForm.dailyMileageLimitKm) : null,
+        insuranceIncluded: newForm.insuranceIncluded,
       });
       toast.success("تمت إضافة العربية.");
       setNewForm(emptyNewVehicleForm());
@@ -167,6 +187,39 @@ function RentalVehiclesAdminPage() {
             value={newForm.multiDayRate}
             onChange={(e) => setNewForm({ ...newForm, multiDayRate: e.target.value })}
           />
+          <Select value={newForm.transmission} onValueChange={(v) => setNewForm({ ...newForm, transmission: v as "automatic" | "manual" })}>
+            <SelectTrigger><SelectValue placeholder="ناقل الحركة" /></SelectTrigger>
+            <SelectContent>
+              {TRANSMISSIONS.map((tr) => <SelectItem key={tr.value} value={tr.value}>{tr.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={newForm.fuelType} onValueChange={(v) => setNewForm({ ...newForm, fuelType: v as typeof newForm.fuelType })}>
+            <SelectTrigger><SelectValue placeholder="نوع الوقود" /></SelectTrigger>
+            <SelectContent>
+              {FUEL_TYPES.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Input
+            type="number"
+            placeholder="عدد المقاعد (اختياري)"
+            value={newForm.seats}
+            onChange={(e) => setNewForm({ ...newForm, seats: e.target.value })}
+          />
+          <Input
+            type="number"
+            placeholder="حد الكيلومترات يوميًا (فارغ = بلا حد)"
+            value={newForm.dailyMileageLimitKm}
+            onChange={(e) => setNewForm({ ...newForm, dailyMileageLimitKm: e.target.value })}
+          />
+          <div className="flex items-center gap-2 sm:col-span-2">
+            <input
+              id="new-insurance"
+              type="checkbox"
+              checked={newForm.insuranceIncluded}
+              onChange={(e) => setNewForm({ ...newForm, insuranceIncluded: e.target.checked })}
+            />
+            <Label htmlFor="new-insurance" className="cursor-pointer">تأمين متضمن</Label>
+          </div>
           <Textarea
             placeholder="وصف العربية (اختياري)"
             value={newForm.description}
@@ -227,6 +280,11 @@ function VehicleRow({
     approvalStatus: vehicle.approvalStatus,
     adminNotes: vehicle.adminNotes ?? "",
     isActive: vehicle.isActive,
+    transmission: vehicle.transmission,
+    fuelType: vehicle.fuelType,
+    seats: vehicle.seats == null ? "" : String(vehicle.seats),
+    dailyMileageLimitKm: vehicle.dailyMileageLimitKm == null ? "" : String(vehicle.dailyMileageLimitKm),
+    insuranceIncluded: vehicle.insuranceIncluded,
   }));
   const [busy, setBusy] = useState(false);
 
@@ -247,6 +305,11 @@ function VehicleRow({
         approvalStatus: form.approvalStatus,
         adminNotes: form.adminNotes.trim() || null,
         isActive: form.isActive,
+        transmission: form.transmission,
+        fuelType: form.fuelType,
+        seats: form.seats.trim() ? Number(form.seats) : null,
+        dailyMileageLimitKm: form.dailyMileageLimitKm.trim() ? Number(form.dailyMileageLimitKm) : null,
+        insuranceIncluded: form.insuranceIncluded,
       });
       toast.success("تم الحفظ.");
       setEditing(false);
@@ -275,6 +338,11 @@ function VehicleRow({
         approvalStatus: status,
         adminNotes: vehicle.adminNotes,
         isActive: vehicle.isActive,
+        transmission: vehicle.transmission,
+        fuelType: vehicle.fuelType,
+        seats: vehicle.seats,
+        dailyMileageLimitKm: vehicle.dailyMileageLimitKm,
+        insuranceIncluded: vehicle.insuranceIncluded,
       });
       toast.success("تم التحديث.");
       onDone();
@@ -301,6 +369,14 @@ function VehicleRow({
             ${vehicle.dailyRateUsd}/يوم
             {vehicle.hourlyRateUsd != null ? ` · $${vehicle.hourlyRateUsd}/ساعة` : ""}
             {vehicle.multiDayRateUsd != null ? ` · $${vehicle.multiDayRateUsd}/عدة أيام` : ""}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {vehicle.transmission === "manual" ? "ناقل عادي" : "أوتوماتيك"} ·{" "}
+            {FUEL_TYPES.find((f) => f.value === vehicle.fuelType)?.label ?? vehicle.fuelType}
+            {vehicle.seats != null ? ` · ${vehicle.seats} مقاعد` : ""}
+            {" · "}
+            {vehicle.dailyMileageLimitKm != null ? `${vehicle.dailyMileageLimitKm} كم/يوم` : "كيلومترات غير محدودة"}
+            {vehicle.insuranceIncluded ? " · تأمين متضمن" : " · بدون تأمين"}
           </p>
           <p className="mt-0.5 text-xs font-bold text-accent">{rentalVehicleApprovalLabel(vehicle.approvalStatus)}</p>
         </div>
@@ -363,6 +439,41 @@ function VehicleRow({
         <div className="space-y-1.5">
           <Label>سعر لعدة أيام</Label>
           <Input type="number" value={form.multiDayRate} onChange={(e) => setForm({ ...form, multiDayRate: e.target.value })} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>ناقل الحركة</Label>
+          <Select value={form.transmission} onValueChange={(v) => setForm({ ...form, transmission: v as "automatic" | "manual" })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {TRANSMISSIONS.map((tr) => <SelectItem key={tr.value} value={tr.value}>{tr.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label>نوع الوقود</Label>
+          <Select value={form.fuelType} onValueChange={(v) => setForm({ ...form, fuelType: v as typeof form.fuelType })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {FUEL_TYPES.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label>عدد المقاعد</Label>
+          <Input type="number" value={form.seats} onChange={(e) => setForm({ ...form, seats: e.target.value })} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>حد الكيلومترات يوميًا (فارغ = بلا حد)</Label>
+          <Input type="number" value={form.dailyMileageLimitKm} onChange={(e) => setForm({ ...form, dailyMileageLimitKm: e.target.value })} />
+        </div>
+        <div className="flex items-center gap-2 pt-6">
+          <input
+            id={`insurance-${vehicle.id}`}
+            type="checkbox"
+            checked={form.insuranceIncluded}
+            onChange={(e) => setForm({ ...form, insuranceIncluded: e.target.checked })}
+          />
+          <Label htmlFor={`insurance-${vehicle.id}`} className="cursor-pointer">تأمين متضمن</Label>
         </div>
         <div className="flex items-center gap-2 pt-6">
           <input

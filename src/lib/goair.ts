@@ -737,6 +737,12 @@ export type RentalVehicle = {
   multiDayRateUsd: number | null;
   multiDayThresholdDays: number;
   minRentalHours: number;
+  transmission: "automatic" | "manual";
+  fuelType: "petrol" | "diesel" | "hybrid" | "electric";
+  seats: number | null;
+  /** Included km per rental day — null means unlimited mileage. */
+  dailyMileageLimitKm: number | null;
+  insuranceIncluded: boolean;
 };
 
 function mapRentalVehicle(row: Record<string, unknown>): RentalVehicle {
@@ -755,6 +761,13 @@ function mapRentalVehicle(row: Record<string, unknown>): RentalVehicle {
     multiDayRateUsd: row["multi_day_rate_usd"] == null ? null : Number(row["multi_day_rate_usd"]),
     multiDayThresholdDays: Number(row["multi_day_threshold_days"] ?? 3),
     minRentalHours: Number(row["min_rental_hours"] ?? 3),
+    transmission: row["transmission"] === "manual" ? "manual" : "automatic",
+    fuelType: (["petrol", "diesel", "hybrid", "electric"] as const).includes(row["fuel_type"] as never)
+      ? (row["fuel_type"] as RentalVehicle["fuelType"])
+      : "petrol",
+    seats: row["seats"] == null ? null : Number(row["seats"]),
+    dailyMileageLimitKm: row["daily_mileage_limit_km"] == null ? null : Number(row["daily_mileage_limit_km"]),
+    insuranceIncluded: Boolean(row["insurance_included"] ?? true),
   };
 }
 
@@ -767,7 +780,7 @@ export async function fetchAvailableRentalVehicles(country?: string): Promise<Re
   let query = supabase
     .from("rental_vehicles")
     .select(
-      "id, category_id, country, make_model, photos, description, hourly_rate_usd, daily_rate_usd, multi_day_rate_usd, multi_day_threshold_days, min_rental_hours, rental_vehicle_categories(label_ar, label_en)",
+      "id, category_id, country, make_model, photos, description, hourly_rate_usd, daily_rate_usd, multi_day_rate_usd, multi_day_threshold_days, min_rental_hours, transmission, fuel_type, seats, daily_mileage_limit_km, insurance_included, rental_vehicle_categories(label_ar, label_en)",
     )
     .order("created_at", { ascending: false });
   if (country) query = query.eq("country", country);

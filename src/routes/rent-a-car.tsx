@@ -7,6 +7,9 @@ import {
   CalendarClock,
   Car,
   CheckCircle2,
+  Cog,
+  Fuel,
+  Gauge,
   Gem,
   Loader2,
   MapPin,
@@ -114,6 +117,8 @@ function RentACarPage() {
 
   const [countryFilter, setCountryFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [transmissionFilter, setTransmissionFilter] = useState<string>("all");
+  const [fuelFilter, setFuelFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
 
   const vehiclesQuery = useQuery({
@@ -132,22 +137,27 @@ function RentACarPage() {
 
   const visibleVehicles = useMemo(() => {
     const list = vehiclesQuery.data ?? [];
-    const filtered =
-      categoryFilter === "all"
-        ? list
-        : list.filter((vehicle) => vehicle.categoryId === categoryFilter);
+    const filtered = list.filter(
+      (vehicle) =>
+        (categoryFilter === "all" || vehicle.categoryId === categoryFilter) &&
+        (transmissionFilter === "all" || vehicle.transmission === transmissionFilter) &&
+        (fuelFilter === "all" || vehicle.fuelType === fuelFilter),
+    );
     const sorted = [...filtered];
     if (sortBy === "price_asc") sorted.sort((a, b) => a.dailyRateUsd - b.dailyRateUsd);
     else if (sortBy === "price_desc") sorted.sort((a, b) => b.dailyRateUsd - a.dailyRateUsd);
     return sorted;
-  }, [vehiclesQuery.data, categoryFilter, sortBy]);
+  }, [vehiclesQuery.data, categoryFilter, transmissionFilter, fuelFilter, sortBy]);
 
   const hasAnyVehicles = (vehiclesQuery.data?.length ?? 0) > 0;
-  const filtersActive = countryFilter !== "all" || categoryFilter !== "all";
+  const filtersActive =
+    countryFilter !== "all" || categoryFilter !== "all" || transmissionFilter !== "all" || fuelFilter !== "all";
 
   function clearFilters() {
     setCountryFilter("all");
     setCategoryFilter("all");
+    setTransmissionFilter("all");
+    setFuelFilter("all");
   }
 
   function onSelectVehicle(vehicle: RentalVehicle) {
@@ -223,6 +233,30 @@ function RentACarPage() {
                       {country}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={transmissionFilter} onValueChange={setTransmissionFilter}>
+                <SelectTrigger className="w-auto min-w-40">
+                  <SelectValue placeholder={t("rentACarPage.filterTransmission")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("rentACarPage.filterAllTransmissions")}</SelectItem>
+                  <SelectItem value="automatic">{t("rentACarPage.transmissionAutomatic")}</SelectItem>
+                  <SelectItem value="manual">{t("rentACarPage.transmissionManual")}</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={fuelFilter} onValueChange={setFuelFilter}>
+                <SelectTrigger className="w-auto min-w-40">
+                  <SelectValue placeholder={t("rentACarPage.filterFuelType")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t("rentACarPage.filterAllFuelTypes")}</SelectItem>
+                  <SelectItem value="petrol">{t("rentACarPage.fuelPetrol")}</SelectItem>
+                  <SelectItem value="diesel">{t("rentACarPage.fuelDiesel")}</SelectItem>
+                  <SelectItem value="hybrid">{t("rentACarPage.fuelHybrid")}</SelectItem>
+                  <SelectItem value="electric">{t("rentACarPage.fuelElectric")}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -369,6 +403,38 @@ function RentalVehicleCard({
     ? localize(vehicle.categoryLabelAr, vehicle.categoryLabelEn, language)
     : null;
 
+  const specs = [
+    {
+      icon: Cog,
+      label:
+        vehicle.transmission === "manual"
+          ? t("rentACarPage.transmissionManual")
+          : t("rentACarPage.transmissionAutomatic"),
+    },
+    {
+      icon: Fuel,
+      label: t(
+        vehicle.fuelType === "diesel"
+          ? "rentACarPage.fuelDiesel"
+          : vehicle.fuelType === "hybrid"
+            ? "rentACarPage.fuelHybrid"
+            : vehicle.fuelType === "electric"
+              ? "rentACarPage.fuelElectric"
+              : "rentACarPage.fuelPetrol",
+      ),
+    },
+    vehicle.seats != null
+      ? { icon: Users, label: t("rentACarPage.seatsCount", { count: vehicle.seats }) }
+      : null,
+    {
+      icon: Gauge,
+      label:
+        vehicle.dailyMileageLimitKm != null
+          ? t("rentACarPage.mileageLimited", { km: vehicle.dailyMileageLimitKm })
+          : t("rentACarPage.mileageUnlimited"),
+    },
+  ].filter((spec) => spec != null);
+
   return (
     <div className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-sm">
       <RentalVehiclePhoto vehicle={vehicle} />
@@ -382,6 +448,31 @@ function RentalVehicleCard({
         {vehicle.description ? (
           <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{vehicle.description}</p>
         ) : null}
+
+        {/* Spec strip — the technical facts real rental sites lead with so a
+            shopper can compare cars without opening each one. */}
+        <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 border-y border-border/70 py-3">
+          {specs.map(({ icon: Icon, label }, i) => (
+            <span key={i} className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+              <Icon className="size-3.5 shrink-0 text-primary/70" aria-hidden />
+              {label}
+            </span>
+          ))}
+        </div>
+
+        <span
+          className={cn(
+            "mt-3 inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold",
+            vehicle.insuranceIncluded
+              ? "bg-accent/10 text-accent"
+              : "bg-muted text-muted-foreground",
+          )}
+        >
+          <ShieldCheck className="size-3.5" aria-hidden />
+          {vehicle.insuranceIncluded
+            ? t("rentACarPage.insuranceIncluded")
+            : t("rentACarPage.insuranceNotIncluded")}
+        </span>
 
         <div className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1">
           {vehicle.hourlyRateUsd != null ? (
