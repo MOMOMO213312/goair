@@ -38,6 +38,12 @@ function AdminLayout() {
           <div className="flex items-center gap-2">
             <nav className="flex gap-2">
               <Link
+                to="/admin/overview"
+                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
+              >
+                نظرة عامة
+              </Link>
+              <Link
                 to="/admin"
                 activeOptions={{ exact: true }}
                 className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"

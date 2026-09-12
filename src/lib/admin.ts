@@ -1321,3 +1321,77 @@ export function payoutModelLabel(model: string) {
   };
   return map[model] ?? model;
 }
+
+export type AdminDashboardStats = {
+  revenueTodayUsd: number;
+  revenueWeekUsd: number;
+  revenueMonthUsd: number;
+  bookingsToday: number;
+  bookingsWeek: number;
+  bookingsMonth: number;
+  bookingsByStatus: { status: string; count: number }[];
+  pendingPaymentsCount: number;
+  unassignedConfirmedCount: number;
+  pendingRentalApplicationsCount: number;
+  pendingRentalVehiclesCount: number;
+  topRoutes: { origin: string; destination: string; bookingsCount: number; revenueUsd: number }[];
+  partnerPerformance: {
+    partnerName: string;
+    partnerType: string;
+    bookingsCount: number;
+    revenueUsd: number;
+    commissionUsd: number;
+  }[];
+  revenueTrend14d: { day: string; revenueUsd: number }[];
+  averageRating: number | null;
+  ratingsCount: number;
+  activeDriversCount: number;
+  activeVehiclesCount: number;
+  activeOperatorsCount: number;
+  activePartnersCount: number;
+};
+
+export async function adminGetDashboardStats(token: string): Promise<AdminDashboardStats> {
+  const { data, error } = await supabase.rpc("admin_get_dashboard_stats", { p_access_token: token });
+  if (error) rpcError(error);
+  const row = (data ?? {}) as Record<string, unknown>;
+  return {
+    revenueTodayUsd: Number(row["revenue_today_usd"] ?? 0),
+    revenueWeekUsd: Number(row["revenue_week_usd"] ?? 0),
+    revenueMonthUsd: Number(row["revenue_month_usd"] ?? 0),
+    bookingsToday: Number(row["bookings_today"] ?? 0),
+    bookingsWeek: Number(row["bookings_week"] ?? 0),
+    bookingsMonth: Number(row["bookings_month"] ?? 0),
+    bookingsByStatus: ((row["bookings_by_status"] ?? []) as Record<string, unknown>[]).map((r) => ({
+      status: String(r["status"] ?? ""),
+      count: Number(r["count"] ?? 0),
+    })),
+    pendingPaymentsCount: Number(row["pending_payments_count"] ?? 0),
+    unassignedConfirmedCount: Number(row["unassigned_confirmed_count"] ?? 0),
+    pendingRentalApplicationsCount: Number(row["pending_rental_applications_count"] ?? 0),
+    pendingRentalVehiclesCount: Number(row["pending_rental_vehicles_count"] ?? 0),
+    topRoutes: ((row["top_routes"] ?? []) as Record<string, unknown>[]).map((r) => ({
+      origin: String(r["origin"] ?? "—"),
+      destination: String(r["destination"] ?? "—"),
+      bookingsCount: Number(r["bookings_count"] ?? 0),
+      revenueUsd: Number(r["revenue_usd"] ?? 0),
+    })),
+    partnerPerformance: ((row["partner_performance"] ?? []) as Record<string, unknown>[]).map((r) => ({
+      partnerName: String(r["partner_name"] ?? "—"),
+      partnerType: String(r["partner_type"] ?? ""),
+      bookingsCount: Number(r["bookings_count"] ?? 0),
+      revenueUsd: Number(r["revenue_usd"] ?? 0),
+      commissionUsd: Number(r["commission_usd"] ?? 0),
+    })),
+    revenueTrend14d: ((row["revenue_trend_14d"] ?? []) as Record<string, unknown>[]).map((r) => ({
+      day: String(r["day"] ?? ""),
+      revenueUsd: Number(r["revenue_usd"] ?? 0),
+    })),
+    averageRating: row["average_rating"] == null ? null : Number(row["average_rating"]),
+    ratingsCount: Number(row["ratings_count"] ?? 0),
+    activeDriversCount: Number(row["active_drivers_count"] ?? 0),
+    activeVehiclesCount: Number(row["active_vehicles_count"] ?? 0),
+    activeOperatorsCount: Number(row["active_operators_count"] ?? 0),
+    activePartnersCount: Number(row["active_partners_count"] ?? 0),
+  };
+}

@@ -35,6 +35,7 @@ import { Route as AdminAddonServicesRouteImport } from './routes/admin.addon-ser
 import { Route as AdminAnnouncementsRouteImport } from './routes/admin.announcements'
 import { Route as AdminFleetRouteImport } from './routes/admin.fleet'
 import { Route as AdminGroundHandlingRouteImport } from './routes/admin.ground-handling'
+import { Route as AdminOverviewRouteImport } from './routes/admin.overview'
 import { Route as AdminPackagesRouteImport } from './routes/admin.packages'
 import { Route as AdminPartnersRouteImport } from './routes/admin.partners'
 import { Route as AdminPricingRouteImport } from './routes/admin.pricing'
@@ -62,6 +63,7 @@ import { Route as PartnerIndexRouteImport } from './routes/partner.index'
 import { Route as PartnerBookRouteImport } from './routes/partner.book'
 import { Route as PartnerBookingsRouteImport } from './routes/partner.bookings'
 import { Route as PartnerCapacityRouteImport } from './routes/partner.capacity'
+import { Route as PartnerServicesRouteImport } from './routes/partner.services'
 import { Route as PartnerStatementsRouteImport } from './routes/partner.statements'
 import { Route as PartnerSubscriptionsRouteImport } from './routes/partner.subscriptions'
 import { Route as PartnerTeamRouteImport } from './routes/partner.team'
@@ -201,6 +203,11 @@ const AdminGroundHandlingRoute = AdminGroundHandlingRouteImport.update({
   path: '/ground-handling',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminOverviewRoute = AdminOverviewRouteImport.update({
+  id: '/overview',
+  path: '/overview',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminPackagesRoute = AdminPackagesRouteImport.update({
   id: '/packages',
   path: '/packages',
@@ -337,6 +344,11 @@ const PartnerCapacityRoute = PartnerCapacityRouteImport.update({
   path: '/capacity',
   getParentRoute: () => PartnerRoute,
 } as any)
+const PartnerServicesRoute = PartnerServicesRouteImport.update({
+  id: '/services',
+  path: '/services',
+  getParentRoute: () => PartnerRoute,
+} as any)
 const PartnerStatementsRoute = PartnerStatementsRouteImport.update({
   id: '/statements',
   path: '/statements',
@@ -404,6 +416,7 @@ export interface FileRoutesByFullPath {
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/fleet': typeof AdminFleetRoute
   '/admin/ground-handling': typeof AdminGroundHandlingRoute
+  '/admin/overview': typeof AdminOverviewRoute
   '/admin/packages': typeof AdminPackagesRoute
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/pricing': typeof AdminPricingRoute
@@ -428,6 +441,7 @@ export interface FileRoutesByFullPath {
   '/partner/book': typeof PartnerBookRoute
   '/partner/bookings': typeof PartnerBookingsRoute
   '/partner/capacity': typeof PartnerCapacityRoute
+  '/partner/services': typeof PartnerServicesRoute
   '/partner/statements': typeof PartnerStatementsRoute
   '/partner/subscriptions': typeof PartnerSubscriptionsRoute
   '/partner/team': typeof PartnerTeamRoute
@@ -462,6 +476,7 @@ export interface FileRoutesByTo {
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/fleet': typeof AdminFleetRoute
   '/admin/ground-handling': typeof AdminGroundHandlingRoute
+  '/admin/overview': typeof AdminOverviewRoute
   '/admin/packages': typeof AdminPackagesRoute
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/pricing': typeof AdminPricingRoute
@@ -486,6 +501,7 @@ export interface FileRoutesByTo {
   '/partner/book': typeof PartnerBookRoute
   '/partner/bookings': typeof PartnerBookingsRoute
   '/partner/capacity': typeof PartnerCapacityRoute
+  '/partner/services': typeof PartnerServicesRoute
   '/partner/statements': typeof PartnerStatementsRoute
   '/partner/subscriptions': typeof PartnerSubscriptionsRoute
   '/partner/team': typeof PartnerTeamRoute
@@ -526,6 +542,7 @@ export interface FileRoutesById {
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/fleet': typeof AdminFleetRoute
   '/admin/ground-handling': typeof AdminGroundHandlingRoute
+  '/admin/overview': typeof AdminOverviewRoute
   '/admin/packages': typeof AdminPackagesRoute
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/pricing': typeof AdminPricingRoute
@@ -550,6 +567,7 @@ export interface FileRoutesById {
   '/partner/book': typeof PartnerBookRoute
   '/partner/bookings': typeof PartnerBookingsRoute
   '/partner/capacity': typeof PartnerCapacityRoute
+  '/partner/services': typeof PartnerServicesRoute
   '/partner/statements': typeof PartnerStatementsRoute
   '/partner/subscriptions': typeof PartnerSubscriptionsRoute
   '/partner/team': typeof PartnerTeamRoute
@@ -591,6 +609,7 @@ export interface FileRouteTypes {
     | '/admin/announcements'
     | '/admin/fleet'
     | '/admin/ground-handling'
+    | '/admin/overview'
     | '/admin/packages'
     | '/admin/partners'
     | '/admin/pricing'
@@ -615,6 +634,7 @@ export interface FileRouteTypes {
     | '/partner/book'
     | '/partner/bookings'
     | '/partner/capacity'
+    | '/partner/services'
     | '/partner/statements'
     | '/partner/subscriptions'
     | '/partner/team'
@@ -649,6 +669,7 @@ export interface FileRouteTypes {
     | '/admin/announcements'
     | '/admin/fleet'
     | '/admin/ground-handling'
+    | '/admin/overview'
     | '/admin/packages'
     | '/admin/partners'
     | '/admin/pricing'
@@ -673,6 +694,7 @@ export interface FileRouteTypes {
     | '/partner/book'
     | '/partner/bookings'
     | '/partner/capacity'
+    | '/partner/services'
     | '/partner/statements'
     | '/partner/subscriptions'
     | '/partner/team'
@@ -712,6 +734,7 @@ export interface FileRouteTypes {
     | '/admin/announcements'
     | '/admin/fleet'
     | '/admin/ground-handling'
+    | '/admin/overview'
     | '/admin/packages'
     | '/admin/partners'
     | '/admin/pricing'
@@ -736,6 +759,7 @@ export interface FileRouteTypes {
     | '/partner/book'
     | '/partner/bookings'
     | '/partner/capacity'
+    | '/partner/services'
     | '/partner/statements'
     | '/partner/subscriptions'
     | '/partner/team'
@@ -958,6 +982,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminGroundHandlingRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/overview': {
+      id: '/admin/overview'
+      path: '/overview'
+      fullPath: '/admin/overview'
+      preLoaderRoute: typeof AdminOverviewRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/packages': {
       id: '/admin/packages'
       path: '/packages'
@@ -1147,6 +1178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartnerCapacityRouteImport
       parentRoute: typeof PartnerRoute
     }
+    '/partner/services': {
+      id: '/partner/services'
+      path: '/services'
+      fullPath: '/partner/services'
+      preLoaderRoute: typeof PartnerServicesRouteImport
+      parentRoute: typeof PartnerRoute
+    }
     '/partner/statements': {
       id: '/partner/statements'
       path: '/statements'
@@ -1211,6 +1249,7 @@ interface AdminRouteChildren {
   AdminAnnouncementsRoute: typeof AdminAnnouncementsRoute
   AdminFleetRoute: typeof AdminFleetRoute
   AdminGroundHandlingRoute: typeof AdminGroundHandlingRoute
+  AdminOverviewRoute: typeof AdminOverviewRoute
   AdminPackagesRoute: typeof AdminPackagesRoute
   AdminPartnersRoute: typeof AdminPartnersRoute
   AdminPricingRoute: typeof AdminPricingRoute
@@ -1228,6 +1267,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAnnouncementsRoute: AdminAnnouncementsRoute,
   AdminFleetRoute: AdminFleetRoute,
   AdminGroundHandlingRoute: AdminGroundHandlingRoute,
+  AdminOverviewRoute: AdminOverviewRoute,
   AdminPackagesRoute: AdminPackagesRoute,
   AdminPartnersRoute: AdminPartnersRoute,
   AdminPricingRoute: AdminPricingRoute,
@@ -1294,6 +1334,7 @@ interface PartnerRouteChildren {
   PartnerBookRoute: typeof PartnerBookRoute
   PartnerBookingsRoute: typeof PartnerBookingsRoute
   PartnerCapacityRoute: typeof PartnerCapacityRoute
+  PartnerServicesRoute: typeof PartnerServicesRoute
   PartnerStatementsRoute: typeof PartnerStatementsRoute
   PartnerSubscriptionsRoute: typeof PartnerSubscriptionsRoute
   PartnerTeamRoute: typeof PartnerTeamRoute
@@ -1305,6 +1346,7 @@ const PartnerRouteChildren: PartnerRouteChildren = {
   PartnerBookRoute: PartnerBookRoute,
   PartnerBookingsRoute: PartnerBookingsRoute,
   PartnerCapacityRoute: PartnerCapacityRoute,
+  PartnerServicesRoute: PartnerServicesRoute,
   PartnerStatementsRoute: PartnerStatementsRoute,
   PartnerSubscriptionsRoute: PartnerSubscriptionsRoute,
   PartnerTeamRoute: PartnerTeamRoute,
