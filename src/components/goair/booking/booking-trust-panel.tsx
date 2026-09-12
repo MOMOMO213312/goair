@@ -17,8 +17,36 @@ const POINTS: { key: "fixedPrice" | "noCardFees" | "vettedDrivers"; icon: Lucide
  * already on screen reads as filler, not reassurance. Three, said with more
  * visual weight, beats five that duplicate.
  */
-export function BookingTrustPanel({ className }: { className?: string }) {
+export function BookingTrustPanel({
+  className,
+  compact = false,
+}: {
+  className?: string;
+  /** Single-line inline bar instead of the full titled card — for spots
+      where the three points are a light reassurance aside, not a dedicated
+      section (e.g. next to already-detailed search-result cards). */
+  compact?: boolean;
+}) {
   const { t } = useTranslation();
+
+  if (compact) {
+    return (
+      <div
+        className={cn(
+          "flex flex-wrap items-center gap-x-5 gap-y-1.5 rounded-xl border border-border/80 bg-card px-4 py-3",
+          className,
+        )}
+      >
+        {POINTS.map(({ key, icon: Icon }) => (
+          <span key={key} className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
+            <Icon className="size-3.5 text-accent" aria-hidden />
+            {t(`booking.trustPanel.${key}` as const)}
+          </span>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <Card className={cn("border-border/80 p-5 shadow-[var(--shadow-card)] sm:p-6", className)}>
       <h2 className="font-display text-sm font-extrabold text-primary">{t("booking.trustPanel.title")}</h2>
