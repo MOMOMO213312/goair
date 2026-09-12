@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { usePartnerToken } from "@/lib/partner-session";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, ClipboardPaste, Lock, Users } from "lucide-react";
+import { CheckCircle2, ClipboardPaste, FileSpreadsheet, Lock, Users } from "lucide-react";
+import { readSheet } from "read-excel-file/browser";
 
 import { PartnerAuthError, PartnerSection, PartnerTempError } from "@/components/partner/partner-shell";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +60,29 @@ function parsePassengerNames(raw: string): string[] {
     .filter((line) => line.length > 0);
 }
 
+/** Common header labels partners might leave in the first row/column of their sheet. */
+const NAME_HEADER_LABELS = new Set(["name", "names", "الاسم", "اسم", "اسم الراكب", "أسماء الركاب"]);
+
+/**
+ * Reads the first column of an uploaded .xlsx file and returns a clean list
+ * of passenger names — one row per name. Skips a leading header row if it
+ * matches a common "Name"/"الاسم" label, and skips any other empty cells.
+ */
+async function extractNamesFromExcel(file: File): Promise<string[]> {
+  const rows = await readSheet(file);
+  const values = rows
+    .map((row) => row[0])
+    .filter((cell) => cell != null && String(cell).trim().length > 0)
+    .map((cell) => String(cell).trim());
+
+  const firstValue = values[0];
+  if (firstValue && NAME_HEADER_LABELS.has(firstValue.toLowerCase())) {
+    values.shift();
+  }
+
+  return values;
+}
+
 function PartnerQuickBookingPage() {
   const token = usePartnerToken();
 
@@ -111,6 +135,8 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
 
   const [listNames, setListNames] = useState(false);
   const [passengerNamesText, setPassengerNamesText] = useState("");
+  const [excelBusy, setExcelBusy] = useState(false);
+  const excelInputRef = useRef<HTMLInputElement>(null);
 
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -157,6 +183,28 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
 
   const parsedNames = useMemo(() => parsePassengerNames(passengerNamesText), [passengerNamesText]);
   const namesMatchSeats = parsedNames.length === seats;
+
+  async function handleExcelUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = ""; // allow re-selecting the same file next time
+    if (!file) return;
+
+    setExcelBusy(true);
+    try {
+      const names = await extractNamesFromExcel(file);
+      if (names.length === 0) {
+        toast.error("الملف فاضي أو مقدرتش ألاقي أسماء في العمود الأول.");
+        return;
+      }
+      setPassengerNamesText(names.join("\n"));
+      setListNames(true);
+      toast.success(`اتقرا ${names.length} اسم من الملف بنجاح.`);
+    } catch {
+      toast.error("مقدرتش أقرا الملف ده. اتأكد إنه ملف إكسل (.xlsx) سليم.");
+    } finally {
+      setExcelBusy(false);
+    }
+  }
 
   function toggleAddon(id: string) {
     setAddonIds((prev) => (prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]));
@@ -496,8 +544,26 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
           {listNames ? (
             <div className="space-y-2">
               <p className="text-xs text-muted-foreground">
-                الصق قائمة الأسماء زي ما هي من الإكسل أو الورقة — اسم في كل سطر (أو مفصولة بفاصلة)، وهنطابقها تلقائيًا مع عدد الركاب.
+                الصق قائمة الأسماء زي ما هي من الإكسل أو الورقة — اسم في كل سطر (أو مفصولة بفاصلة)، وهنطابقها تلقائيًا مع عدد الركاب. أو ارفع ملف الإكسل نفسه بدل اللصق.
               </p>
+              <input
+                ref={excelInputRef}
+                type="file"
+                accept=".xlsx"
+                className="hidden"
+                onChange={handleExcelUpload}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={excelBusy}
+                onClick={() => excelInputRef.current?.click()}
+                className="gap-1.5"
+              >
+                <FileSpreadsheet className="size-4" aria-hidden />
+                {excelBusy ? "جاري القراءة..." : "رفع ملف إكسل"}
+              </Button>
               <Textarea
                 value={passengerNamesText}
                 onChange={(e) => setPassengerNamesText(e.target.value)}
