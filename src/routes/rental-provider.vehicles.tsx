@@ -38,10 +38,11 @@ import {
   listRentalProviderVehicles,
   MAX_VEHICLE_PHOTOS,
   updateRentalProviderVehicle,
+  updateRentalProviderVehiclePickupArea,
   uploadRentalVehiclePhotos,
   type RentalProviderVehicle,
 } from "@/lib/rental-provider";
-import { fetchRentalVehicleCategories } from "@/lib/goair";
+import { fetchRentalPickupAreas, fetchRentalVehicleCategories } from "@/lib/goair";
 
 export const Route = createFileRoute("/rental-provider/vehicles")({
   head: () => ({ meta: [{ title: "عرباتي — بوابة مزوّد التأجير" }, { name: "robots", content: "noindex" }] }),
@@ -165,6 +166,12 @@ function VehicleCard({
           {vehicle.hourlyRateUsd ? ` · ${vehicle.hourlyRateUsd}$/ساعة` : ""}
           {vehicle.multiDayRateUsd ? ` · ${vehicle.multiDayRateUsd}$/يوم (${vehicle.multiDayThresholdDays}+ أيام)` : ""}
         </p>
+        {vehicle.city ? (
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            منطقة الاستلام: {vehicle.city}
+            {vehicle.pickupAreaCustom ? ` — ${vehicle.pickupAreaCustom}` : ""}
+          </p>
+        ) : null}
         <span
           className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-bold ${statusBadgeClass(vehicle.approvalStatus)}`}
         >
@@ -290,6 +297,91 @@ function VehiclePhotoPicker({
   );
 }
 
+const PICKUP_AREA_OTHER = "__other__";
+
+// City + pickup-area picker shared between the add and edit dialogs. The
+// area list is preset per (country, city); if the city has no presets yet
+// (or the provider picks "منطقة تانية"), we fall back to free text.
+function PickupAreaFields({
+  country,
+  city,
+  onCityChange,
+  pickupAreaId,
+  onPickupAreaIdChange,
+  pickupAreaCustom,
+  onPickupAreaCustomChange,
+}: {
+  country: string;
+  city: string;
+  onCityChange: (v: string) => void;
+  pickupAreaId: string | null;
+  onPickupAreaIdChange: (v: string | null) => void;
+  pickupAreaCustom: string;
+  onPickupAreaCustomChange: (v: string) => void;
+}) {
+  const trimmedCity = city.trim();
+  const areasQuery = useQuery({
+    queryKey: ["rental-pickup-areas", country, trimmedCity],
+    queryFn: () => fetchRentalPickupAreas(country, trimmedCity),
+    enabled: Boolean(country && trimmedCity),
+  });
+  const areas = areasQuery.data ?? [];
+  const showCustom = !pickupAreaId; // no preset selected yet -> free text
+
+  return (
+    <div className="space-y-3 rounded-lg border border-border/70 p-3">
+      <div className="space-y-2">
+        <Label htmlFor="city">المدينة</Label>
+        <Input
+          id="city"
+          placeholder="مثال: القاهرة"
+          value={city}
+          onChange={(e) => {
+            onCityChange(e.target.value);
+            onPickupAreaIdChange(null);
+            onPickupAreaCustomChange("");
+          }}
+        />
+      </div>
+      {trimmedCity ? (
+        <div className="space-y-2">
+          <Label>منطقة الاستلام المعتادة (اختياري)</Label>
+          <Select
+            value={pickupAreaId ?? (showCustom ? PICKUP_AREA_OTHER : "")}
+            onValueChange={(v) => {
+              if (v === PICKUP_AREA_OTHER) {
+                onPickupAreaIdChange(null);
+              } else {
+                onPickupAreaIdChange(v);
+                onPickupAreaCustomChange("");
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="اختار منطقة" />
+            </SelectTrigger>
+            <SelectContent>
+              {areas.map((a) => (
+                <SelectItem key={a.id} value={a.id}>
+                  {a.name}
+                </SelectItem>
+              ))}
+              <SelectItem value={PICKUP_AREA_OTHER}>منطقة تانية...</SelectItem>
+            </SelectContent>
+          </Select>
+          {showCustom ? (
+            <Input
+              placeholder="اكتب اسم المنطقة"
+              value={pickupAreaCustom}
+              onChange={(e) => onPickupAreaCustomChange(e.target.value)}
+            />
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function VehicleFormDialog({
   token,
   country,
@@ -312,6 +404,9 @@ function VehicleFormDialog({
   const [seats, setSeats] = useState("");
   const [description, setDescription] = useState("");
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [city, setCity] = useState("");
+  const [pickupAreaId, setPickupAreaId] = useState<string | null>(null);
+  const [pickupAreaCustom, setPickupAreaCustom] = useState("");
   const [busy, setBusy] = useState(false);
   const [busyLabel, setBusyLabel] = useState("جاري الحفظ...");
 
@@ -329,7 +424,7 @@ function VehicleFormDialog({
         photos = await uploadRentalVehiclePhotos(photoFiles);
       }
       setBusyLabel("جاري الحفظ...");
-      await addRentalProviderVehicle(token, {
+      const vehicleId = await addRentalProviderVehicle(token, {
         categoryId,
         country,
         plateNumber: plateNumber.trim(),
@@ -343,6 +438,15 @@ function VehicleFormDialog({
         description: description.trim() || null,
         photos,
       });
+      if (city.trim() && (pickupAreaId || pickupAreaCustom.trim())) {
+        await updateRentalProviderVehiclePickupArea(
+          token,
+          vehicleId,
+          city.trim(),
+          pickupAreaId,
+          pickupAreaId ? null : pickupAreaCustom.trim(),
+        );
+      }
       toast.success("تمت إضافة العربية — هتبقى ظاهرة للعملاء بعد موافقة GoAir.");
       onDone();
     } catch (error) {
@@ -402,6 +506,15 @@ function VehicleFormDialog({
           <Label htmlFor="seats">عدد المقاعد (اختياري)</Label>
           <Input id="seats" inputMode="numeric" value={seats} onChange={(e) => setSeats(e.target.value)} />
         </div>
+        <PickupAreaFields
+          country={country}
+          city={city}
+          onCityChange={setCity}
+          pickupAreaId={pickupAreaId}
+          onPickupAreaIdChange={setPickupAreaId}
+          pickupAreaCustom={pickupAreaCustom}
+          onPickupAreaCustomChange={setPickupAreaCustom}
+        />
         <div className="space-y-2">
           <Label htmlFor="desc">وصف العربية (اختياري)</Label>
           <Textarea
@@ -445,6 +558,9 @@ function EditVehicleDialog({
   const [description, setDescription] = useState(vehicle.description ?? "");
   const [existingPhotos, setExistingPhotos] = useState<string[]>(vehicle.photos ?? []);
   const [newPhotoFiles, setNewPhotoFiles] = useState<File[]>([]);
+  const [city, setCity] = useState(vehicle.city ?? "");
+  const [pickupAreaId, setPickupAreaId] = useState<string | null>(vehicle.pickupAreaId);
+  const [pickupAreaCustom, setPickupAreaCustom] = useState(vehicle.pickupAreaCustom ?? "");
   const [busy, setBusy] = useState(false);
   const [busyLabel, setBusyLabel] = useState("جاري الحفظ...");
 
@@ -468,6 +584,15 @@ function EditVehicleDialog({
         description: description.trim() || null,
         photos,
       });
+      if (city.trim() && (pickupAreaId || pickupAreaCustom.trim())) {
+        await updateRentalProviderVehiclePickupArea(
+          token,
+          vehicle.id,
+          city.trim(),
+          pickupAreaId,
+          pickupAreaId ? null : pickupAreaCustom.trim(),
+        );
+      }
       toast.success("اتحفظ التعديل — هيرجع للمراجعة قبل ما يظهر تاني.");
       onDone();
     } catch (error) {
@@ -508,6 +633,15 @@ function EditVehicleDialog({
             <Input id="e-multiday" inputMode="decimal" value={multiDayRate} onChange={(e) => setMultiDayRate(e.target.value)} />
           </div>
         </div>
+        <PickupAreaFields
+          country={vehicle.country}
+          city={city}
+          onCityChange={setCity}
+          pickupAreaId={pickupAreaId}
+          onPickupAreaIdChange={setPickupAreaId}
+          pickupAreaCustom={pickupAreaCustom}
+          onPickupAreaCustomChange={setPickupAreaCustom}
+        />
         <div className="space-y-2">
           <Label htmlFor="e-desc">الوصف</Label>
           <Textarea id="e-desc" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />

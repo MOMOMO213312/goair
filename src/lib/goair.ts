@@ -729,6 +729,8 @@ export type RentalVehicle = {
   categoryLabelAr: string | null;
   categoryLabelEn: string | null;
   country: string;
+  city: string | null;
+  pickupAreaLabel: string | null;
   makeModel: string;
   photos: string[];
   description: string | null;
@@ -747,12 +749,17 @@ export type RentalVehicle = {
 
 function mapRentalVehicle(row: Record<string, unknown>): RentalVehicle {
   const category = row["rental_vehicle_categories"] as Record<string, unknown> | null;
+  const pickupArea = row["rental_pickup_areas"] as Record<string, unknown> | null;
   return {
     id: String(row["id"]),
     categoryId: (row["category_id"] as string | null) ?? null,
     categoryLabelAr: (category?.["label_ar"] as string | null) ?? null,
     categoryLabelEn: (category?.["label_en"] as string | null) ?? null,
     country: String(row["country"] ?? ""),
+    city: (row["city"] as string | null) ?? null,
+    // Normalized area name takes priority; falls back to the free-text
+    // "other area" the provider typed when their area wasn't in the list.
+    pickupAreaLabel: (pickupArea?.["name"] as string | null) ?? (row["pickup_area_custom"] as string | null) ?? null,
     makeModel: String(row["make_model"] ?? ""),
     photos: (row["photos"] as string[] | null) ?? [],
     description: (row["description"] as string | null) ?? null,
@@ -780,13 +787,32 @@ export async function fetchAvailableRentalVehicles(country?: string): Promise<Re
   let query = supabase
     .from("rental_vehicles")
     .select(
-      "id, category_id, country, make_model, photos, description, hourly_rate_usd, daily_rate_usd, multi_day_rate_usd, multi_day_threshold_days, min_rental_hours, transmission, fuel_type, seats, daily_mileage_limit_km, insurance_included, rental_vehicle_categories(label_ar, label_en)",
+      "id, category_id, country, city, pickup_area_custom, make_model, photos, description, hourly_rate_usd, daily_rate_usd, multi_day_rate_usd, multi_day_threshold_days, min_rental_hours, transmission, fuel_type, seats, daily_mileage_limit_km, insurance_included, rental_vehicle_categories(label_ar, label_en), rental_pickup_areas(name)",
     )
     .order("created_at", { ascending: false });
   if (country) query = query.eq("country", country);
   const { data, error } = await query;
   if (error) throw new Error(error.message);
   return ((data ?? []) as Record<string, unknown>[]).map(mapRentalVehicle);
+}
+
+export type RentalPickupArea = { id: string; name: string };
+
+/** Preset pickup-area options for a given country+city — used by the rental
+ * provider's vehicle form and (optionally) as a browse filter. Returns an
+ * empty list for a city with no preset areas yet, which callers should treat
+ * as "free-text only". */
+export async function fetchRentalPickupAreas(country: string, city: string): Promise<RentalPickupArea[]> {
+  if (!country || !city) return [];
+  const { data, error } = await supabase.rpc("get_rental_pickup_areas", {
+    p_country: country,
+    p_city: city,
+  });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+    id: String(row["id"]),
+    name: String(row["name"]),
+  }));
 }
 
 export type RentalDurationType = "hourly" | "daily" | "multi_day";

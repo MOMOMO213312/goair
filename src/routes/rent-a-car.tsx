@@ -127,6 +127,7 @@ function RentACarPage() {
   const { t, language } = useTranslation();
 
   const [countryFilter, setCountryFilter] = useState<string>("all");
+  const [cityFilter, setCityFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [transmissionFilter, setTransmissionFilter] = useState<string>("all");
   const [fuelFilter, setFuelFilter] = useState<string>("all");
@@ -146,10 +147,23 @@ function RentACarPage() {
   const [phase, setPhase] = useState<Phase>("browse");
   const [selectedVehicle, setSelectedVehicle] = useState<RentalVehicle | null>(null);
 
+  // Cities are derived from whatever vehicles are currently loaded (already
+  // scoped by countryFilter) rather than a separate query — the dataset is
+  // small and this keeps the filter in sync automatically as providers add
+  // vehicles in new cities, with no extra migration needed to expand.
+  const availableCities = useMemo(() => {
+    const cities = new Set<string>();
+    for (const v of vehiclesQuery.data ?? []) {
+      if (v.city) cities.add(v.city);
+    }
+    return Array.from(cities).sort();
+  }, [vehiclesQuery.data]);
+
   const visibleVehicles = useMemo(() => {
     const list = vehiclesQuery.data ?? [];
     const filtered = list.filter(
       (vehicle) =>
+        (cityFilter === "all" || vehicle.city === cityFilter) &&
         (categoryFilter === "all" || vehicle.categoryId === categoryFilter) &&
         (transmissionFilter === "all" || vehicle.transmission === transmissionFilter) &&
         (fuelFilter === "all" || vehicle.fuelType === fuelFilter),
@@ -158,14 +172,19 @@ function RentACarPage() {
     if (sortBy === "price_asc") sorted.sort((a, b) => a.dailyRateUsd - b.dailyRateUsd);
     else if (sortBy === "price_desc") sorted.sort((a, b) => b.dailyRateUsd - a.dailyRateUsd);
     return sorted;
-  }, [vehiclesQuery.data, categoryFilter, transmissionFilter, fuelFilter, sortBy]);
+  }, [vehiclesQuery.data, cityFilter, categoryFilter, transmissionFilter, fuelFilter, sortBy]);
 
   const hasAnyVehicles = (vehiclesQuery.data?.length ?? 0) > 0;
   const filtersActive =
-    countryFilter !== "all" || categoryFilter !== "all" || transmissionFilter !== "all" || fuelFilter !== "all";
+    countryFilter !== "all" ||
+    cityFilter !== "all" ||
+    categoryFilter !== "all" ||
+    transmissionFilter !== "all" ||
+    fuelFilter !== "all";
 
   function clearFilters() {
     setCountryFilter("all");
+    setCityFilter("all");
     setCategoryFilter("all");
     setTransmissionFilter("all");
     setFuelFilter("all");
@@ -278,7 +297,13 @@ function RentACarPage() {
               </div>
 
               <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border/70 pt-4">
-                <Select value={countryFilter} onValueChange={setCountryFilter}>
+                <Select
+                  value={countryFilter}
+                  onValueChange={(v) => {
+                    setCountryFilter(v);
+                    setCityFilter("all");
+                  }}
+                >
                   <SelectTrigger className="w-auto min-w-40">
                     <SelectValue placeholder={t("rentACarPage.filterAllCountries")} />
                   </SelectTrigger>
@@ -291,6 +316,22 @@ function RentACarPage() {
                     ))}
                   </SelectContent>
                 </Select>
+
+                {availableCities.length > 0 ? (
+                  <Select value={cityFilter} onValueChange={setCityFilter}>
+                    <SelectTrigger className="w-auto min-w-40">
+                      <SelectValue placeholder={t("rentACarPage.filterAllCities")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">{t("rentACarPage.filterAllCities")}</SelectItem>
+                      {availableCities.map((city) => (
+                        <SelectItem key={city} value={city}>
+                          {city}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : null}
 
                 <Select value={transmissionFilter} onValueChange={setTransmissionFilter}>
                   <SelectTrigger className="w-auto min-w-40">
@@ -528,6 +569,13 @@ function RentalVehicleCard({
       <RentalVehiclePhoto vehicle={vehicle} categoryLabel={categoryLabel} />
       <div className="flex flex-1 flex-col p-5">
         <h3 className="font-display text-lg font-extrabold text-primary">{vehicle.makeModel}</h3>
+        {vehicle.city ? (
+          <p className="mt-0.5 flex items-center gap-1 text-xs font-semibold text-muted-foreground">
+            <MapPin className="size-3 shrink-0" aria-hidden />
+            {vehicle.city}
+            {vehicle.pickupAreaLabel ? ` — ${vehicle.pickupAreaLabel}` : ""}
+          </p>
+        ) : null}
         {vehicle.description ? (
           <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{vehicle.description}</p>
         ) : null}

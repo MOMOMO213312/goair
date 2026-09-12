@@ -965,6 +965,7 @@ const en = {
     errorLoading: "Something went wrong loading available cars.",
     retryButton: "Try again",
     filterAllCountries: "All countries",
+    filterAllCities: "All cities",
     filterAllCategories: "All categories",
     sortLabel: "Sort by",
     sortNewest: "Newest",

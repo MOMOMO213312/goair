@@ -927,6 +927,7 @@ const ar = {
     errorLoading: "حصل خطأ في تحميل العربيات المتاحة.",
     retryButton: "حاول تاني",
     filterAllCountries: "كل الدول",
+    filterAllCities: "كل المدن",
     filterAllCategories: "كل الفئات",
     sortLabel: "الترتيب",
     sortNewest: "الأحدث",

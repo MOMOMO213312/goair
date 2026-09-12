@@ -63,6 +63,9 @@ export type RentalProviderVehicle = {
   id: string;
   categoryId: string;
   country: string;
+  city: string | null;
+  pickupAreaId: string | null;
+  pickupAreaCustom: string | null;
   plateNumber: string;
   makeModel: string;
   photos: string[];
@@ -87,6 +90,9 @@ function mapVehicle(row: Record<string, unknown>): RentalProviderVehicle {
     id: String(row["id"]),
     categoryId: String(row["category_id"]),
     country: String(row["country"]),
+    city: (row["city"] as string | null) ?? null,
+    pickupAreaId: (row["pickup_area_id"] as string | null) ?? null,
+    pickupAreaCustom: (row["pickup_area_custom"] as string | null) ?? null,
     plateNumber: String(row["plate_number"]),
     makeModel: String(row["make_model"]),
     photos: (row["photos"] as string[] | null) ?? [],
@@ -199,6 +205,26 @@ export async function updateRentalProviderVehicle(
     p_description: input.description ?? null,
     p_is_active: input.isActive ?? null,
     p_photos: input.photos ?? null,
+  });
+  if (error) rpcError(error);
+}
+
+// Separate RPC (not part of updateRentalProviderVehicle) because pickup
+// area needs exactly one of a normalized area id OR free-text custom area —
+// enforced by rental_partner_update_vehicle_pickup_area itself.
+export async function updateRentalProviderVehiclePickupArea(
+  token: string,
+  vehicleId: string,
+  city: string,
+  pickupAreaId: string | null,
+  pickupAreaCustom: string | null,
+): Promise<void> {
+  const { error } = await supabase.rpc("rental_partner_update_vehicle_pickup_area", {
+    p_token: token,
+    p_vehicle_id: vehicleId,
+    p_city: city,
+    p_pickup_area_id: pickupAreaId,
+    p_pickup_area_custom: pickupAreaCustom,
   });
   if (error) rpcError(error);
 }
