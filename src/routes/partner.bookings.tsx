@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import {
   BookingStatusBadge,
+  LifecycleBadge,
   PartnerAuthError,
   PartnerSection,
   PartnerTableSkeleton,
@@ -110,6 +111,7 @@ function BookingsPage() {
                 <TableHead className="text-right">عدد المقاعد</TableHead>
                 <TableHead className="text-right">الدفع</TableHead>
                 <TableHead className="text-right">الحالة</TableHead>
+                <TableHead className="text-right">مرحلة الرحلة</TableHead>
                 <TableHead className="text-right">إجمالي الحجز</TableHead>
                 <TableHead className="text-right">العمولة</TableHead>
               </TableRow>
@@ -126,6 +128,13 @@ function BookingsPage() {
                   <TableCell>{row.paymentStatus}</TableCell>
                   <TableCell>
                     <BookingStatusBadge status={row.status} />
+                  </TableCell>
+                  <TableCell>
+                    {row.status.toLowerCase() === "cancelled" || row.status.toLowerCase() === "canceled" ? (
+                      <span className="text-muted-foreground">—</span>
+                    ) : (
+                      <LifecycleBadge status={row.lifecycleStatus} driverName={row.driverName} />
+                    )}
                   </TableCell>
                   <TableCell>{formatPartnerMoney(row.expectedTotalUsd)}</TableCell>
                   <TableCell className="font-bold text-accent">{formatPartnerMoney(row.commissionUsd)}</TableCell>

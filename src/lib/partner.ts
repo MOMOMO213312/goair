@@ -127,6 +127,10 @@ export type PartnerBooking = {
   expectedTotalUsd: number;
   commissionUsd: number;
   paymentStatus: string;
+  /** Operator-side execution status from trip_assignments (null until a driver is assigned). */
+  lifecycleStatus: string | null;
+  lifecycleUpdatedAt: string | null;
+  driverName: string | null;
 };
 
 export async function getPartnerBookings(
@@ -153,6 +157,9 @@ export async function getPartnerBookings(
     expectedTotalUsd: num(row["expected_total_usd"]),
     commissionUsd: num(row["commission_usd"]),
     paymentStatus: String(row["payment_status"] ?? "لسه ما دفعش"),
+    lifecycleStatus: (row["lifecycle_status"] as string | null) ?? null,
+    lifecycleUpdatedAt: (row["lifecycle_updated_at"] as string | null) ?? null,
+    driverName: (row["driver_name"] as string | null) ?? null,
   }));
 }
 
@@ -254,3 +261,53 @@ export function partnerBookingStatusLabel(status: string) {
   };
   return map[key] ?? status;
 }
+
+/**
+ * Operator-side execution lifecycle (`trip_assignments.operator_status`) —
+ * separate from `booking.status`. This is what actually tells a partner
+ * whether a driver was assigned and where the trip is right now, not just
+ * whether the booking itself was accepted.
+ */
+const LIFECYCLE_STAGES = [
+  "pending",
+  "accepted",
+  "on_the_way",
+  "picked_up",
+  "completed",
+] as const;
+
+const LIFECYCLE_LABELS: Record<string, string> = {
+  pending: "بانتظار تعيين سائق",
+  accepted: "تم تعيين السائق",
+  on_the_way: "السائق في الطريق",
+  picked_up: "تم استلام الراكب",
+  completed: "اكتملت الرحلة",
+  delayed: "تأخير",
+  vehicle_issue: "مشكلة في المركبة",
+  driver_change: "تم تغيير السائق",
+  cancelled: "ملغاة",
+  no_show: "الراكب لم يحضر",
+  rejected: "تم رفض التعيين",
+};
+
+/** Human label for an operator_status value. Falls back to a generic "not yet dispatched" label when null (booking exists but no driver assigned yet). */
+export function partnerLifecycleLabel(status: string | null) {
+  if (!status) return "لسه ما اتجهزتش للتشغيل";
+  return LIFECYCLE_LABELS[status.toLowerCase()] ?? status;
+}
+
+/** Whether this lifecycle status represents a problem that deserves a warning color, rather than normal progress. */
+export function isPartnerLifecycleAlert(status: string | null) {
+  if (!status) return false;
+  return ["delayed", "vehicle_issue", "no_show", "rejected"].includes(status.toLowerCase());
+}
+
+/** 0-based progress index into the normal happy-path stages, or null for cancelled/alert statuses that don't fit a linear progress bar. */
+export function partnerLifecycleProgress(status: string | null): number | null {
+  if (!status) return 0;
+  const key = status.toLowerCase();
+  const index = LIFECYCLE_STAGES.indexOf(key as (typeof LIFECYCLE_STAGES)[number]);
+  return index === -1 ? null : index;
+}
+
+export const PARTNER_LIFECYCLE_STAGE_COUNT = LIFECYCLE_STAGES.length;

@@ -5,6 +5,7 @@ import {
   CalendarRange,
   FileText,
   LayoutDashboard,
+  PackageSearch,
   ScrollText,
   Sparkles,
   Users,
@@ -13,12 +14,20 @@ import {
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PartnerDashboard } from "@/lib/partner";
-import { PARTNER_AUTH_ERROR, partnerBookingStatusLabel } from "@/lib/partner";
+import {
+  isPartnerLifecycleAlert,
+  PARTNER_AUTH_ERROR,
+  PARTNER_LIFECYCLE_STAGE_COUNT,
+  partnerBookingStatusLabel,
+  partnerLifecycleLabel,
+  partnerLifecycleProgress,
+} from "@/lib/partner";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { to: "/partner", label: "نظرة عامة", exact: true, icon: LayoutDashboard },
   { to: "/partner/book", label: "احجز لعميل", icon: CalendarRange },
+  { to: "/partner/services", label: "خدماتك", icon: PackageSearch },
   { to: "/partner/bookings", label: "الحجوزات", icon: CalendarRange },
   { to: "/partner/subscriptions", label: "الاشتراكات", icon: Sparkles },
   { to: "/partner/statements", label: "كشوف الحساب", icon: ScrollText },
@@ -285,5 +294,58 @@ export function BookingStatusBadge({ status }: { status: string }) {
     >
       {partnerBookingStatusLabel(status)}
     </span>
+  );
+}
+
+/**
+ * Shows where a confirmed booking actually stands operationally — driver
+ * assigned, on the way, picked up, completed — not just the yes/no booking
+ * acceptance status from BookingStatusBadge. Only meaningful once a booking
+ * is confirmed; cancelled bookings never reach dispatch.
+ */
+export function LifecycleBadge({
+  status,
+  driverName,
+}: {
+  status: string | null;
+  driverName?: string | null;
+}) {
+  const alert = isPartnerLifecycleAlert(status);
+  const progress = partnerLifecycleProgress(status);
+  const isComplete = status?.toLowerCase() === "completed";
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span
+        className={cn(
+          "inline-flex w-fit rounded-full px-3 py-1 text-xs font-bold",
+          alert
+            ? "bg-destructive/10 text-destructive"
+            : isComplete
+              ? "bg-primary text-primary-foreground"
+              : status
+                ? "bg-accent/15 text-primary"
+                : "bg-muted text-muted-foreground",
+        )}
+      >
+        {partnerLifecycleLabel(status)}
+      </span>
+      {progress !== null && !alert ? (
+        <div className="flex gap-1" aria-hidden>
+          {Array.from({ length: PARTNER_LIFECYCLE_STAGE_COUNT }).map((_, index) => (
+            <span
+              key={index}
+              className={cn(
+                "h-1 w-4 rounded-full",
+                index <= progress ? "bg-primary" : "bg-border",
+              )}
+            />
+          ))}
+        </div>
+      ) : null}
+      {driverName ? (
+        <span className="text-xs text-muted-foreground">السائق: {driverName}</span>
+      ) : null}
+    </div>
   );
 }
