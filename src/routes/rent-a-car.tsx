@@ -52,10 +52,13 @@ import { cn } from "@/lib/utils";
 
 const pageMeta = translations[DEFAULT_LANGUAGE].rentACarPage.meta;
 
-// Real, freely-licensed (Unsplash) highway photo — same hotlinking pattern
-// used for the homepage/explore hero imagery (see trip-media.ts / index.tsx).
+// Real, freely-licensed (Unsplash) highway-at-night photo — same hotlinking
+// pattern used for the homepage/explore hero imagery (see trip-media.ts /
+// index.tsx). Chosen over a bright daytime highway shot because it's
+// naturally dark, so it stays clearly visible under the hero's navy→violet
+// overlay instead of getting washed out to a flat color.
 const rentalHeroImage =
-  "https://images.unsplash.com/photo-1776142519355-641c5b7d5df0?q=80&w=1920&auto=format&fit=crop";
+  "https://images.unsplash.com/photo-1695064940434-b81422491b64?q=80&w=1920&auto=format&fit=crop";
 
 export const Route = createFileRoute("/rent-a-car")({
   head: () => ({
@@ -203,9 +206,9 @@ function RentACarPage() {
               src={rentalHeroImage}
               alt=""
               loading="eager"
-              className="absolute inset-0 -z-10 size-full object-cover opacity-25"
+              className="absolute inset-0 -z-10 size-full object-cover opacity-70"
             />
-            <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/90 to-violet-deep/90" />
+            <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/75 via-primary/35 to-violet-deep/70" />
             <RoadRoute className="pointer-events-none absolute inset-x-0 top-6 h-16 w-full text-accent/25 sm:top-10 sm:h-24 [stroke-dasharray:1200] [stroke-dashoffset:1200] motion-safe:animate-[draw-route_1.8s_ease-out_forwards]" />
 
             <div className="goair-container relative">
