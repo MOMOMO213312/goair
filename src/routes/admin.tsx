@@ -105,6 +105,12 @@ function AdminLayout() {
                 عربيات التأجير
               </Link>
               <Link
+                to="/admin/rental-partners"
+                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
+              >
+                مزوّدو التأجير
+              </Link>
+              <Link
                 to="/admin/team"
                 className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
               >

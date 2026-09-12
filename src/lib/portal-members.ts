@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 // وشريك الطيران (partner). الدوال دي بتتعامل مع جدول portal_members اللي
 // بيسجل كل عضو بدور owner أو member.
 
-export type PortalType = "operator" | "agency" | "partner" | "ground_handling";
+export type PortalType = "operator" | "agency" | "partner" | "ground_handling" | "rental";
 
 export type PortalMemberRole = "owner" | "member";
 

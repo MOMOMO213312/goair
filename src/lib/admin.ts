@@ -807,30 +807,54 @@ export async function adminUpdateRentalPartnerApplicationStatus(
 
 export async function adminApproveRentalPartnerApplication(
   token: string,
-  params: {
-    applicationId: string;
-    plateNumber: string;
-    hourlyRateUsd: number | null;
-    dailyRateUsd: number;
-    multiDayRateUsd: number | null;
-    multiDayThresholdDays: number;
-    minRentalHours: number;
-    description: string | null;
-  },
+  applicationId: string,
 ): Promise<string> {
+  // Approving now only creates/activates the partner account (individual or company).
+  // The provider adds their own vehicle(s) afterward from their own portal.
   const { data, error } = await supabase.rpc("admin_approve_rental_partner_application", {
     p_access_token: token,
-    p_application_id: params.applicationId,
-    p_plate_number: params.plateNumber,
-    p_hourly_rate_usd: params.hourlyRateUsd,
-    p_daily_rate_usd: params.dailyRateUsd,
-    p_multi_day_rate_usd: params.multiDayRateUsd,
-    p_multi_day_threshold_days: params.multiDayThresholdDays,
-    p_min_rental_hours: params.minRentalHours,
-    p_description: params.description,
+    p_application_id: applicationId,
   });
   if (error) rpcError(error);
   return String(data);
+}
+
+export type AdminRentalPartnerRow = {
+  id: string;
+  fullName: string;
+  companyName: string | null;
+  providerType: "individual" | "company";
+  phoneNumber: string;
+  email: string | null;
+  country: string;
+  isActive: boolean;
+  accessToken: string | null;
+  authUserId: string | null;
+  vehiclesCount: number;
+  createdAt: string;
+};
+
+function mapRentalPartner(row: Record<string, unknown>): AdminRentalPartnerRow {
+  return {
+    id: String(row["id"]),
+    fullName: String(row["full_name"]),
+    companyName: (row["company_name"] as string | null) ?? null,
+    providerType: row["provider_type"] === "company" ? "company" : "individual",
+    phoneNumber: String(row["phone_number"]),
+    email: (row["email"] as string | null) ?? null,
+    country: String(row["country"]),
+    isActive: Boolean(row["is_active"]),
+    accessToken: (row["access_token"] as string | null) ?? null,
+    authUserId: (row["auth_user_id"] as string | null) ?? null,
+    vehiclesCount: Number(row["vehicles_count"] ?? 0),
+    createdAt: String(row["created_at"]),
+  };
+}
+
+export async function adminListRentalPartners(token: string): Promise<AdminRentalPartnerRow[]> {
+  const { data, error } = await supabase.rpc("admin_list_rental_partners", { p_access_token: token });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map(mapRentalPartner);
 }
 
 export function rentalApplicationStatusLabel(status: string) {

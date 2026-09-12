@@ -9,18 +9,6 @@ import { AdminAuthError, AdminLoading } from "@/components/admin/admin-shell";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
   adminApproveRentalPartnerApplication,
   adminListRentalPartnerApplications,
   adminUpdateRentalPartnerApplicationStatus,
@@ -105,7 +93,7 @@ function ApplicationCard({
   categoryLabel: string | undefined;
   onDone: () => void;
 }) {
-  const [approveOpen, setApproveOpen] = useState(false);
+  const [approving, setApproving] = useState(false);
 
   async function setStatus(status: string) {
     try {
@@ -114,6 +102,19 @@ function ApplicationCard({
       onDone();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "حصل خطأ.");
+    }
+  }
+
+  async function approve() {
+    setApproving(true);
+    try {
+      await adminApproveRentalPartnerApplication(token, app.id);
+      toast.success("تم إنشاء حساب المزوّد. هيقدر يدخل لوحته ويضيف عرباته بنفسه.");
+      onDone();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
+    } finally {
+      setApproving(false);
     }
   }
 
@@ -147,101 +148,17 @@ function ApplicationCard({
             <Button size="sm" variant="outline" onClick={() => setStatus("rejected")}>
               رفض
             </Button>
-            <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" className="bg-primary font-bold text-primary-foreground hover:bg-primary/90">
-                  موافقة وإنشاء عربية
-                </Button>
-              </DialogTrigger>
-              <ApproveDialogContent app={app} token={token} onDone={() => { setApproveOpen(false); onDone(); }} />
-            </Dialog>
+            <Button
+              size="sm"
+              disabled={approving}
+              onClick={approve}
+              className="bg-primary font-bold text-primary-foreground hover:bg-primary/90"
+            >
+              {approving ? "جاري الموافقة..." : "موافقة — إنشاء حساب المزوّد"}
+            </Button>
           </>
         ) : null}
       </div>
     </Card>
-  );
-}
-
-function ApproveDialogContent({
-  app,
-  token,
-  onDone,
-}: {
-  app: RentalPartnerApplicationRow;
-  token: string;
-  onDone: () => void;
-}) {
-  const [plateNumber, setPlateNumber] = useState("");
-  const [hourlyRate, setHourlyRate] = useState("");
-  const [dailyRate, setDailyRate] = useState("");
-  const [multiDayRate, setMultiDayRate] = useState("");
-  const [description, setDescription] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  async function onSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    if (!plateNumber.trim() || !dailyRate.trim()) {
-      toast.error("رقم اللوحة والسعر اليومي مطلوبين.");
-      return;
-    }
-    setBusy(true);
-    try {
-      await adminApproveRentalPartnerApplication(token, {
-        applicationId: app.id,
-        plateNumber: plateNumber.trim(),
-        hourlyRateUsd: hourlyRate.trim() ? Number(hourlyRate) : null,
-        dailyRateUsd: Number(dailyRate),
-        multiDayRateUsd: multiDayRate.trim() ? Number(multiDayRate) : null,
-        multiDayThresholdDays: 3,
-        minRentalHours: 3,
-        description: description.trim() || null,
-      });
-      toast.success("تم إنشاء العربية والموافقة على الطلب.");
-      onDone();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>موافقة على طلب {app.fullName}</DialogTitle>
-        <DialogDescription>
-          هيتعمل حساب شريك (لو مفيش واحد بنفس رقم التليفون) وعربية جاهزة للظهور للعملاء فورًا.
-        </DialogDescription>
-      </DialogHeader>
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="plate">رقم اللوحة</Label>
-          <Input id="plate" value={plateNumber} onChange={(e) => setPlateNumber(e.target.value)} />
-        </div>
-        <div className="grid grid-cols-3 gap-3">
-          <div className="space-y-2">
-            <Label htmlFor="hourly">سعر الساعة (اختياري)</Label>
-            <Input id="hourly" inputMode="decimal" value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="daily">سعر اليوم *</Label>
-            <Input id="daily" inputMode="decimal" value={dailyRate} onChange={(e) => setDailyRate(e.target.value)} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="multiday">سعر لعدة أيام (اختياري)</Label>
-            <Input id="multiday" inputMode="decimal" value={multiDayRate} onChange={(e) => setMultiDayRate(e.target.value)} />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="desc">وصف العربية (اختياري)</Label>
-          <Textarea id="desc" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
-        </div>
-        <DialogFooter>
-          <Button type="submit" disabled={busy} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">
-            {busy ? "جاري الحفظ..." : "تأكيد الموافقة"}
-          </Button>
-        </DialogFooter>
-      </form>
-    </DialogContent>
   );
 }

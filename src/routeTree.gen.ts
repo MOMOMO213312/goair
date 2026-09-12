@@ -26,6 +26,7 @@ import { Route as PaymentRouteImport } from './routes/payment'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as RentACarRouteImport } from './routes/rent-a-car'
 import { Route as RentYourCarRouteImport } from './routes/rent-your-car'
+import { Route as RentalProviderRouteImport } from './routes/rental-provider'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SubscribeRouteImport } from './routes/subscribe'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -38,6 +39,7 @@ import { Route as AdminPackagesRouteImport } from './routes/admin.packages'
 import { Route as AdminPartnersRouteImport } from './routes/admin.partners'
 import { Route as AdminPricingRouteImport } from './routes/admin.pricing'
 import { Route as AdminRentalApplicationsRouteImport } from './routes/admin.rental-applications'
+import { Route as AdminRentalPartnersRouteImport } from './routes/admin.rental-partners'
 import { Route as AdminRentalVehiclesRouteImport } from './routes/admin.rental-vehicles'
 import { Route as AdminRequestsRouteImport } from './routes/admin.requests'
 import { Route as AdminSubscriptionPlansRouteImport } from './routes/admin.subscription-plans'
@@ -63,6 +65,10 @@ import { Route as PartnerCapacityRouteImport } from './routes/partner.capacity'
 import { Route as PartnerStatementsRouteImport } from './routes/partner.statements'
 import { Route as PartnerTeamRouteImport } from './routes/partner.team'
 import { Route as PartnerTermsRouteImport } from './routes/partner.terms'
+import { Route as RentalProviderIndexRouteImport } from './routes/rental-provider.index'
+import { Route as RentalProviderBookingsRouteImport } from './routes/rental-provider.bookings'
+import { Route as RentalProviderTeamRouteImport } from './routes/rental-provider.team'
+import { Route as RentalProviderVehiclesRouteImport } from './routes/rental-provider.vehicles'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -149,6 +155,11 @@ const RentYourCarRoute = RentYourCarRouteImport.update({
   path: '/rent-your-car',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RentalProviderRoute = RentalProviderRouteImport.update({
+  id: '/rental-provider',
+  path: '/rental-provider',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
@@ -207,6 +218,11 @@ const AdminPricingRoute = AdminPricingRouteImport.update({
 const AdminRentalApplicationsRoute = AdminRentalApplicationsRouteImport.update({
   id: '/rental-applications',
   path: '/rental-applications',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminRentalPartnersRoute = AdminRentalPartnersRouteImport.update({
+  id: '/rental-partners',
+  path: '/rental-partners',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminRentalVehiclesRoute = AdminRentalVehiclesRouteImport.update({
@@ -335,6 +351,26 @@ const PartnerTermsRoute = PartnerTermsRouteImport.update({
   path: '/terms',
   getParentRoute: () => PartnerRoute,
 } as any)
+const RentalProviderIndexRoute = RentalProviderIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => RentalProviderRoute,
+} as any)
+const RentalProviderBookingsRoute = RentalProviderBookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
+  getParentRoute: () => RentalProviderRoute,
+} as any)
+const RentalProviderTeamRoute = RentalProviderTeamRouteImport.update({
+  id: '/team',
+  path: '/team',
+  getParentRoute: () => RentalProviderRoute,
+} as any)
+const RentalProviderVehiclesRoute = RentalProviderVehiclesRouteImport.update({
+  id: '/vehicles',
+  path: '/vehicles',
+  getParentRoute: () => RentalProviderRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -354,6 +390,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/rent-a-car': typeof RentACarRoute
   '/rent-your-car': typeof RentYourCarRoute
+  '/rental-provider': typeof RentalProviderRouteWithChildren
   '/search': typeof SearchRoute
   '/subscribe': typeof SubscribeRoute
   '/terms': typeof TermsRoute
@@ -365,6 +402,7 @@ export interface FileRoutesByFullPath {
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/pricing': typeof AdminPricingRoute
   '/admin/rental-applications': typeof AdminRentalApplicationsRoute
+  '/admin/rental-partners': typeof AdminRentalPartnersRoute
   '/admin/rental-vehicles': typeof AdminRentalVehiclesRoute
   '/admin/requests': typeof AdminRequestsRoute
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
@@ -387,10 +425,14 @@ export interface FileRoutesByFullPath {
   '/partner/statements': typeof PartnerStatementsRoute
   '/partner/team': typeof PartnerTeamRoute
   '/partner/terms': typeof PartnerTermsRoute
+  '/rental-provider/bookings': typeof RentalProviderBookingsRoute
+  '/rental-provider/team': typeof RentalProviderTeamRoute
+  '/rental-provider/vehicles': typeof RentalProviderVehiclesRoute
   '/admin/': typeof AdminIndexRoute
   '/ground-handling/': typeof GroundHandlingIndexRoute
   '/operator/': typeof OperatorIndexRoute
   '/partner/': typeof PartnerIndexRoute
+  '/rental-provider/': typeof RentalProviderIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -417,6 +459,7 @@ export interface FileRoutesByTo {
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/pricing': typeof AdminPricingRoute
   '/admin/rental-applications': typeof AdminRentalApplicationsRoute
+  '/admin/rental-partners': typeof AdminRentalPartnersRoute
   '/admin/rental-vehicles': typeof AdminRentalVehiclesRoute
   '/admin/requests': typeof AdminRequestsRoute
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
@@ -439,10 +482,14 @@ export interface FileRoutesByTo {
   '/partner/statements': typeof PartnerStatementsRoute
   '/partner/team': typeof PartnerTeamRoute
   '/partner/terms': typeof PartnerTermsRoute
+  '/rental-provider/bookings': typeof RentalProviderBookingsRoute
+  '/rental-provider/team': typeof RentalProviderTeamRoute
+  '/rental-provider/vehicles': typeof RentalProviderVehiclesRoute
   '/admin': typeof AdminIndexRoute
   '/ground-handling': typeof GroundHandlingIndexRoute
   '/operator': typeof OperatorIndexRoute
   '/partner': typeof PartnerIndexRoute
+  '/rental-provider': typeof RentalProviderIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -463,6 +510,7 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/rent-a-car': typeof RentACarRoute
   '/rent-your-car': typeof RentYourCarRoute
+  '/rental-provider': typeof RentalProviderRouteWithChildren
   '/search': typeof SearchRoute
   '/subscribe': typeof SubscribeRoute
   '/terms': typeof TermsRoute
@@ -474,6 +522,7 @@ export interface FileRoutesById {
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/pricing': typeof AdminPricingRoute
   '/admin/rental-applications': typeof AdminRentalApplicationsRoute
+  '/admin/rental-partners': typeof AdminRentalPartnersRoute
   '/admin/rental-vehicles': typeof AdminRentalVehiclesRoute
   '/admin/requests': typeof AdminRequestsRoute
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
@@ -496,10 +545,14 @@ export interface FileRoutesById {
   '/partner/statements': typeof PartnerStatementsRoute
   '/partner/team': typeof PartnerTeamRoute
   '/partner/terms': typeof PartnerTermsRoute
+  '/rental-provider/bookings': typeof RentalProviderBookingsRoute
+  '/rental-provider/team': typeof RentalProviderTeamRoute
+  '/rental-provider/vehicles': typeof RentalProviderVehiclesRoute
   '/admin/': typeof AdminIndexRoute
   '/ground-handling/': typeof GroundHandlingIndexRoute
   '/operator/': typeof OperatorIndexRoute
   '/partner/': typeof PartnerIndexRoute
+  '/rental-provider/': typeof RentalProviderIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -521,6 +574,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/rent-a-car'
     | '/rent-your-car'
+    | '/rental-provider'
     | '/search'
     | '/subscribe'
     | '/terms'
@@ -532,6 +586,7 @@ export interface FileRouteTypes {
     | '/admin/partners'
     | '/admin/pricing'
     | '/admin/rental-applications'
+    | '/admin/rental-partners'
     | '/admin/rental-vehicles'
     | '/admin/requests'
     | '/admin/subscription-plans'
@@ -554,10 +609,14 @@ export interface FileRouteTypes {
     | '/partner/statements'
     | '/partner/team'
     | '/partner/terms'
+    | '/rental-provider/bookings'
+    | '/rental-provider/team'
+    | '/rental-provider/vehicles'
     | '/admin/'
     | '/ground-handling/'
     | '/operator/'
     | '/partner/'
+    | '/rental-provider/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -584,6 +643,7 @@ export interface FileRouteTypes {
     | '/admin/partners'
     | '/admin/pricing'
     | '/admin/rental-applications'
+    | '/admin/rental-partners'
     | '/admin/rental-vehicles'
     | '/admin/requests'
     | '/admin/subscription-plans'
@@ -606,10 +666,14 @@ export interface FileRouteTypes {
     | '/partner/statements'
     | '/partner/team'
     | '/partner/terms'
+    | '/rental-provider/bookings'
+    | '/rental-provider/team'
+    | '/rental-provider/vehicles'
     | '/admin'
     | '/ground-handling'
     | '/operator'
     | '/partner'
+    | '/rental-provider'
   id:
     | '__root__'
     | '/'
@@ -629,6 +693,7 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/rent-a-car'
     | '/rent-your-car'
+    | '/rental-provider'
     | '/search'
     | '/subscribe'
     | '/terms'
@@ -640,6 +705,7 @@ export interface FileRouteTypes {
     | '/admin/partners'
     | '/admin/pricing'
     | '/admin/rental-applications'
+    | '/admin/rental-partners'
     | '/admin/rental-vehicles'
     | '/admin/requests'
     | '/admin/subscription-plans'
@@ -662,10 +728,14 @@ export interface FileRouteTypes {
     | '/partner/statements'
     | '/partner/team'
     | '/partner/terms'
+    | '/rental-provider/bookings'
+    | '/rental-provider/team'
+    | '/rental-provider/vehicles'
     | '/admin/'
     | '/ground-handling/'
     | '/operator/'
     | '/partner/'
+    | '/rental-provider/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -686,6 +756,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   RentACarRoute: typeof RentACarRoute
   RentYourCarRoute: typeof RentYourCarRoute
+  RentalProviderRoute: typeof RentalProviderRouteWithChildren
   SearchRoute: typeof SearchRoute
   SubscribeRoute: typeof SubscribeRoute
   TermsRoute: typeof TermsRoute
@@ -812,6 +883,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RentYourCarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/rental-provider': {
+      id: '/rental-provider'
+      path: '/rental-provider'
+      fullPath: '/rental-provider'
+      preLoaderRoute: typeof RentalProviderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/search': {
       id: '/search'
       path: '/search'
@@ -894,6 +972,13 @@ declare module '@tanstack/react-router' {
       path: '/rental-applications'
       fullPath: '/admin/rental-applications'
       preLoaderRoute: typeof AdminRentalApplicationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/rental-partners': {
+      id: '/admin/rental-partners'
+      path: '/rental-partners'
+      fullPath: '/admin/rental-partners'
+      preLoaderRoute: typeof AdminRentalPartnersRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/rental-vehicles': {
@@ -1071,6 +1156,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartnerTermsRouteImport
       parentRoute: typeof PartnerRoute
     }
+    '/rental-provider/': {
+      id: '/rental-provider/'
+      path: '/'
+      fullPath: '/rental-provider/'
+      preLoaderRoute: typeof RentalProviderIndexRouteImport
+      parentRoute: typeof RentalProviderRoute
+    }
+    '/rental-provider/bookings': {
+      id: '/rental-provider/bookings'
+      path: '/bookings'
+      fullPath: '/rental-provider/bookings'
+      preLoaderRoute: typeof RentalProviderBookingsRouteImport
+      parentRoute: typeof RentalProviderRoute
+    }
+    '/rental-provider/team': {
+      id: '/rental-provider/team'
+      path: '/team'
+      fullPath: '/rental-provider/team'
+      preLoaderRoute: typeof RentalProviderTeamRouteImport
+      parentRoute: typeof RentalProviderRoute
+    }
+    '/rental-provider/vehicles': {
+      id: '/rental-provider/vehicles'
+      path: '/vehicles'
+      fullPath: '/rental-provider/vehicles'
+      preLoaderRoute: typeof RentalProviderVehiclesRouteImport
+      parentRoute: typeof RentalProviderRoute
+    }
   }
 }
 
@@ -1083,6 +1196,7 @@ interface AdminRouteChildren {
   AdminPartnersRoute: typeof AdminPartnersRoute
   AdminPricingRoute: typeof AdminPricingRoute
   AdminRentalApplicationsRoute: typeof AdminRentalApplicationsRoute
+  AdminRentalPartnersRoute: typeof AdminRentalPartnersRoute
   AdminRentalVehiclesRoute: typeof AdminRentalVehiclesRoute
   AdminRequestsRoute: typeof AdminRequestsRoute
   AdminSubscriptionPlansRoute: typeof AdminSubscriptionPlansRoute
@@ -1099,6 +1213,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminPartnersRoute: AdminPartnersRoute,
   AdminPricingRoute: AdminPricingRoute,
   AdminRentalApplicationsRoute: AdminRentalApplicationsRoute,
+  AdminRentalPartnersRoute: AdminRentalPartnersRoute,
   AdminRentalVehiclesRoute: AdminRentalVehiclesRoute,
   AdminRequestsRoute: AdminRequestsRoute,
   AdminSubscriptionPlansRoute: AdminSubscriptionPlansRoute,
@@ -1179,6 +1294,24 @@ const PartnerRouteChildren: PartnerRouteChildren = {
 const PartnerRouteWithChildren =
   PartnerRoute._addFileChildren(PartnerRouteChildren)
 
+interface RentalProviderRouteChildren {
+  RentalProviderBookingsRoute: typeof RentalProviderBookingsRoute
+  RentalProviderTeamRoute: typeof RentalProviderTeamRoute
+  RentalProviderVehiclesRoute: typeof RentalProviderVehiclesRoute
+  RentalProviderIndexRoute: typeof RentalProviderIndexRoute
+}
+
+const RentalProviderRouteChildren: RentalProviderRouteChildren = {
+  RentalProviderBookingsRoute: RentalProviderBookingsRoute,
+  RentalProviderTeamRoute: RentalProviderTeamRoute,
+  RentalProviderVehiclesRoute: RentalProviderVehiclesRoute,
+  RentalProviderIndexRoute: RentalProviderIndexRoute,
+}
+
+const RentalProviderRouteWithChildren = RentalProviderRoute._addFileChildren(
+  RentalProviderRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
@@ -1197,6 +1330,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   RentACarRoute: RentACarRoute,
   RentYourCarRoute: RentYourCarRoute,
+  RentalProviderRoute: RentalProviderRouteWithChildren,
   SearchRoute: SearchRoute,
   SubscribeRoute: SubscribeRoute,
   TermsRoute: TermsRoute,
