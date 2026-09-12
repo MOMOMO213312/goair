@@ -330,6 +330,8 @@ const ar = {
       contact: "جهة الاتصال",
       fullName: "الاسم بالكامل",
       mobileWhatsapp: "رقم الموبايل / واتساب",
+      email: "البريد الإلكتروني",
+      emailHint: "هنبعتلك تأكيد الحجز عليه (اختياري).",
       additionalPassenger: "المسافر {{number}}",
       additionalSeatNote: "مقعد إضافي ضمن نفس الحجز — لا يلزم بيانات منفصلة.",
       tripDetails: "تفاصيل الرحلة",

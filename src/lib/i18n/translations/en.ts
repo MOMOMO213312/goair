@@ -337,6 +337,8 @@ const en = {
       contact: "Contact",
       fullName: "Full name",
       mobileWhatsapp: "Mobile / WhatsApp number",
+      email: "Email address",
+      emailHint: "We'll send your booking confirmation here (optional).",
       additionalPassenger: "Passenger {{number}}",
       additionalSeatNote: "Extra seat in the same booking — no separate details needed.",
       tripDetails: "Trip details",
