@@ -1,4 +1,4 @@
-import { CalendarX2 } from "lucide-react";
+import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
@@ -9,6 +9,7 @@ import {
 } from "@/components/goair/search/custom-request-card";
 import { BookingStepper } from "@/components/goair/booking/booking-stepper";
 import { BookingTrustPanel } from "@/components/goair/booking/booking-trust-panel";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SearchEmptyState } from "@/components/goair/search/search-empty-state";
 import { SearchFiltersPanel } from "@/components/goair/search/search-filters-panel";
 import { SearchFiltersSheet } from "@/components/goair/search/search-filters-sheet";
@@ -22,6 +23,7 @@ import { fetchScheduleOptions, fetchTrips, fetchVehicleTypes, type VehicleType }
 import { getDestinationSummariesForAirport } from "@/lib/trip-stats";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
+import { cn } from "@/lib/utils";
 
 const pageMeta = translations[DEFAULT_LANGUAGE].searchPage.meta;
 
@@ -57,6 +59,9 @@ function SearchPage() {
   const { t } = useTranslation();
   const params = Route.useSearch();
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
+  // Closed by default — filters are an on-demand tool, not something that
+  // should permanently claim sidebar space next to the results.
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const tripsQuery = useQuery({ queryKey: ["goair", "trips"], queryFn: fetchTrips });
   const vehicleTypesQuery = useQuery({
@@ -241,30 +246,48 @@ function SearchPage() {
               {/* Desktop filters + trust panel */}
               <div className="hidden lg:block">
                 <div className="sticky top-20 space-y-5">
-                  <div className="rounded-xl border border-border/80 bg-card p-5 shadow-[var(--shadow-card)]">
-                    <SearchFiltersPanel {...filterPanelProps} />
-                  </div>
-                  <BookingTrustPanel />
+                  <Collapsible
+                    open={filtersOpen}
+                    onOpenChange={setFiltersOpen}
+                    className="rounded-xl border border-border/80 bg-card shadow-[var(--shadow-card)]"
+                  >
+                    <CollapsibleTrigger className="flex w-full items-center justify-between p-5 text-start">
+                      <span className="flex items-center gap-2 font-display text-base font-bold text-primary">
+                        <SlidersHorizontal className="size-4 text-accent" aria-hidden />
+                        {t("search.filters.title")}
+                        {activeFilterCount > 0 ? (
+                          <span className="inline-flex size-5 items-center justify-center rounded-full bg-accent text-[11px] font-bold text-accent-foreground">
+                            {activeFilterCount}
+                          </span>
+                        ) : null}
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          "size-4 shrink-0 text-muted-foreground transition-transform",
+                          filtersOpen ? "rotate-180" : "",
+                        )}
+                        aria-hidden
+                      />
+                    </CollapsibleTrigger>
+                    <CollapsibleContent className="px-5 pb-5">
+                      <SearchFiltersPanel {...filterPanelProps} hideHeader />
+                    </CollapsibleContent>
+                  </Collapsible>
+                  <BookingTrustPanel compact />
                 </div>
               </div>
 
               {/* Results list */}
               <div className="min-w-0 space-y-4">
                 {visibleOptions.length > 0 ? (
-                  <>
-                    <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
-                      <CalendarX2 className="size-4 shrink-0" aria-hidden />
-                      {t("search.privateBooking.freeCancellationBanner")}
-                    </div>
-                    <SearchResultCard
-                      trip={trip!}
-                      options={visibleOptions}
-                      seats={params.seats}
-                      travelDate={params.date}
-                      flight={params.flight}
-                      vehicleTypesById={vehicleTypesById}
-                    />
-                  </>
+                  <SearchResultCard
+                    trip={trip!}
+                    options={visibleOptions}
+                    seats={params.seats}
+                    travelDate={params.date}
+                    flight={params.flight}
+                    vehicleTypesById={vehicleTypesById}
+                  />
                 ) : (
                   <Card className="border-dashed p-8 text-center">
                     <SearchEmptyState
@@ -284,7 +307,7 @@ function SearchPage() {
               </div>
             </div>
 
-            <BookingTrustPanel className="mt-6 lg:hidden" />
+            <BookingTrustPanel compact className="mt-6 lg:hidden" />
           </div>
         ) : null}
 
