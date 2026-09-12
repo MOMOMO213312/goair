@@ -1,4 +1,4 @@
-import { Info, Phone, Plane, User } from "lucide-react";
+import { Info, Mail, Phone, Plane, User } from "lucide-react";
 
 import { BookingTrustNote } from "@/components/goair/booking/booking-trust-note";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,11 @@ type BookingPassengersStepProps = {
   seats: number;
   fullName: string;
   phone: string;
+  email: string;
   flight: string;
   onFullNameChange: (value: string) => void;
   onPhoneChange: (value: string) => void;
+  onEmailChange: (value: string) => void;
   onFlightChange: (value: string) => void;
   onBack: () => void;
   onContinue: (event: React.FormEvent) => void;
@@ -26,9 +28,11 @@ export function BookingPassengersStep({
   seats,
   fullName,
   phone,
+  email,
   flight,
   onFullNameChange,
   onPhoneChange,
+  onEmailChange,
   onFlightChange,
   onBack,
   onContinue,
@@ -91,6 +95,30 @@ export function BookingPassengersStep({
                 />
               </div>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email" className="font-medium">
+              {t("booking.passengerForm.email")}{" "}
+              <span className="text-xs text-muted-foreground">{t("booking.passengerForm.optional")}</span>
+            </Label>
+            <div className="relative">
+              <Mail
+                className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(event) => onEmailChange(event.target.value)}
+                placeholder="you@example.com"
+                className="h-11 ps-10"
+                autoComplete="email"
+                inputMode="email"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">{t("booking.passengerForm.emailHint")}</p>
           </div>
         </fieldset>
 
