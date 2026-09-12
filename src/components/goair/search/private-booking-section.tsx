@@ -230,11 +230,6 @@ export function PrivateBookingSection({ trip, destination, date, seats, classNam
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
-        <CalendarX2 className="size-4 shrink-0" aria-hidden />
-        {t("search.privateBooking.freeCancellationBanner")}
-      </div>
-
       <div className="mt-4 space-y-4">
         {options.map((option) => (
           <PrivateOptionCard

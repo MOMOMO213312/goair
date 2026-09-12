@@ -26,6 +26,10 @@ type SearchFiltersPanelProps = {
   onReset: () => void;
   className?: string;
   showReset?: boolean;
+  /** Skip the built-in title row — used when an outer wrapper (e.g. a
+      collapsible trigger) already shows the "تصفية النتائج" heading, so it
+      isn't duplicated inside the opened content. */
+  hideHeader?: boolean;
 };
 
 export function SearchFiltersPanel({
@@ -40,18 +44,23 @@ export function SearchFiltersPanel({
   onReset,
   className,
   showReset = true,
+  hideHeader = false,
 }: SearchFiltersPanelProps) {
   const { t, language } = useTranslation();
   const hasActiveFilters = filters.maxPrice !== null && priceCeiling > priceFloor;
+  const showResetButton = showReset && hasActiveFilters;
 
   return (
     <aside className={cn("space-y-6", className)}>
-      <div className="flex items-center justify-between gap-2">
+      {!hideHeader || showResetButton ? (
+      <div className={cn("flex items-center gap-2", hideHeader ? "justify-end" : "justify-between")}>
+        {!hideHeader ? (
         <h2 className="flex items-center gap-2 font-display text-base font-bold text-primary">
           <SlidersHorizontal className="size-4 text-accent" aria-hidden />
           {t("search.filters.title")}
         </h2>
-        {showReset && hasActiveFilters ? (
+        ) : null}
+        {showResetButton ? (
           <Button
             type="button"
             variant="ghost"
@@ -64,6 +73,7 @@ export function SearchFiltersPanel({
           </Button>
         ) : null}
       </div>
+      ) : null}
 
       {/* Route context — read-only, from current search */}
       <div className="rounded-lg border border-border bg-secondary/30 p-4">
