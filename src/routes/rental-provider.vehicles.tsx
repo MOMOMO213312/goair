@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { ImagePlus, X } from "lucide-react";
+import { FileText, ImagePlus, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -34,12 +34,16 @@ import {
   addRentalProviderVehicle,
   APPROVAL_STATUS_LABELS,
   getRentalProviderProfile,
+  getRentalVehicleDocumentSignedUrl,
   isRentalProviderAuthError,
   listRentalProviderVehicles,
   MAX_VEHICLE_PHOTOS,
+  RENTAL_DOCUMENT_LABELS,
   updateRentalProviderVehicle,
+  uploadRentalVehicleDocument,
   uploadRentalVehiclePhotos,
   type RentalProviderVehicle,
+  type RentalVehicleDocumentKind,
 } from "@/lib/rental-provider";
 import { fetchRentalVehicleCategories } from "@/lib/goair";
 
@@ -290,6 +294,96 @@ function VehiclePhotoPicker({
   );
 }
 
+// حقل رفع ورقة قانونية واحدة (رخصة عربية / رخصة كابتن / بطاقة كابتن).
+// لو فيه ملف اتحفظ قبل كده بيظهر بزرار "عرض" (بيولّد رابط مؤقت لأن الباكت
+// خاص) وزرار استبدال، ولو لسه هيترفع بيعرض اسم الملف المختار.
+function DocumentUploadField({
+  kind,
+  required,
+  existingPath,
+  onExistingPathChange,
+  newFile,
+  onNewFileChange,
+}: {
+  kind: RentalVehicleDocumentKind;
+  required: boolean;
+  existingPath: string | null;
+  onExistingPathChange: (path: string | null) => void;
+  newFile: File | null;
+  onNewFileChange: (file: File | null) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [viewing, setViewing] = useState(false);
+
+  async function handleView() {
+    if (!existingPath) return;
+    setViewing(true);
+    try {
+      const url = await getRentalVehicleDocumentSignedUrl(existingPath);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "تعذّر فتح الملف.");
+    } finally {
+      setViewing(false);
+    }
+  }
+
+  function handlePick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    e.target.value = "";
+    if (!file) return;
+    onNewFileChange(file);
+    onExistingPathChange(null);
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label>
+        {RENTAL_DOCUMENT_LABELS[kind]}
+        {required ? " *" : " (اختياري)"}
+      </Label>
+      <div className="flex flex-wrap items-center gap-2">
+        {existingPath ? (
+          <>
+            <Button type="button" size="sm" variant="outline" disabled={viewing} onClick={handleView}>
+              {viewing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+              عرض الملف المرفوع
+            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => onExistingPathChange(null)}>
+              استبدال
+            </Button>
+          </>
+        ) : newFile ? (
+          <span className="flex items-center gap-2 rounded-lg border border-border/80 px-2.5 py-1.5 text-sm">
+            <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+            {newFile.name}
+            <button
+              type="button"
+              onClick={() => onNewFileChange(null)}
+              className="text-muted-foreground hover:text-destructive"
+              aria-label="إلغاء الملف"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </span>
+        ) : (
+          <Button type="button" size="sm" variant="outline" onClick={() => inputRef.current?.click()}>
+            <ImagePlus className="h-3.5 w-3.5" />
+            اختيار ملف
+          </Button>
+        )}
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*,.pdf"
+        className="hidden"
+        onChange={handlePick}
+      />
+    </div>
+  );
+}
+
 function VehicleFormDialog({
   token,
   country,
@@ -312,22 +406,49 @@ function VehicleFormDialog({
   const [seats, setSeats] = useState("");
   const [description, setDescription] = useState("");
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [driverFullName, setDriverFullName] = useState("");
+  const [driverPhoneNumber, setDriverPhoneNumber] = useState("");
+  const [vehicleLicenseFile, setVehicleLicenseFile] = useState<File | null>(null);
+  const [driverLicenseFile, setDriverLicenseFile] = useState<File | null>(null);
+  const [driverIdFile, setDriverIdFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [busyLabel, setBusyLabel] = useState("جاري الحفظ...");
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!categoryId || !plateNumber.trim() || !makeModel.trim() || !dailyRate.trim()) {
-      toast.error("الفئة، رقم اللوحة، الموديل، وسعر اليوم كلها مطلوبة.");
+    if (
+      !categoryId ||
+      !plateNumber.trim() ||
+      !makeModel.trim() ||
+      !dailyRate.trim() ||
+      !hourlyRate.trim() ||
+      !multiDayRate.trim() ||
+      !seats.trim() ||
+      !description.trim() ||
+      !photoFiles.length ||
+      !driverFullName.trim() ||
+      !driverPhoneNumber.trim() ||
+      !vehicleLicenseFile ||
+      !driverLicenseFile ||
+      !driverIdFile
+    ) {
+      toast.error(
+        "كل البيانات مطلوبة: الفئة، رقم اللوحة، الموديل، الأسعار التلاتة، المقاعد، الوصف، صورة عربية واحدة على الأقل، بيانات الكابتن، وصور الأوراق القانونية التلاتة.",
+      );
       return;
     }
     setBusy(true);
     try {
-      let photos: string[] = [];
-      if (photoFiles.length) {
-        setBusyLabel("جاري رفع الصور...");
-        photos = await uploadRentalVehiclePhotos(photoFiles);
-      }
+      setBusyLabel("جاري رفع الصور...");
+      const photos = await uploadRentalVehiclePhotos(photoFiles);
+
+      setBusyLabel("جاري رفع الأوراق...");
+      const [vehicleLicenseDocPath, driverLicenseDocPath, driverIdDocPath] = await Promise.all([
+        uploadRentalVehicleDocument(vehicleLicenseFile, "vehicle-license"),
+        uploadRentalVehicleDocument(driverLicenseFile, "driver-license"),
+        uploadRentalVehicleDocument(driverIdFile, "driver-id"),
+      ]);
+
       setBusyLabel("جاري الحفظ...");
       await addRentalProviderVehicle(token, {
         categoryId,
@@ -337,11 +458,16 @@ function VehicleFormDialog({
         transmission,
         fuelType,
         dailyRateUsd: Number(dailyRate),
-        hourlyRateUsd: hourlyRate.trim() ? Number(hourlyRate) : null,
-        multiDayRateUsd: multiDayRate.trim() ? Number(multiDayRate) : null,
-        seats: seats.trim() ? Number(seats) : null,
-        description: description.trim() || null,
+        hourlyRateUsd: Number(hourlyRate),
+        multiDayRateUsd: Number(multiDayRate),
+        seats: Number(seats),
+        description: description.trim(),
         photos,
+        driverFullName: driverFullName.trim(),
+        driverPhoneNumber: driverPhoneNumber.trim(),
+        vehicleLicenseDocPath,
+        driverLicenseDocPath,
+        driverIdDocPath,
       });
       toast.success("تمت إضافة العربية — هتبقى ظاهرة للعملاء بعد موافقة GoAir.");
       onDone();
@@ -386,7 +512,7 @@ function VehicleFormDialog({
         </div>
         <div className="grid grid-cols-3 gap-3">
           <div className="space-y-2">
-            <Label htmlFor="hourly">سعر الساعة (اختياري)</Label>
+            <Label htmlFor="hourly">سعر الساعة *</Label>
             <Input id="hourly" inputMode="decimal" value={hourlyRate} onChange={(e) => setHourlyRate(e.target.value)} />
           </div>
           <div className="space-y-2">
@@ -394,16 +520,16 @@ function VehicleFormDialog({
             <Input id="daily" inputMode="decimal" value={dailyRate} onChange={(e) => setDailyRate(e.target.value)} />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="multiday">سعر لعدة أيام (اختياري)</Label>
+            <Label htmlFor="multiday">سعر لعدة أيام *</Label>
             <Input id="multiday" inputMode="decimal" value={multiDayRate} onChange={(e) => setMultiDayRate(e.target.value)} />
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="seats">عدد المقاعد (اختياري)</Label>
+          <Label htmlFor="seats">عدد المقاعد *</Label>
           <Input id="seats" inputMode="numeric" value={seats} onChange={(e) => setSeats(e.target.value)} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="desc">وصف العربية (اختياري)</Label>
+          <Label htmlFor="desc">وصف العربية *</Label>
           <Textarea
             id="desc"
             rows={3}
@@ -418,6 +544,54 @@ function VehicleFormDialog({
           newFiles={photoFiles}
           onNewFilesChange={setPhotoFiles}
         />
+
+        <div className="space-y-3 rounded-lg border border-border/80 p-3">
+          <p className="text-sm font-bold text-primary">بيانات الكابتن</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="driver-name">اسم الكابتن *</Label>
+              <Input id="driver-name" value={driverFullName} onChange={(e) => setDriverFullName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="driver-phone">رقم موبايل الكابتن *</Label>
+              <Input
+                id="driver-phone"
+                inputMode="tel"
+                value={driverPhoneNumber}
+                onChange={(e) => setDriverPhoneNumber(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3 rounded-lg border border-border/80 p-3">
+          <p className="text-sm font-bold text-primary">الأوراق القانونية</p>
+          <DocumentUploadField
+            kind="vehicle-license"
+            required
+            existingPath={null}
+            onExistingPathChange={() => {}}
+            newFile={vehicleLicenseFile}
+            onNewFileChange={setVehicleLicenseFile}
+          />
+          <DocumentUploadField
+            kind="driver-license"
+            required
+            existingPath={null}
+            onExistingPathChange={() => {}}
+            newFile={driverLicenseFile}
+            onNewFileChange={setDriverLicenseFile}
+          />
+          <DocumentUploadField
+            kind="driver-id"
+            required
+            existingPath={null}
+            onExistingPathChange={() => {}}
+            newFile={driverIdFile}
+            onNewFileChange={setDriverIdFile}
+          />
+        </div>
+
         <DialogFooter>
           <Button type="submit" disabled={busy} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">
             {busy ? busyLabel : "إضافة للمراجعة"}
@@ -445,6 +619,14 @@ function EditVehicleDialog({
   const [description, setDescription] = useState(vehicle.description ?? "");
   const [existingPhotos, setExistingPhotos] = useState<string[]>(vehicle.photos ?? []);
   const [newPhotoFiles, setNewPhotoFiles] = useState<File[]>([]);
+  const [driverFullName, setDriverFullName] = useState(vehicle.driverFullName ?? "");
+  const [driverPhoneNumber, setDriverPhoneNumber] = useState(vehicle.driverPhoneNumber ?? "");
+  const [vehicleLicensePath, setVehicleLicensePath] = useState(vehicle.vehicleLicenseDocPath);
+  const [vehicleLicenseFile, setVehicleLicenseFile] = useState<File | null>(null);
+  const [driverLicensePath, setDriverLicensePath] = useState(vehicle.driverLicenseDocPath);
+  const [driverLicenseFile, setDriverLicenseFile] = useState<File | null>(null);
+  const [driverIdPath, setDriverIdPath] = useState(vehicle.driverIdDocPath);
+  const [driverIdFile, setDriverIdFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [busyLabel, setBusyLabel] = useState("جاري الحفظ...");
 
@@ -458,6 +640,14 @@ function EditVehicleDialog({
         const uploaded = await uploadRentalVehiclePhotos(newPhotoFiles);
         photos = [...existingPhotos, ...uploaded];
       }
+
+      setBusyLabel("جاري رفع الأوراق...");
+      const [vehicleLicenseDocPath, driverLicenseDocPath, driverIdDocPath] = await Promise.all([
+        vehicleLicenseFile ? uploadRentalVehicleDocument(vehicleLicenseFile, "vehicle-license") : Promise.resolve(vehicleLicensePath),
+        driverLicenseFile ? uploadRentalVehicleDocument(driverLicenseFile, "driver-license") : Promise.resolve(driverLicensePath),
+        driverIdFile ? uploadRentalVehicleDocument(driverIdFile, "driver-id") : Promise.resolve(driverIdPath),
+      ]);
+
       setBusyLabel("جاري الحفظ...");
       await updateRentalProviderVehicle(token, vehicle.id, {
         plateNumber: plateNumber.trim(),
@@ -467,6 +657,11 @@ function EditVehicleDialog({
         multiDayRateUsd: multiDayRate.trim() ? Number(multiDayRate) : null,
         description: description.trim() || null,
         photos,
+        driverFullName: driverFullName.trim() || null,
+        driverPhoneNumber: driverPhoneNumber.trim() || null,
+        vehicleLicenseDocPath,
+        driverLicenseDocPath,
+        driverIdDocPath,
       });
       toast.success("اتحفظ التعديل — هيرجع للمراجعة قبل ما يظهر تاني.");
       onDone();
@@ -518,6 +713,54 @@ function EditVehicleDialog({
           newFiles={newPhotoFiles}
           onNewFilesChange={setNewPhotoFiles}
         />
+
+        <div className="space-y-3 rounded-lg border border-border/80 p-3">
+          <p className="text-sm font-bold text-primary">بيانات الكابتن</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="e-driver-name">اسم الكابتن</Label>
+              <Input id="e-driver-name" value={driverFullName} onChange={(e) => setDriverFullName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="e-driver-phone">رقم موبايل الكابتن</Label>
+              <Input
+                id="e-driver-phone"
+                inputMode="tel"
+                value={driverPhoneNumber}
+                onChange={(e) => setDriverPhoneNumber(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3 rounded-lg border border-border/80 p-3">
+          <p className="text-sm font-bold text-primary">الأوراق القانونية</p>
+          <DocumentUploadField
+            kind="vehicle-license"
+            required={false}
+            existingPath={vehicleLicensePath}
+            onExistingPathChange={setVehicleLicensePath}
+            newFile={vehicleLicenseFile}
+            onNewFileChange={setVehicleLicenseFile}
+          />
+          <DocumentUploadField
+            kind="driver-license"
+            required={false}
+            existingPath={driverLicensePath}
+            onExistingPathChange={setDriverLicensePath}
+            newFile={driverLicenseFile}
+            onNewFileChange={setDriverLicenseFile}
+          />
+          <DocumentUploadField
+            kind="driver-id"
+            required={false}
+            existingPath={driverIdPath}
+            onExistingPathChange={setDriverIdPath}
+            newFile={driverIdFile}
+            onNewFileChange={setDriverIdFile}
+          />
+        </div>
+
         <DialogFooter>
           <Button type="submit" disabled={busy} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">
             {busy ? busyLabel : "حفظ التعديل"}

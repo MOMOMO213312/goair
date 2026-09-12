@@ -63,6 +63,11 @@ export type RentalProviderVehicle = {
   approvalStatus: string;
   isActive: boolean;
   createdAt: string;
+  driverFullName: string | null;
+  driverPhoneNumber: string | null;
+  vehicleLicenseDocPath: string | null;
+  driverLicenseDocPath: string | null;
+  driverIdDocPath: string | null;
 };
 
 function mapVehicle(row: Record<string, unknown>): RentalProviderVehicle {
@@ -87,6 +92,11 @@ function mapVehicle(row: Record<string, unknown>): RentalProviderVehicle {
     approvalStatus: String(row["approval_status"]),
     isActive: Boolean(row["is_active"]),
     createdAt: String(row["created_at"]),
+    driverFullName: (row["driver_full_name"] as string | null) ?? null,
+    driverPhoneNumber: (row["driver_phone_number"] as string | null) ?? null,
+    vehicleLicenseDocPath: (row["vehicle_license_doc_url"] as string | null) ?? null,
+    driverLicenseDocPath: (row["driver_license_doc_url"] as string | null) ?? null,
+    driverIdDocPath: (row["driver_id_doc_url"] as string | null) ?? null,
   };
 }
 
@@ -111,14 +121,59 @@ export async function uploadRentalVehiclePhotos(files: File[]): Promise<string[]
     }
     const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const path = `${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage
-      .from("rental-vehicle-photos")
-      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type || undefined });
+    const uploadOptions: { cacheControl: string; upsert: boolean; contentType?: string } = {
+      cacheControl: "3600",
+      upsert: false,
+    };
+    if (file.type) uploadOptions.contentType = file.type;
+    const { error } = await supabase.storage.from("rental-vehicle-photos").upload(path, file, uploadOptions);
     if (error) throw new Error(error.message || `فشل رفع الصورة "${file.name}".`);
     const { data } = supabase.storage.from("rental-vehicle-photos").getPublicUrl(path);
     urls.push(data.publicUrl);
   }
   return urls;
+}
+
+// --- الأوراق القانونية (رخصة العربية، رخصة الكابتن، بطاقة الكابتن) ---
+// الباكت "rental-vehicle-documents" خاص (مش public) لأن دي أوراق رسمية،
+// فبنخزّن مسار الملف فقط وبنولّد رابط مؤقت (signed URL) وقت العرض بدل ما
+// يبقى في رابط عام دايم لأي حد.
+export type RentalVehicleDocumentKind = "vehicle-license" | "driver-license" | "driver-id";
+
+export const RENTAL_DOCUMENT_LABELS: Record<RentalVehicleDocumentKind, string> = {
+  "vehicle-license": "رخصة العربية",
+  "driver-license": "رخصة قيادة الكابتن",
+  "driver-id": "بطاقة الرقم القومي للكابتن",
+};
+
+export const MAX_DOCUMENT_SIZE_MB = 10;
+
+export async function uploadRentalVehicleDocument(
+  file: File,
+  kind: RentalVehicleDocumentKind,
+): Promise<string> {
+  if (file.size > MAX_DOCUMENT_SIZE_MB * 1024 * 1024) {
+    throw new Error(`الملف "${file.name}" أكبر من ${MAX_DOCUMENT_SIZE_MB} ميجا.`);
+  }
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `${kind}/${crypto.randomUUID()}.${ext}`;
+  const uploadOptions: { cacheControl: string; upsert: boolean; contentType?: string } = {
+    cacheControl: "3600",
+    upsert: false,
+  };
+  if (file.type) uploadOptions.contentType = file.type;
+  const { error } = await supabase.storage.from("rental-vehicle-documents").upload(path, file, uploadOptions);
+  if (error) throw new Error(error.message || `فشل رفع "${RENTAL_DOCUMENT_LABELS[kind]}".`);
+  return path;
+}
+
+// بيرجع رابط مؤقت (صالح لمدة قصيرة) لعرض ورقة مرفوعة قبل كده، لأن الباكت خاص.
+export async function getRentalVehicleDocumentSignedUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from("rental-vehicle-documents")
+    .createSignedUrl(path, 300);
+  if (error || !data) throw new Error(error?.message || "تعذّر فتح الملف.");
+  return data.signedUrl;
 }
 
 export async function addRentalProviderVehicle(
@@ -131,11 +186,16 @@ export async function addRentalProviderVehicle(
     transmission: string;
     fuelType: string;
     dailyRateUsd: number;
-    hourlyRateUsd: number | null;
-    multiDayRateUsd: number | null;
-    seats: number | null;
-    description: string | null;
-    photos?: string[];
+    hourlyRateUsd: number;
+    multiDayRateUsd: number;
+    seats: number;
+    description: string;
+    photos: string[];
+    driverFullName: string;
+    driverPhoneNumber: string;
+    vehicleLicenseDocPath: string;
+    driverLicenseDocPath: string;
+    driverIdDocPath: string;
   },
 ): Promise<string> {
   const { data, error } = await supabase.rpc("rental_partner_add_vehicle", {
@@ -151,7 +211,12 @@ export async function addRentalProviderVehicle(
     p_multi_day_rate_usd: input.multiDayRateUsd,
     p_seats: input.seats,
     p_description: input.description,
-    p_photos: input.photos ?? [],
+    p_photos: input.photos,
+    p_driver_full_name: input.driverFullName,
+    p_driver_phone_number: input.driverPhoneNumber,
+    p_vehicle_license_doc_url: input.vehicleLicenseDocPath,
+    p_driver_license_doc_url: input.driverLicenseDocPath,
+    p_driver_id_doc_url: input.driverIdDocPath,
   });
   if (error) rpcError(error);
   return String(data);
@@ -169,6 +234,12 @@ export async function updateRentalProviderVehicle(
     description: string | null;
     isActive: boolean;
     photos: string[];
+    seats: number | null;
+    driverFullName: string | null;
+    driverPhoneNumber: string | null;
+    vehicleLicenseDocPath: string | null;
+    driverLicenseDocPath: string | null;
+    driverIdDocPath: string | null;
   }>,
 ): Promise<void> {
   const { error } = await supabase.rpc("rental_partner_update_vehicle", {
@@ -182,6 +253,12 @@ export async function updateRentalProviderVehicle(
     p_description: input.description ?? null,
     p_is_active: input.isActive ?? null,
     p_photos: input.photos ?? null,
+    p_seats: input.seats ?? null,
+    p_driver_full_name: input.driverFullName ?? null,
+    p_driver_phone_number: input.driverPhoneNumber ?? null,
+    p_vehicle_license_doc_url: input.vehicleLicenseDocPath ?? null,
+    p_driver_license_doc_url: input.driverLicenseDocPath ?? null,
+    p_driver_id_doc_url: input.driverIdDocPath ?? null,
   });
   if (error) rpcError(error);
 }
