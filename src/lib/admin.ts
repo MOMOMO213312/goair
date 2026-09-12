@@ -831,6 +831,9 @@ export type AdminRentalPartnerRow = {
   accessToken: string | null;
   authUserId: string | null;
   vehiclesCount: number;
+  verificationStatus: "pending_review" | "verified" | "rejected";
+  verifiedAt: string | null;
+  rejectionReason: string | null;
   createdAt: string;
 };
 
@@ -847,6 +850,14 @@ function mapRentalPartner(row: Record<string, unknown>): AdminRentalPartnerRow {
     accessToken: (row["access_token"] as string | null) ?? null,
     authUserId: (row["auth_user_id"] as string | null) ?? null,
     vehiclesCount: Number(row["vehicles_count"] ?? 0),
+    verificationStatus:
+      row["verification_status"] === "verified"
+        ? "verified"
+        : row["verification_status"] === "rejected"
+          ? "rejected"
+          : "pending_review",
+    verifiedAt: (row["verified_at"] as string | null) ?? null,
+    rejectionReason: (row["rejection_reason"] as string | null) ?? null,
     createdAt: String(row["created_at"]),
   };
 }
@@ -855,6 +866,34 @@ export async function adminListRentalPartners(token: string): Promise<AdminRenta
   const { data, error } = await supabase.rpc("admin_list_rental_partners", { p_access_token: token });
   if (error) rpcError(error);
   return ((data ?? []) as Record<string, unknown>[]).map(mapRentalPartner);
+}
+
+export async function adminVerifyRentalPartner(token: string, partnerId: string) {
+  const { error } = await supabase.rpc("admin_verify_rental_partner", {
+    p_access_token: token,
+    p_partner_id: partnerId,
+  });
+  if (error) rpcError(error);
+}
+
+export async function adminRejectRentalPartner(token: string, partnerId: string, reason: string) {
+  const { error } = await supabase.rpc("admin_reject_rental_partner", {
+    p_access_token: token,
+    p_partner_id: partnerId,
+    p_reason: reason,
+  });
+  if (error) rpcError(error);
+}
+
+export function rentalVerificationStatusLabel(status: AdminRentalPartnerRow["verificationStatus"]) {
+  switch (status) {
+    case "verified":
+      return "معتمد";
+    case "rejected":
+      return "مرفوض";
+    default:
+      return "بانتظار الاعتماد";
+  }
 }
 
 export function rentalApplicationStatusLabel(status: string) {

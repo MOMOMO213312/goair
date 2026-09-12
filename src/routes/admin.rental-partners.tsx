@@ -4,6 +4,17 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { AdminAuthError, AdminLoading } from "@/components/admin/admin-shell";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -16,7 +27,15 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { adminListRentalPartners, isAdminAuthError, type AdminRentalPartnerRow } from "@/lib/admin";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  adminListRentalPartners,
+  adminRejectRentalPartner,
+  adminVerifyRentalPartner,
+  isAdminAuthError,
+  rentalVerificationStatusLabel,
+  type AdminRentalPartnerRow,
+} from "@/lib/admin";
 import { useAdminToken } from "@/lib/admin-session";
 import { adminInvitePortalOwner } from "@/lib/portal-members";
 
@@ -45,8 +64,9 @@ function AdminRentalPartnersPage() {
   }
 
   const partners = partnersQuery.data ?? [];
-  const individuals = partners.filter((p) => p.providerType === "individual");
-  const companies = partners.filter((p) => p.providerType === "company");
+  const pending = partners.filter((p) => p.verificationStatus === "pending_review");
+  const individuals = partners.filter((p) => p.providerType === "individual" && p.verificationStatus !== "pending_review");
+  const companies = partners.filter((p) => p.providerType === "company" && p.verificationStatus !== "pending_review");
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ["admin-rental-partners", token] });
@@ -56,8 +76,16 @@ function AdminRentalPartnersPage() {
     <div className="space-y-8">
       <p className="text-sm text-muted-foreground">
         الحسابات دي بتتعمل تلقائيًا لما توافق على طلب انضمام. من هنا تديهم حساب دخول (إيميل/باسورد) لبوابتهم
-        — بعدها هما اللي بيضيفوا عرباتهم بنفسهم.
+        — بعدها هما اللي بيضيفوا عرباتهم بنفسهم. لازم تعتمد المزوّد الأول قبل ما يقدر يشتغل بشكل كامل.
       </p>
+      {pending.length > 0 && (
+        <section>
+          <h2 className="mb-3 font-display text-lg font-extrabold text-amber-600">
+            بانتظار الاعتماد ({pending.length})
+          </h2>
+          <PartnerList partners={pending} onDone={invalidate} empty="" />
+        </section>
+      )}
       <section>
         <h2 className="mb-3 font-display text-lg font-extrabold text-primary">شركات تأجير ({companies.length})</h2>
         <PartnerList partners={companies} onDone={invalidate} empty="مفيش شركات تأجير لسه." />
@@ -97,14 +125,67 @@ function PartnerList({
 
 function PartnerCard({ partner, onDone }: { partner: AdminRentalPartnerRow; onDone: () => void }) {
   const [open, setOpen] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const token = useAdminToken();
   const hasLogin = Boolean(partner.authUserId);
+
+  async function handleVerify() {
+    if (!token) return;
+    setBusy(true);
+    try {
+      await adminVerifyRentalPartner(token, partner.id);
+      toast.success(`تم اعتماد ${partner.companyName || partner.fullName}.`);
+      setVerifyOpen(false);
+      onDone();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleReject() {
+    if (!token) return;
+    if (!rejectReason.trim()) {
+      toast.error("لازم تكتب سبب الرفض.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await adminRejectRentalPartner(token, partner.id, rejectReason.trim());
+      toast.success(`تم رفض ${partner.companyName || partner.fullName}.`);
+      setRejectOpen(false);
+      setRejectReason("");
+      onDone();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <Card className="flex flex-col gap-3 rounded-xl border-border/80 p-4 shadow-[var(--shadow-card)] sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <p className="font-display text-base font-bold text-primary">
-          {partner.companyName || partner.fullName}
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="font-display text-base font-bold text-primary">
+            {partner.companyName || partner.fullName}
+          </p>
+          <Badge
+            variant={
+              partner.verificationStatus === "verified"
+                ? "default"
+                : partner.verificationStatus === "rejected"
+                  ? "destructive"
+                  : "outline"
+            }
+          >
+            {rentalVerificationStatusLabel(partner.verificationStatus)}
+          </Badge>
+        </div>
         <p className="mt-0.5 text-sm text-muted-foreground">
           {partner.companyName ? `مسؤول التواصل: ${partner.fullName} · ` : ""}
           {partner.phoneNumber} · {partner.country} · {partner.vehiclesCount} عربية
@@ -112,8 +193,62 @@ function PartnerCard({ partner, onDone }: { partner: AdminRentalPartnerRow; onDo
         <p className="mt-0.5 text-xs font-bold text-accent">
           {hasLogin ? "عنده حساب دخول" : "مفيش حساب دخول لسه"}
         </p>
+        {partner.verificationStatus === "rejected" && partner.rejectionReason && (
+          <p className="mt-0.5 text-xs text-destructive">سبب الرفض: {partner.rejectionReason}</p>
+        )}
       </div>
-      <div className="flex shrink-0 gap-2">
+      <div className="flex shrink-0 flex-wrap gap-2">
+        {partner.verificationStatus !== "verified" && (
+          <AlertDialog open={verifyOpen} onOpenChange={setVerifyOpen}>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
+                اعتماد
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>اعتماد {partner.companyName || partner.fullName}؟</AlertDialogTitle>
+                <AlertDialogDescription>
+                  هيقدر بعدها يضيف عرباته ويستقبل حجوزات على البوابة.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={busy}>إلغاء</AlertDialogCancel>
+                <Button onClick={handleVerify} disabled={busy}>
+                  {busy ? "جاري الاعتماد..." : "تأكيد الاعتماد"}
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+        {partner.verificationStatus !== "rejected" && (
+          <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" className="text-destructive">
+                رفض
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>رفض {partner.companyName || partner.fullName}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-2">
+                <Label htmlFor="reject-reason">سبب الرفض</Label>
+                <Textarea
+                  id="reject-reason"
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="مثلاً: الأوراق غير واضحة أو ناقصة"
+                />
+              </div>
+              <DialogFooter>
+                <Button variant="destructive" onClick={handleReject} disabled={busy}>
+                  {busy ? "جاري الرفض..." : "تأكيد الرفض"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" variant={hasLogin ? "outline" : "default"}>

@@ -12,6 +12,7 @@ import {
   isRentalProviderAuthError,
   listRentalProviderBookings,
   listRentalProviderVehicles,
+  VERIFICATION_STATUS_LABELS,
 } from "@/lib/rental-provider";
 
 export const Route = createFileRoute("/rental-provider/")({
@@ -56,17 +57,45 @@ function RentalProviderOverview() {
   const pendingCount = vehicles.filter((v) => v.approvalStatus === "pending_review").length;
   const upcomingBookings = bookings.filter((b) => b.status !== "completed" && b.status !== "cancelled").length;
 
+  const verificationStatus = profileQuery.data.verificationStatus;
+
   return (
     <div className="space-y-6">
       <div className="rounded-xl border border-border/80 bg-card p-5 shadow-[var(--shadow-card)]">
-        <h2 className="font-display text-xl font-extrabold text-primary">
-          {profileQuery.data.companyName || profileQuery.data.fullName}
-        </h2>
+        <div className="flex flex-wrap items-center gap-2">
+          <h2 className="font-display text-xl font-extrabold text-primary">
+            {profileQuery.data.companyName || profileQuery.data.fullName}
+          </h2>
+          <span
+            className={
+              "rounded-full px-3 py-1 text-xs font-bold " +
+              (verificationStatus === "verified"
+                ? "bg-accent/15 text-accent"
+                : verificationStatus === "rejected"
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-amber-100 text-amber-700")
+            }
+          >
+            {VERIFICATION_STATUS_LABELS[verificationStatus]}
+          </span>
+        </div>
         <p className="mt-1 text-sm text-muted-foreground">
           {profileQuery.data.providerType === "company" ? "حساب شركة تأجير" : "حساب مزوّد فردي"} ·{" "}
           {profileQuery.data.country}
         </p>
       </div>
+      {verificationStatus === "pending_review" && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          حسابك لسه بانتظار اعتماد فريق GoAir بعد مراجعة الأوراق. هتقدر تستقبل حجوزات لما يتم الاعتماد.
+        </div>
+      )}
+      {verificationStatus === "rejected" && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+          للأسف تم رفض الحساب.
+          {profileQuery.data.rejectionReason ? ` السبب: ${profileQuery.data.rejectionReason}` : ""} تواصل مع الدعم لمزيد
+          من التفاصيل.
+        </div>
+      )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <RentalProviderStatCard label="عرباتك المعتمدة" value={String(approvedCount)} />
         <RentalProviderStatCard label="قيد المراجعة" value={String(pendingCount)} />

@@ -24,6 +24,15 @@ export type RentalProviderProfile = {
   phoneNumber: string;
   email: string | null;
   country: string;
+  verificationStatus: "pending_review" | "verified" | "rejected";
+  verifiedAt: string | null;
+  rejectionReason: string | null;
+};
+
+export const VERIFICATION_STATUS_LABELS: Record<RentalProviderProfile["verificationStatus"], string> = {
+  pending_review: "بانتظار الاعتماد من فريق GoAir",
+  verified: "معتمد",
+  rejected: "مرفوض",
 };
 
 export async function getRentalProviderProfile(token: string): Promise<RentalProviderProfile> {
@@ -39,6 +48,14 @@ export async function getRentalProviderProfile(token: string): Promise<RentalPro
     phoneNumber: String(row["phone_number"]),
     email: (row["email"] as string | null) ?? null,
     country: String(row["country"]),
+    verificationStatus:
+      row["verification_status"] === "verified"
+        ? "verified"
+        : row["verification_status"] === "rejected"
+          ? "rejected"
+          : "pending_review",
+    verifiedAt: (row["verified_at"] as string | null) ?? null,
+    rejectionReason: (row["rejection_reason"] as string | null) ?? null,
   };
 }
 
