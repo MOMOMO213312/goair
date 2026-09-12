@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAdminToken } from "@/lib/admin-session";
@@ -14,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import {
   adminAddRentalVehicle,
+  adminGetRentalVehicleDocumentSignedUrl,
   adminListRentalVehicles,
   adminUpdateRentalVehicle,
   isAdminAuthError,
@@ -257,6 +259,35 @@ function RentalVehiclesAdminPage() {
   );
 }
 
+// زرار بيفتح ورقة قانونية مرفوعة (رخصة عربية/كابتن أو بطاقة كابتن) في تاب
+// جديد عن طريق رابط مؤقت، لأن باكت الأوراق خاص مش public.
+function RentalDocumentButton({ label, path }: { label: string; path: string | null }) {
+  const [busy, setBusy] = useState(false);
+
+  if (!path) {
+    return <span className="text-xs text-muted-foreground">{label}: غير مرفوعة</span>;
+  }
+
+  async function handleOpen() {
+    setBusy(true);
+    try {
+      const url = await adminGetRentalVehicleDocumentSignedUrl(path as string);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "تعذّر فتح الملف.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Button type="button" size="sm" variant="outline" disabled={busy} onClick={handleOpen} className="h-7 gap-1 px-2 text-xs">
+      {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileText className="h-3 w-3" />}
+      {label}
+    </Button>
+  );
+}
+
 function VehicleRow({
   vehicle,
   token,
@@ -379,6 +410,17 @@ function VehicleRow({
             {vehicle.insuranceIncluded ? " · تأمين متضمن" : " · بدون تأمين"}
           </p>
           <p className="mt-0.5 text-xs font-bold text-accent">{rentalVehicleApprovalLabel(vehicle.approvalStatus)}</p>
+          {vehicle.driverFullName || vehicle.driverPhoneNumber ? (
+            <p className="text-xs text-muted-foreground">
+              الكابتن: {vehicle.driverFullName ?? "—"}
+              {vehicle.driverPhoneNumber ? ` · ${vehicle.driverPhoneNumber}` : ""}
+            </p>
+          ) : null}
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            <RentalDocumentButton label="رخصة العربية" path={vehicle.vehicleLicenseDocPath} />
+            <RentalDocumentButton label="رخصة الكابتن" path={vehicle.driverLicenseDocPath} />
+            <RentalDocumentButton label="بطاقة الكابتن" path={vehicle.driverIdDocPath} />
+          </div>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
           {vehicle.approvalStatus !== "approved" ? (

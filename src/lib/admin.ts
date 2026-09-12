@@ -895,6 +895,11 @@ export type AdminRentalVehicle = {
   adminNotes: string | null;
   isActive: boolean;
   createdAt: string;
+  driverFullName: string | null;
+  driverPhoneNumber: string | null;
+  vehicleLicenseDocPath: string | null;
+  driverLicenseDocPath: string | null;
+  driverIdDocPath: string | null;
 };
 
 function mapAdminRentalVehicle(row: Record<string, unknown>): AdminRentalVehicle {
@@ -926,7 +931,22 @@ function mapAdminRentalVehicle(row: Record<string, unknown>): AdminRentalVehicle
     adminNotes: (row["admin_notes"] as string | null) ?? null,
     isActive: Boolean(row["is_active"]),
     createdAt: String(row["created_at"] ?? ""),
+    driverFullName: (row["driver_full_name"] as string | null) ?? null,
+    driverPhoneNumber: (row["driver_phone_number"] as string | null) ?? null,
+    vehicleLicenseDocPath: (row["vehicle_license_doc_url"] as string | null) ?? null,
+    driverLicenseDocPath: (row["driver_license_doc_url"] as string | null) ?? null,
+    driverIdDocPath: (row["driver_id_doc_url"] as string | null) ?? null,
   };
+}
+
+// بيرجع رابط مؤقت لعرض ورقة قانونية (رخصة عربية/كابتن) لأن باكت
+// rental-vehicle-documents خاص — نفس المنطق المستخدم في بوابة المزوّد.
+export async function adminGetRentalVehicleDocumentSignedUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from("rental-vehicle-documents")
+    .createSignedUrl(path, 300);
+  if (error || !data) throw new Error(error?.message || "تعذّر فتح الملف.");
+  return data.signedUrl;
 }
 
 export async function adminListRentalVehicles(token: string): Promise<AdminRentalVehicle[]> {
