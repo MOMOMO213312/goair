@@ -96,6 +96,31 @@ export async function listRentalProviderVehicles(token: string): Promise<RentalP
   return ((data ?? []) as Record<string, unknown>[]).map(mapVehicle);
 }
 
+// أقصى عدد صور لكل عربية، وأقصى حجم للصورة الواحدة (ميجابايت).
+export const MAX_VEHICLE_PHOTOS = 6;
+export const MAX_VEHICLE_PHOTO_SIZE_MB = 5;
+
+// بيرفع كل صورة لباكت "rental-vehicle-photos" (public) ويرجع الروابط العامة
+// بنفس الترتيب. أي صورة تفشل بتوقف الرفع كله وترمي خطأ واضح بدل ما تسيب
+// عربية بصور ناقصة من غير ما المستخدم يعرف.
+export async function uploadRentalVehiclePhotos(files: File[]): Promise<string[]> {
+  const urls: string[] = [];
+  for (const file of files) {
+    if (file.size > MAX_VEHICLE_PHOTO_SIZE_MB * 1024 * 1024) {
+      throw new Error(`الصورة "${file.name}" أكبر من ${MAX_VEHICLE_PHOTO_SIZE_MB} ميجا.`);
+    }
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("rental-vehicle-photos")
+      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type || undefined });
+    if (error) throw new Error(error.message || `فشل رفع الصورة "${file.name}".`);
+    const { data } = supabase.storage.from("rental-vehicle-photos").getPublicUrl(path);
+    urls.push(data.publicUrl);
+  }
+  return urls;
+}
+
 export async function addRentalProviderVehicle(
   token: string,
   input: {
@@ -110,6 +135,7 @@ export async function addRentalProviderVehicle(
     multiDayRateUsd: number | null;
     seats: number | null;
     description: string | null;
+    photos?: string[];
   },
 ): Promise<string> {
   const { data, error } = await supabase.rpc("rental_partner_add_vehicle", {
@@ -125,6 +151,7 @@ export async function addRentalProviderVehicle(
     p_multi_day_rate_usd: input.multiDayRateUsd,
     p_seats: input.seats,
     p_description: input.description,
+    p_photos: input.photos ?? [],
   });
   if (error) rpcError(error);
   return String(data);
@@ -141,6 +168,7 @@ export async function updateRentalProviderVehicle(
     multiDayRateUsd: number | null;
     description: string | null;
     isActive: boolean;
+    photos: string[];
   }>,
 ): Promise<void> {
   const { error } = await supabase.rpc("rental_partner_update_vehicle", {
@@ -153,6 +181,7 @@ export async function updateRentalProviderVehicle(
     p_multi_day_rate_usd: input.multiDayRateUsd ?? null,
     p_description: input.description ?? null,
     p_is_active: input.isActive ?? null,
+    p_photos: input.photos ?? null,
   });
   if (error) rpcError(error);
 }
