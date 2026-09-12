@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Briefcase, CalendarX2, Info, MapPin, Sparkle, UserRound } from "lucide-react";
+import { ArrowLeft, Briefcase, CalendarX2, Info, MapPin, Sparkle, UserRound, Users } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { DestinationPlaceholder } from "@/components/goair/destination-placeholder";
@@ -91,6 +91,24 @@ export function SearchResultCard({
     return max === null ? vehicle.maxLuggage : Math.max(max, vehicle.maxLuggage);
   }, null);
 
+  // Group-size hint only — never the vehicle name itself (e.g. "Hiace").
+  // Tiered on purpose so the customer gets a realistic expectation of how
+  // many strangers they might share the ride with, without it reading like
+  // an internal fleet spec.
+  const maxCapacity = options.reduce<number | null>((max, option) => {
+    const vehicle = option.vehicleTypeId ? vehicleTypesById?.get(option.vehicleTypeId) : null;
+    if (vehicle?.capacity == null) return max;
+    return max === null ? vehicle.capacity : Math.max(max, vehicle.capacity);
+  }, null);
+  const capacityLabel =
+    maxCapacity == null
+      ? null
+      : maxCapacity <= 8
+        ? t("search.resultCard.upToPassengersSmall", { count: maxCapacity })
+        : maxCapacity <= 20
+          ? t("search.resultCard.upToPassengersLarge", { count: maxCapacity })
+          : t("search.resultCard.largeVehicle");
+
   // The trip may run at many points across the day, but the customer never
   // sees "16 available departures" as a stacked list — just one compact
   // "pick your time" control, same as picking a pickup time on any transfer
@@ -145,6 +163,12 @@ export function SearchResultCard({
             <Sparkle className="size-3" aria-hidden />
             {t("search.resultCard.shared")}
           </span>
+          {capacityLabel ? (
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-muted-foreground">
+              <Users className="size-3.5 text-muted-foreground/70" aria-hidden />
+              {capacityLabel}
+            </span>
+          ) : null}
         </div>
 
         <p className="text-sm leading-relaxed text-muted-foreground">{getCountryLabel(trip.country, language)}</p>
