@@ -115,6 +115,7 @@ function PackagePage() {
   const [extrasNotes, setExtrasNotes] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [flight, setFlight] = useState("");
   const [busy, setBusy] = useState(false);
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
@@ -249,6 +250,7 @@ function PackagePage() {
         seatsCount: seats,
         fullName: fullName.trim(),
         phoneNumber: phone.trim(),
+        customerEmail: email.trim() || null,
         flightNumber: flight.trim() || null,
         luggageCount: luggage,
         packageId: pkg?.id ?? null,
@@ -502,9 +504,11 @@ function PackagePage() {
                 seats={seats}
                 fullName={fullName}
                 phone={phone}
+                email={email}
                 flight={flight}
                 onFullNameChange={setFullName}
                 onPhoneChange={setPhone}
+                onEmailChange={setEmail}
                 onFlightChange={setFlight}
                 onBack={() => setPhase("extras")}
                 onContinue={onPassengersSubmit}
