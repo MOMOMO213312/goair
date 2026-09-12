@@ -230,13 +230,6 @@ function BookPage() {
           <div className="min-w-0 space-y-6">
             {phase === "extras" ? (
               <>
-                <BookingExtrasStep
-                  luggage={luggage}
-                  onLuggageChange={setLuggage}
-                  notes={extrasNotes}
-                  onNotesChange={setExtrasNotes}
-                  onContinue={() => setPhase("passengers")}
-                />
                 <BookingAddonsStep
                   addons={addonsQuery.data ?? []}
                   addonsLoading={addonsQuery.isLoading}
@@ -245,6 +238,13 @@ function BookPage() {
                   groundHandlingServices={groundHandlingServices}
                   selectedGroundHandlingServiceIds={selectedGroundHandlingServiceIds}
                   onToggleGroundHandlingService={toggleGroundHandlingService}
+                />
+                <BookingExtrasStep
+                  luggage={luggage}
+                  onLuggageChange={setLuggage}
+                  notes={extrasNotes}
+                  onNotesChange={setExtrasNotes}
+                  onContinue={() => setPhase("passengers")}
                   className="mt-6"
                 />
               </>
