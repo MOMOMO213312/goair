@@ -135,6 +135,11 @@ function CustomRequestCard({
           {request.preferredDate ? ` · ${request.preferredDate}` : ""}
           {request.preferredTimeNote ? ` · ${request.preferredTimeNote}` : ""}
         </p>
+        {request.tier ? (
+          <p className="mt-1 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold text-primary">
+            {request.tier === "van" ? "طلب فان خاص" : request.tier === "hiace" ? "طلب هاي إيس خاص" : request.tier}
+          </p>
+        ) : null}
         <p className="mt-1 text-xs font-bold text-accent">{customRequestStatusLabel(request.status)}</p>
       </div>
       <div className="flex shrink-0 gap-2">

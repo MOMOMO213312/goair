@@ -174,6 +174,7 @@ const en = {
       description: "Try changing the date or destination to find other options.",
     },
     customRequest: {
+      invalidName: "Enter your full name.",
       invalidPhone: "Enter a valid mobile number.",
       submitSuccess: "Got your request — we'll reach out on WhatsApp.",
       submitError: "We couldn't send the request. Try again or contact us.",
@@ -181,6 +182,8 @@ const en = {
       noSchedulesBody:
         "Request the route and leave your number — our team will get back to you with a suitable time.",
       submitted: "Your request has been sent ✓",
+      nameLabel: "Full name",
+      namePlaceholder: "Your full name",
       phoneLabel: "Mobile number / WhatsApp",
       submitButton: "Request this route",
     },
@@ -251,6 +254,9 @@ const en = {
       tierPremiumName: "Comfort",
       serviceHighlights: "Service highlights",
       freeCancellationBanner: "Free cancellation up to 24 hours before your trip",
+      quoteOnRequest: "Price on request",
+      requestQuoteButton: "Request a quote",
+      requestQuoteSubmit: "Send request",
     },
   },
   bookPage: {

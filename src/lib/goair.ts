@@ -674,19 +674,26 @@ export async function submitPayment(params: {
 
 export async function submitCustomRequest(params: {
   country: string;
-  airportCode: string;
-  destination: string;
-  travelDate: string;
-  seats: number;
+  routeName: string;
+  preferredDate: string;
+  passengerName: string;
   phone: string;
+  pax: number;
+  /** Free-text scheduling note (e.g. flight time) — optional. */
+  preferredTimeNote?: string;
+  /** Vehicle preference for this request (e.g. "van" | "hiace") when it comes from a
+   * private-booking quote ask rather than the generic "no schedule on this route" form. */
+  tier?: string;
 }) {
   const { error } = await supabase.from("custom_requests").insert({
     country: params.country,
-    airport_code: params.airportCode,
-    destination: params.destination,
-    travel_date: params.travelDate,
-    seats_count: params.seats,
-    phone_number: params.phone,
+    route_name: params.routeName,
+    preferred_date: params.preferredDate,
+    preferred_time_note: params.preferredTimeNote ?? null,
+    passenger_name: params.passengerName,
+    phone: params.phone,
+    pax: params.pax,
+    tier: params.tier ?? null,
   });
   if (error) throw new Error(error.message);
   return true;

@@ -23,12 +23,17 @@ export type SearchParams = {
 
 export function CustomRequestCard({ params }: { params: SearchParams }) {
   const { t } = useTranslation();
+  const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
+    if (name.trim().length < 2) {
+      toast.error(t("search.customRequest.invalidName"));
+      return;
+    }
     if (phone.trim().length < 7) {
       toast.error(t("search.customRequest.invalidPhone"));
       return;
@@ -37,11 +42,11 @@ export function CustomRequestCard({ params }: { params: SearchParams }) {
     try {
       await submitCustomRequest({
         country: params.country,
-        airportCode: params.airport,
-        destination: params.destination,
-        travelDate: params.date,
-        seats: params.seats,
+        routeName: `${params.airport} — ${params.destination}`,
+        preferredDate: params.date,
+        passengerName: name.trim(),
         phone: phone.trim(),
+        pax: params.seats,
       });
       setDone(true);
       toast.success(t("search.customRequest.submitSuccess"));
@@ -69,6 +74,16 @@ export function CustomRequestCard({ params }: { params: SearchParams }) {
           <p className="text-center font-display font-bold text-accent">{t("search.customRequest.submitted")}</p>
         ) : (
           <form onSubmit={onSubmit} className="mx-auto flex max-w-sm flex-col gap-3">
+            <div className="space-y-2 text-start">
+              <Label htmlFor="custom-request-name">{t("search.customRequest.nameLabel")}</Label>
+              <Input
+                id="custom-request-name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder={t("search.customRequest.namePlaceholder")}
+                className="h-11"
+              />
+            </div>
             <div className="space-y-2 text-start">
               <Label htmlFor="custom-request-phone">{t("search.customRequest.phoneLabel")}</Label>
               <Input

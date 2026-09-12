@@ -2,14 +2,27 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { Briefcase, CalendarX2, ChevronDown, Lock, MapPin, Sparkle, UserRound, Users } from "lucide-react";
+import { toast } from "sonner";
 
+import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useStockPhoto } from "@/hooks/use-stock-photo";
 import type { PrivateOption, Trip } from "@/lib/goair";
-import { fetchPrivateTripOptions, formatUsd } from "@/lib/goair";
+import { fetchPrivateTripOptions, formatUsd, submitCustomRequest } from "@/lib/goair";
 import { getVehicleImageByCode } from "@/lib/trip-media";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-context";
+
+/**
+ * Vehicle types that stay OUT of the instant-priced private catalog. A van or
+ * hiace booked privately (whole vehicle, no pooling) is rare enough that a
+ * flat auto-priced total isn't worth maintaining — instead these become a
+ * manual "request a quote" ask (reuses the custom_requests table/admin queue),
+ * same as any other non-standard route. Sedan/car stays instant-priced.
+ */
+const QUOTE_ONLY_VEHICLE_CODES = new Set(["van", "hiace"]);
 
 function getVehicleBlurb(t: ReturnType<typeof useTranslation>["t"], vehicleCode: string): string | undefined {
   const map: Record<string, string> = {
@@ -157,27 +170,123 @@ function PrivateOptionCard({
           by a border, so price and the booking action are the first thing
           the eye lands on (matches a horizontal results-row layout). */}
       <div className="flex shrink-0 flex-col items-center justify-center gap-2 border-t border-border p-5 text-center sm:w-52 sm:border-t-0 sm:border-s sm:border-border">
-        <span className="text-xs font-bold text-muted-foreground">{t("search.privateBooking.fullVehiclePrice")}</span>
-        <span className="font-display text-2xl font-extrabold text-accent">{formatUsd(option.priceUsd)}</span>
-        <Link
-          to="/book"
-          search={{
-            tripId: trip.id,
-            scheduleId: "",
-            tripOptionId: option.tripOptionId,
-            date,
-            seats: Math.min(seats, option.capacity),
-            time: "",
-            price: option.priceUsd,
-            bookingType: "private",
-            vehicleTypeId: option.vehicleTypeId,
-          }}
-          className="mt-1 inline-flex w-full items-center justify-center rounded-lg bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground transition-colors hover:bg-accent/90"
-        >
-          {t("search.privateBooking.bookPrivateFor", { destination })}
-        </Link>
+        {QUOTE_ONLY_VEHICLE_CODES.has(option.vehicleCode) ? (
+          <>
+            <span className="text-xs font-bold text-muted-foreground">{t("search.privateBooking.quoteOnRequest")}</span>
+            <PrivateQuoteRequestForm option={option} trip={trip} destination={destination} date={date} seats={seats} />
+          </>
+        ) : (
+          <>
+            <span className="text-xs font-bold text-muted-foreground">{t("search.privateBooking.fullVehiclePrice")}</span>
+            <span className="font-display text-2xl font-extrabold text-accent">{formatUsd(option.priceUsd)}</span>
+            <Link
+              to="/book"
+              search={{
+                tripId: trip.id,
+                scheduleId: "",
+                tripOptionId: option.tripOptionId,
+                date,
+                seats: Math.min(seats, option.capacity),
+                time: "",
+                price: option.priceUsd,
+                bookingType: "private",
+                vehicleTypeId: option.vehicleTypeId,
+              }}
+              className="mt-1 inline-flex w-full items-center justify-center rounded-lg bg-accent px-4 py-2.5 text-sm font-bold text-accent-foreground transition-colors hover:bg-accent/90"
+            >
+              {t("search.privateBooking.bookPrivateFor", { destination })}
+            </Link>
+          </>
+        )}
       </div>
     </div>
+  );
+}
+
+function PrivateQuoteRequestForm({
+  option,
+  trip,
+  destination,
+  date,
+  seats,
+}: {
+  option: PrivateOption;
+  trip: Trip;
+  destination: string;
+  date: string;
+  seats: number;
+}) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(false);
+
+  async function onSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (name.trim().length < 2) {
+      toast.error(t("search.customRequest.invalidName"));
+      return;
+    }
+    if (phone.trim().length < 7) {
+      toast.error(t("search.customRequest.invalidPhone"));
+      return;
+    }
+    setBusy(true);
+    try {
+      await submitCustomRequest({
+        country: trip.country,
+        routeName: `${trip.airport_name} — ${destination}`,
+        preferredDate: date,
+        passengerName: name.trim(),
+        phone: phone.trim(),
+        pax: seats,
+        tier: option.vehicleCode,
+      });
+      setDone(true);
+      toast.success(t("search.customRequest.submitSuccess"));
+    } catch {
+      toast.error(t("search.customRequest.submitError"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (done) {
+    return <p className="text-sm font-bold text-accent">{t("search.customRequest.submitted")}</p>;
+  }
+
+  if (!open) {
+    return (
+      <Button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-1 w-full bg-accent font-bold text-accent-foreground hover:bg-accent/90"
+      >
+        {t("search.privateBooking.requestQuoteButton")}
+      </Button>
+    );
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="flex w-full flex-col gap-2 text-start">
+      <Input
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        placeholder={t("search.customRequest.namePlaceholder")}
+        className="h-10"
+      />
+      <Input
+        value={phone}
+        onChange={(event) => setPhone(event.target.value)}
+        placeholder="+20 1XX XXX XXXX"
+        className="h-10"
+      />
+      <Button type="submit" disabled={busy} className="h-10 bg-accent font-bold text-accent-foreground hover:bg-accent/90">
+        {t("search.privateBooking.requestQuoteSubmit")}
+      </Button>
+    </form>
   );
 }
 
@@ -200,10 +309,14 @@ export function PrivateBookingSection({ trip, destination, date, seats, classNam
 
   // Smallest vehicle that still fits the group the user actually searched for —
   // ties the private-booking cards to the real search instead of showing three static options.
-  const fitting = options.filter((option) => option.capacity >= seats);
+  // Prefer instantly-bookable options for the "recommended" badge — a quote-only
+  // van/hiace card has no instant price to steer anyone toward.
+  const instantOptions = options.filter((option) => !QUOTE_ONLY_VEHICLE_CODES.has(option.vehicleCode));
+  const recommendationPool = instantOptions.length > 0 ? instantOptions : options;
+  const fitting = recommendationPool.filter((option) => option.capacity >= seats);
   const recommendedId = (fitting.length > 0
     ? fitting.reduce((best, option) => (option.capacity < best.capacity ? option : best))
-    : options.reduce((best, option) => (option.capacity > best.capacity ? option : best))
+    : recommendationPool.reduce((best, option) => (option.capacity > best.capacity ? option : best))
   ).tripOptionId;
 
   // A vehicle type only needs a tier badge when it actually has more than one
