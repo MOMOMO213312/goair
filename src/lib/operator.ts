@@ -52,12 +52,17 @@ export async function getOperatorDashboard(token: string): Promise<OperatorDashb
   };
 }
 
-export type OperatorTripStatus = "pending" | "accepted" | "rejected" | string;
+export type OperatorTripStatus =
+  | "pending" | "accepted" | "rejected"
+  | "on_the_way" | "picked_up" | "completed"
+  | "delayed" | "vehicle_issue" | "driver_change" | "cancelled" | "no_show"
+  | string;
 
 export type OperatorTrip = {
   assignmentId: string; travelDate: string; departureTime: string | null;
   destination: string; origin: string; seatsCount: number; amountDueUsd: number;
   driverName: string | null; vehiclePlate: string; operatorStatus: OperatorTripStatus;
+  statusNote: string | null; statusUpdatedAt: string | null;
 };
 
 export async function getOperatorTrips(token: string): Promise<OperatorTrip[]> {
@@ -74,6 +79,8 @@ export async function getOperatorTrips(token: string): Promise<OperatorTrip[]> {
     driverName: (r["driver_name"] as string | null) ?? null,
     vehiclePlate: String(r["vehicle_plate"] ?? "—"),
     operatorStatus: String(r["operator_status"] ?? "pending"),
+    statusNote: (r["status_note"] as string | null) ?? null,
+    statusUpdatedAt: (r["status_updated_at"] as string | null) ?? null,
   }));
 }
 
@@ -81,19 +88,47 @@ export const OPERATOR_TRIP_STATUS_LABELS: Record<string, string> = {
   pending: "بانتظار ردك",
   accepted: "موافَق عليها",
   rejected: "مرفوضة",
+  on_the_way: "في الطريق",
+  picked_up: "تم استلام الراكب",
+  completed: "مكتملة",
+  delayed: "متأخرة",
+  vehicle_issue: "عطل في العربية",
+  driver_change: "تغيير سائق",
+  cancelled: "ملغاة",
+  no_show: "الراكب لم يحضر",
 };
 
-// الدالة دي كانت جاهزة في القاعدة (operator_set_trip_status) من غير أي مكان في
-// الواجهة بينادي عليها — الأوبريتور ماكانش يقدر يوافق/يرفض رحلة متخصصة له.
+/** Statuses that don't allow any further transition. */
+export const OPERATOR_TERMINAL_STATUSES = new Set(["completed", "rejected", "cancelled", "no_show"]);
+
+/** Mirrors the server-side transition guard in operator_set_trip_status — kept
+ * in sync so the UI only ever offers moves the RPC will actually accept. */
+export const OPERATOR_STATUS_TRANSITIONS: Record<string, OperatorTripStatus[]> = {
+  pending: ["accepted", "rejected"],
+  accepted: ["on_the_way", "delayed", "vehicle_issue", "driver_change", "cancelled", "no_show"],
+  on_the_way: ["picked_up", "delayed", "vehicle_issue", "driver_change", "cancelled", "no_show"],
+  picked_up: ["completed", "delayed"],
+  delayed: ["on_the_way", "picked_up", "completed", "cancelled"],
+  vehicle_issue: ["on_the_way", "driver_change", "cancelled"],
+  driver_change: ["on_the_way", "picked_up"],
+};
+
+/** Statuses that require the operator to attach a reason/note. */
+export const OPERATOR_STATUSES_REQUIRING_NOTE = new Set([
+  "delayed", "vehicle_issue", "driver_change", "cancelled", "no_show",
+]);
+
 export async function operatorSetTripStatus(
   token: string,
   assignmentId: string,
-  status: "accepted" | "rejected",
+  status: OperatorTripStatus,
+  note?: string,
 ): Promise<void> {
   const { error } = await supabase.rpc("operator_set_trip_status", {
     p_access_token: token,
     p_assignment_id: assignmentId,
     p_status: status,
+    p_note: note ?? null,
   });
   if (error) rpcError(error);
 }
