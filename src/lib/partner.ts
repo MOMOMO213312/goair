@@ -131,6 +131,12 @@ export type PartnerBooking = {
   lifecycleStatus: string | null;
   lifecycleUpdatedAt: string | null;
   driverName: string | null;
+  /** Individual passenger names for group bookings (seatsCount > 1). Empty if not collected. */
+  passengerNames: string[];
+  /** 'to_airport' = العميل رايح المطار، 'from_airport' = العميل جاي من المطار. */
+  direction: string | null;
+  /** Shared id linking the outbound and return legs of a round-trip booking. Null for one-way. */
+  roundTripGroupId: string | null;
 };
 
 export async function getPartnerBookings(
@@ -160,7 +166,73 @@ export async function getPartnerBookings(
     lifecycleStatus: (row["lifecycle_status"] as string | null) ?? null,
     lifecycleUpdatedAt: (row["lifecycle_updated_at"] as string | null) ?? null,
     driverName: (row["driver_name"] as string | null) ?? null,
+    passengerNames: ((row["passenger_names"] as string[] | null) ?? []).filter(Boolean),
+    direction: (row["direction"] as string | null) ?? null,
+    roundTripGroupId: (row["round_trip_group_id"] as string | null) ?? null,
   }));
+}
+
+export function partnerDirectionLabel(direction: string | null): string {
+  if (direction === "to_airport") return "إلى المطار";
+  if (direction === "from_airport") return "من المطار";
+  return "—";
+}
+
+/** Builds and downloads a CSV of the passenger list — one row per passenger for group bookings
+ * (seatsCount > 1 with names collected), one row for solo bookings. Includes round-trip linkage. */
+export function exportPartnerBookingsCsv(bookings: PartnerBooking[], filenamePrefix = "goair-bookings") {
+  const headers = [
+    "تاريخ الحجز",
+    "اسم الراكب",
+    "تليفون التواصل",
+    "تاريخ الرحلة",
+    "الاتجاه",
+    "الوجهة",
+    "ذهاب وعودة؟",
+    "عدد المقاعد بالحجز",
+    "الحالة",
+    "حالة الدفع",
+    "إجمالي الحجز (USD)",
+    "العمولة (USD)",
+  ];
+
+  function csvCell(value: string | number) {
+    const s = String(value ?? "");
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+
+  const rows: string[][] = [];
+  for (const b of bookings) {
+    const names = b.passengerNames.length > 0 ? b.passengerNames : [b.fullName];
+    const isRoundTrip = b.roundTripGroupId ? "نعم" : "لا";
+    for (const name of names) {
+      rows.push([
+        formatDate(b.bookedAt),
+        name,
+        b.phoneNumber,
+        formatDate(b.travelDate),
+        partnerDirectionLabel(b.direction),
+        `${b.origin} ← ${b.destination}`,
+        isRoundTrip,
+        String(b.seatsCount),
+        partnerBookingStatusLabel(b.status),
+        b.paymentStatus,
+        b.expectedTotalUsd.toFixed(2),
+        b.commissionUsd.toFixed(2),
+      ]);
+    }
+  }
+
+  const csv = [headers, ...rows].map((r) => r.map(csvCell).join(",")).join("\r\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${filenamePrefix}-${todayIso()}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 export type PartnerSubscription = {

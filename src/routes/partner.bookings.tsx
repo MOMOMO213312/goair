@@ -23,13 +23,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  exportPartnerBookingsCsv,
   formatDate,
   formatPartnerMoney,
   getPartnerBookings,
   isoDaysAgo,
   isPartnerAuthError,
+  partnerDirectionLabel,
   todayIso,
 } from "@/lib/partner";
+import { Download } from "lucide-react";
 
 export const Route = createFileRoute("/partner/bookings")({
   head: () => ({
@@ -92,6 +95,20 @@ function BookingsPage() {
         </Button>
       </form>
 
+      {(query.data ?? []).length > 0 ? (
+        <div className="mb-4 flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            className="gap-2 font-bold"
+            onClick={() => exportPartnerBookingsCsv(query.data ?? [])}
+          >
+            <Download className="size-4" aria-hidden />
+            تصدير كشف العملاء (CSV)
+          </Button>
+        </div>
+      ) : null}
+
       {query.isPending ? (
         <PartnerTableSkeleton rows={6} cols={6} />
       ) : query.isError ? (
@@ -107,6 +124,7 @@ function BookingsPage() {
                 <TableHead className="text-right">الراكب</TableHead>
                 <TableHead className="text-right">تليفون الراكب</TableHead>
                 <TableHead className="text-right">تاريخ الرحلة</TableHead>
+                <TableHead className="text-right">الاتجاه</TableHead>
                 <TableHead className="text-right">الوجهة</TableHead>
                 <TableHead className="text-right">عدد المقاعد</TableHead>
                 <TableHead className="text-right">الدفع</TableHead>
@@ -120,9 +138,22 @@ function BookingsPage() {
               {(query.data ?? []).map((row) => (
                 <TableRow key={row.id}>
                   <TableCell className="text-muted-foreground">{formatDate(row.bookedAt)}</TableCell>
-                  <TableCell className="font-semibold text-primary">{row.fullName}</TableCell>
+                  <TableCell className="font-semibold text-primary">
+                    {row.fullName}
+                    {row.passengerNames.length > 1 ? (
+                      <div className="mt-1 text-xs font-normal text-muted-foreground">
+                        {row.passengerNames.join("، ")}
+                      </div>
+                    ) : null}
+                  </TableCell>
                   <TableCell dir="ltr" className="text-right">{row.phoneNumber}</TableCell>
                   <TableCell>{formatDate(row.travelDate)}</TableCell>
+                  <TableCell>
+                    {partnerDirectionLabel(row.direction)}
+                    {row.roundTripGroupId ? (
+                      <div className="mt-1 text-xs font-bold text-accent">🔁 ذهاب وعودة</div>
+                    ) : null}
+                  </TableCell>
                   <TableCell>{row.origin} ← {row.destination}</TableCell>
                   <TableCell>{row.seatsCount}</TableCell>
                   <TableCell>{row.paymentStatus}</TableCell>
