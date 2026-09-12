@@ -746,12 +746,11 @@ export type RentalVehicle = {
 };
 
 function mapRentalVehicle(row: Record<string, unknown>): RentalVehicle {
-  const category = row["rental_vehicle_categories"] as Record<string, unknown> | null;
   return {
     id: String(row["id"]),
     categoryId: (row["category_id"] as string | null) ?? null,
-    categoryLabelAr: (category?.["label_ar"] as string | null) ?? null,
-    categoryLabelEn: (category?.["label_en"] as string | null) ?? null,
+    categoryLabelAr: (row["category_label_ar"] as string | null) ?? null,
+    categoryLabelEn: (row["category_label_en"] as string | null) ?? null,
     country: String(row["country"] ?? ""),
     makeModel: String(row["make_model"] ?? ""),
     photos: (row["photos"] as string[] | null) ?? [],
@@ -762,29 +761,37 @@ function mapRentalVehicle(row: Record<string, unknown>): RentalVehicle {
     multiDayThresholdDays: Number(row["multi_day_threshold_days"] ?? 3),
     minRentalHours: Number(row["min_rental_hours"] ?? 3),
     transmission: row["transmission"] === "manual" ? "manual" : "automatic",
-    fuelType: (["petrol", "diesel", "hybrid", "electric"] as const).includes(row["fuel_type"] as never)
+    fuelType: (["petrol", "diesel", "hybrid", "electric"] as const).includes(
+      row["fuel_type"] as never,
+    )
       ? (row["fuel_type"] as RentalVehicle["fuelType"])
       : "petrol",
     seats: row["seats"] == null ? null : Number(row["seats"]),
-    dailyMileageLimitKm: row["daily_mileage_limit_km"] == null ? null : Number(row["daily_mileage_limit_km"]),
+    dailyMileageLimitKm:
+      row["daily_mileage_limit_km"] == null ? null : Number(row["daily_mileage_limit_km"]),
     insuranceIncluded: Boolean(row["insurance_included"] ?? true),
   };
 }
 
 /**
- * Browse-available rental cars — RLS already restricts this to
- * approval_status = 'approved' AND is_active = true, so no extra filtering
- * is needed here. Optionally narrowed to one country.
+ * Browse-available rental cars for an optional country and, crucially, an
+ * optional [startDatetime, endDatetime) window. When a window is given, the
+ * DB-side fetch_available_rental_vehicles function excludes any vehicle that
+ * already has a non-cancelled booking overlapping it — same overlap logic
+ * enforced by the rental_bookings_no_overlap exclusion constraint, so a car
+ * shown here is actually bookable for the searched dates, not just
+ * "approved in general".
  */
-export async function fetchAvailableRentalVehicles(country?: string): Promise<RentalVehicle[]> {
-  let query = supabase
-    .from("rental_vehicles")
-    .select(
-      "id, category_id, country, make_model, photos, description, hourly_rate_usd, daily_rate_usd, multi_day_rate_usd, multi_day_threshold_days, min_rental_hours, transmission, fuel_type, seats, daily_mileage_limit_km, insurance_included, rental_vehicle_categories(label_ar, label_en)",
-    )
-    .order("created_at", { ascending: false });
-  if (country) query = query.eq("country", country);
-  const { data, error } = await query;
+export async function fetchAvailableRentalVehicles(
+  country?: string,
+  startDatetime?: string,
+  endDatetime?: string,
+): Promise<RentalVehicle[]> {
+  const { data, error } = await supabase.rpc("fetch_available_rental_vehicles", {
+    p_country: country ?? null,
+    p_start_datetime: startDatetime ?? null,
+    p_end_datetime: endDatetime ?? null,
+  });
   if (error) throw new Error(error.message);
   return ((data ?? []) as Record<string, unknown>[]).map(mapRentalVehicle);
 }

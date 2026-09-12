@@ -100,6 +100,82 @@ function TrustStrip() {
   );
 }
 
+function SearchBar({
+  country,
+  onCountryChange,
+  start,
+  onStartChange,
+  end,
+  onEndChange,
+  rangeValid,
+}: {
+  country: string;
+  onCountryChange: (value: string) => void;
+  start: string;
+  onStartChange: (value: string) => void;
+  end: string;
+  onEndChange: (value: string) => void;
+  rangeValid: boolean;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="mt-6 rounded-2xl border border-border bg-card p-4 shadow-[var(--shadow-card)] sm:p-5">
+      <div className="grid gap-3 sm:grid-cols-[1fr_1fr_1fr]">
+        <div className="space-y-1.5">
+          <Label htmlFor="rc-search-location" className="flex items-center gap-1.5 text-xs">
+            <MapPin className="size-3.5" aria-hidden />
+            {t("rentACarPage.searchLocationLabel")}
+          </Label>
+          <Select value={country} onValueChange={onCountryChange}>
+            <SelectTrigger id="rc-search-location" className="w-full">
+              <SelectValue placeholder={t("rentACarPage.filterAllCountries")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("rentACarPage.filterAllCountries")}</SelectItem>
+              {RENTAL_COUNTRIES.map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="rc-search-start" className="flex items-center gap-1.5 text-xs">
+            <CalendarClock className="size-3.5" aria-hidden />
+            {t("rentACarPage.searchStartLabel")}
+          </Label>
+          <Input
+            id="rc-search-start"
+            type="datetime-local"
+            value={start}
+            onChange={(event) => onStartChange(event.target.value)}
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="rc-search-end" className="flex items-center gap-1.5 text-xs">
+            <CalendarClock className="size-3.5" aria-hidden />
+            {t("rentACarPage.searchEndLabel")}
+          </Label>
+          <Input
+            id="rc-search-end"
+            type="datetime-local"
+            value={end}
+            onChange={(event) => onEndChange(event.target.value)}
+          />
+        </div>
+      </div>
+      {!rangeValid ? (
+        <p className="mt-2 text-xs font-semibold text-destructive">
+          {t("rentACarPage.searchInvalidRange")}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 function toLocalInputValue(date: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
@@ -112,19 +188,53 @@ function defaultStart() {
   return d;
 }
 
+function defaultSearchEnd() {
+  const d = defaultStart();
+  d.setDate(d.getDate() + 1);
+  return d;
+}
+
 function RentACarPage() {
   const { t, language } = useTranslation();
 
+  // Search-bar state — the "where + when" a real rental site asks for before
+  // it ever shows cars. Drives the DB-side availability filter directly.
   const [countryFilter, setCountryFilter] = useState<string>("all");
+  const [searchStart, setSearchStart] = useState(() => toLocalInputValue(defaultStart()));
+  const [searchEnd, setSearchEnd] = useState(() => toLocalInputValue(defaultSearchEnd()));
+
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [transmissionFilter, setTransmissionFilter] = useState<string>("all");
   const [fuelFilter, setFuelFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
 
+  const searchStartIso = useMemo(
+    () => (searchStart ? new Date(searchStart).toISOString() : null),
+    [searchStart],
+  );
+  const searchEndIso = useMemo(
+    () => (searchEnd ? new Date(searchEnd).toISOString() : null),
+    [searchEnd],
+  );
+  const searchRangeValid = Boolean(
+    searchStartIso && searchEndIso && new Date(searchEndIso) > new Date(searchStartIso),
+  );
+
   const vehiclesQuery = useQuery({
-    queryKey: ["goair", "rental-vehicles", countryFilter],
+    queryKey: [
+      "goair",
+      "rental-vehicles",
+      countryFilter,
+      searchRangeValid ? searchStartIso : null,
+      searchRangeValid ? searchEndIso : null,
+    ],
     queryFn: () =>
-      fetchAvailableRentalVehicles(countryFilter === "all" ? undefined : countryFilter),
+      fetchAvailableRentalVehicles(
+        countryFilter === "all" ? undefined : countryFilter,
+        searchStartIso ?? undefined,
+        searchEndIso ?? undefined,
+      ),
+    enabled: searchRangeValid,
   });
 
   const categoriesQuery = useQuery({
@@ -151,10 +261,9 @@ function RentACarPage() {
 
   const hasAnyVehicles = (vehiclesQuery.data?.length ?? 0) > 0;
   const filtersActive =
-    countryFilter !== "all" || categoryFilter !== "all" || transmissionFilter !== "all" || fuelFilter !== "all";
+    categoryFilter !== "all" || transmissionFilter !== "all" || fuelFilter !== "all";
 
   function clearFilters() {
-    setCountryFilter("all");
     setCategoryFilter("all");
     setTransmissionFilter("all");
     setFuelFilter("all");
@@ -185,6 +294,16 @@ function RentACarPage() {
             <p className="mt-2 text-sm text-muted-foreground">{t("rentACarPage.subtitle")}</p>
 
             <TrustStrip />
+
+            <SearchBar
+              country={countryFilter}
+              onCountryChange={setCountryFilter}
+              start={searchStart}
+              onStartChange={setSearchStart}
+              end={searchEnd}
+              onEndChange={setSearchEnd}
+              rangeValid={searchRangeValid}
+            />
 
             <div className="mt-6 flex flex-wrap items-center gap-2">
               <button
@@ -222,27 +341,15 @@ function RentACarPage() {
             </div>
 
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <Select value={countryFilter} onValueChange={setCountryFilter}>
-                <SelectTrigger className="w-auto min-w-40">
-                  <SelectValue placeholder={t("rentACarPage.filterAllCountries")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("rentACarPage.filterAllCountries")}</SelectItem>
-                  {RENTAL_COUNTRIES.map((country) => (
-                    <SelectItem key={country} value={country}>
-                      {country}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
               <Select value={transmissionFilter} onValueChange={setTransmissionFilter}>
                 <SelectTrigger className="w-auto min-w-40">
                   <SelectValue placeholder={t("rentACarPage.filterTransmission")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">{t("rentACarPage.filterAllTransmissions")}</SelectItem>
-                  <SelectItem value="automatic">{t("rentACarPage.transmissionAutomatic")}</SelectItem>
+                  <SelectItem value="automatic">
+                    {t("rentACarPage.transmissionAutomatic")}
+                  </SelectItem>
                   <SelectItem value="manual">{t("rentACarPage.transmissionManual")}</SelectItem>
                 </SelectContent>
               </Select>
@@ -292,7 +399,14 @@ function RentACarPage() {
               ) : null}
             </div>
 
-            {vehiclesQuery.isPending ? (
+            {!searchRangeValid ? (
+              <div className="mt-10 flex flex-col items-center gap-2 text-center">
+                <AlertTriangle className="size-8 text-destructive" aria-hidden />
+                <p className="text-sm text-muted-foreground">
+                  {t("rentACarPage.searchInvalidRange")}
+                </p>
+              </div>
+            ) : vehiclesQuery.isPending ? (
               <p className="mt-10 text-center text-sm text-muted-foreground">
                 {t("rentACarPage.loading")}
               </p>
@@ -307,7 +421,9 @@ function RentACarPage() {
             ) : visibleVehicles.length === 0 ? (
               <div className="mt-10 flex flex-col items-center gap-3 text-center">
                 <p className="text-sm text-muted-foreground">
-                  {hasAnyVehicles ? t("rentACarPage.noResultsForFilter") : t("rentACarPage.empty")}
+                  {hasAnyVehicles
+                    ? t("rentACarPage.noResultsForFilter")
+                    : t("rentACarPage.noResultsForRange")}
                 </p>
                 {hasAnyVehicles ? (
                   <Button variant="outline" onClick={clearFilters}>
@@ -342,6 +458,8 @@ function RentACarPage() {
             <BookingForm
               vehicle={selectedVehicle}
               language={language}
+              initialStart={searchRangeValid ? searchStart : undefined}
+              initialEnd={searchRangeValid ? searchEnd : undefined}
               onBack={() => setPhase("browse")}
               onDone={onBookingDone}
             />
@@ -453,7 +571,10 @@ function RentalVehicleCard({
             shopper can compare cars without opening each one. */}
         <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 border-y border-border/70 py-3">
           {specs.map(({ icon: Icon, label }, i) => (
-            <span key={i} className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+            <span
+              key={i}
+              className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground"
+            >
               <Icon className="size-3.5 shrink-0 text-primary/70" aria-hidden />
               {label}
             </span>
@@ -519,11 +640,15 @@ const DURATION_PRESETS: { type: RentalDurationType; hours: number }[] = [
 function BookingForm({
   vehicle,
   language,
+  initialStart,
+  initialEnd,
   onBack,
   onDone,
 }: {
   vehicle: RentalVehicle;
   language: "ar" | "en";
+  initialStart?: string | undefined;
+  initialEnd?: string | undefined;
   onBack: () => void;
   onDone: () => void;
 }) {
@@ -535,8 +660,9 @@ function BookingForm({
   const [durationPreset, setDurationPreset] = useState<RentalDurationType>(
     vehicle.hourlyRateUsd != null ? "hourly" : "daily",
   );
-  const [start, setStart] = useState(() => toLocalInputValue(defaultStart()));
+  const [start, setStart] = useState(() => initialStart ?? toLocalInputValue(defaultStart()));
   const [end, setEnd] = useState(() => {
+    if (initialEnd) return initialEnd;
     const base = defaultStart();
     base.setHours(base.getHours() + Math.max(vehicle.minRentalHours, 1));
     return toLocalInputValue(base);

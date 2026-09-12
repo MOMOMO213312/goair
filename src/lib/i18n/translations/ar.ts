@@ -975,6 +975,11 @@ const ar = {
     filterAllTransmissions: "كل الأنواع",
     filterAllFuelTypes: "كل الأنواع",
     filtersTitle: "الفلاتر",
+    searchLocationLabel: "الموقع",
+    searchStartLabel: "تاريخ ووقت الاستلام",
+    searchEndLabel: "تاريخ ووقت التسليم",
+    searchInvalidRange: "لازم يكون معاد التسليم بعد معاد الاستلام.",
+    noResultsForRange: "مفيش عربيات متاحة في المواعيد دي، جرب تواريخ تانية.",
   },
 } as const;
 

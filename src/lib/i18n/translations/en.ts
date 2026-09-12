@@ -702,7 +702,8 @@ const en = {
     sectionTitle: "What can you book with GoAir?",
     sectionDescription: "Not just a ride — arrange your whole airport journey in one place.",
     transferTitle: "Airport Transfer",
-    transferDescription: "Shared or private, to and from any airport GoAir covers, at a fixed per-seat price.",
+    transferDescription:
+      "Shared or private, to and from any airport GoAir covers, at a fixed per-seat price.",
     transferCta: "Book your ride",
   },
   chooseYourJourney: {
@@ -1014,6 +1015,11 @@ const en = {
     filterAllTransmissions: "All types",
     filterAllFuelTypes: "All types",
     filtersTitle: "Filters",
+    searchLocationLabel: "Location",
+    searchStartLabel: "Pickup date & time",
+    searchEndLabel: "Drop-off date & time",
+    searchInvalidRange: "Drop-off must be after pickup.",
+    noResultsForRange: "No cars are available for these dates, try different dates.",
   },
 } as const;
 
