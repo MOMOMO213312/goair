@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -35,7 +36,9 @@ import {
   getRentalProviderProfile,
   isRentalProviderAuthError,
   listRentalProviderVehicles,
+  MAX_VEHICLE_PHOTOS,
   updateRentalProviderVehicle,
+  uploadRentalVehiclePhotos,
   type RentalProviderVehicle,
 } from "@/lib/rental-provider";
 import { fetchRentalVehicleCategories } from "@/lib/goair";
@@ -197,6 +200,96 @@ function VehicleCard({
   );
 }
 
+// منتقي صور بسيط: بيعرض الصور الموجودة (روابط) والصور المختارة لسه ماترفعتش
+// (كملفات محلية) في نفس الشبكة، وبيسمح بإضافة/حذف لحد أقصى MAX_VEHICLE_PHOTOS.
+function VehiclePhotoPicker({
+  existingPhotos,
+  onRemoveExisting,
+  newFiles,
+  onNewFilesChange,
+}: {
+  existingPhotos: string[];
+  onRemoveExisting: (url: string) => void;
+  newFiles: File[];
+  onNewFilesChange: (files: File[]) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const totalCount = existingPhotos.length + newFiles.length;
+  const canAddMore = totalCount < MAX_VEHICLE_PHOTOS;
+
+  function handlePick(e: React.ChangeEvent<HTMLInputElement>) {
+    const picked = Array.from(e.target.files ?? []);
+    e.target.value = "";
+    if (!picked.length) return;
+    const room = MAX_VEHICLE_PHOTOS - totalCount;
+    if (room <= 0) {
+      toast.error(`أقصى عدد صور للعربية ${MAX_VEHICLE_PHOTOS}.`);
+      return;
+    }
+    onNewFilesChange([...newFiles, ...picked.slice(0, room)]);
+  }
+
+  return (
+    <div className="space-y-2">
+      <Label>صور العربية (اختياري — لحد {MAX_VEHICLE_PHOTOS})</Label>
+      <div className="flex flex-wrap gap-2">
+        {existingPhotos.map((url) => (
+          <div key={url} className="group relative h-20 w-20 overflow-hidden rounded-lg border border-border/80">
+            <img src={url} alt="صورة العربية" className="h-full w-full object-cover" />
+            <button
+              type="button"
+              onClick={() => onRemoveExisting(url)}
+              className="absolute end-1 top-1 rounded-full bg-black/60 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+              aria-label="حذف الصورة"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        ))}
+        {newFiles.map((file, i) => {
+          const previewUrl = URL.createObjectURL(file);
+          return (
+            <div key={`${file.name}-${i}`} className="group relative h-20 w-20 overflow-hidden rounded-lg border border-border/80">
+              <img
+                src={previewUrl}
+                alt={file.name}
+                className="h-full w-full object-cover"
+                onLoad={() => URL.revokeObjectURL(previewUrl)}
+              />
+              <button
+                type="button"
+                onClick={() => onNewFilesChange(newFiles.filter((_, idx) => idx !== i))}
+                className="absolute end-1 top-1 rounded-full bg-black/60 p-0.5 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                aria-label="إلغاء الصورة"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          );
+        })}
+        {canAddMore ? (
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+          >
+            <ImagePlus className="h-5 w-5" />
+            <span className="text-[11px]">إضافة</span>
+          </button>
+        ) : null}
+      </div>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={handlePick}
+      />
+    </div>
+  );
+}
+
 function VehicleFormDialog({
   token,
   country,
@@ -218,7 +311,9 @@ function VehicleFormDialog({
   const [multiDayRate, setMultiDayRate] = useState("");
   const [seats, setSeats] = useState("");
   const [description, setDescription] = useState("");
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
+  const [busyLabel, setBusyLabel] = useState("جاري الحفظ...");
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -228,6 +323,12 @@ function VehicleFormDialog({
     }
     setBusy(true);
     try {
+      let photos: string[] = [];
+      if (photoFiles.length) {
+        setBusyLabel("جاري رفع الصور...");
+        photos = await uploadRentalVehiclePhotos(photoFiles);
+      }
+      setBusyLabel("جاري الحفظ...");
       await addRentalProviderVehicle(token, {
         categoryId,
         country,
@@ -240,6 +341,7 @@ function VehicleFormDialog({
         multiDayRateUsd: multiDayRate.trim() ? Number(multiDayRate) : null,
         seats: seats.trim() ? Number(seats) : null,
         description: description.trim() || null,
+        photos,
       });
       toast.success("تمت إضافة العربية — هتبقى ظاهرة للعملاء بعد موافقة GoAir.");
       onDone();
@@ -247,6 +349,7 @@ function VehicleFormDialog({
       toast.error(error instanceof Error ? error.message : "حصل خطأ.");
     } finally {
       setBusy(false);
+      setBusyLabel("جاري الحفظ...");
     }
   }
 
@@ -301,11 +404,23 @@ function VehicleFormDialog({
         </div>
         <div className="space-y-2">
           <Label htmlFor="desc">وصف العربية (اختياري)</Label>
-          <Textarea id="desc" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
+          <Textarea
+            id="desc"
+            rows={3}
+            placeholder="اكتب تفاصيل بتفرّق عند الحجز: حالة العربية، مميزات جوّاها، شروط الاستخدام، أماكن التسليم المتاحة..."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
         </div>
+        <VehiclePhotoPicker
+          existingPhotos={[]}
+          onRemoveExisting={() => {}}
+          newFiles={photoFiles}
+          onNewFilesChange={setPhotoFiles}
+        />
         <DialogFooter>
           <Button type="submit" disabled={busy} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">
-            {busy ? "جاري الحفظ..." : "إضافة للمراجعة"}
+            {busy ? busyLabel : "إضافة للمراجعة"}
           </Button>
         </DialogFooter>
       </form>
@@ -328,12 +443,22 @@ function EditVehicleDialog({
   const [hourlyRate, setHourlyRate] = useState(vehicle.hourlyRateUsd != null ? String(vehicle.hourlyRateUsd) : "");
   const [multiDayRate, setMultiDayRate] = useState(vehicle.multiDayRateUsd != null ? String(vehicle.multiDayRateUsd) : "");
   const [description, setDescription] = useState(vehicle.description ?? "");
+  const [existingPhotos, setExistingPhotos] = useState<string[]>(vehicle.photos ?? []);
+  const [newPhotoFiles, setNewPhotoFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
+  const [busyLabel, setBusyLabel] = useState("جاري الحفظ...");
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
+      let photos = existingPhotos;
+      if (newPhotoFiles.length) {
+        setBusyLabel("جاري رفع الصور...");
+        const uploaded = await uploadRentalVehiclePhotos(newPhotoFiles);
+        photos = [...existingPhotos, ...uploaded];
+      }
+      setBusyLabel("جاري الحفظ...");
       await updateRentalProviderVehicle(token, vehicle.id, {
         plateNumber: plateNumber.trim(),
         makeModel: makeModel.trim(),
@@ -341,6 +466,7 @@ function EditVehicleDialog({
         hourlyRateUsd: hourlyRate.trim() ? Number(hourlyRate) : null,
         multiDayRateUsd: multiDayRate.trim() ? Number(multiDayRate) : null,
         description: description.trim() || null,
+        photos,
       });
       toast.success("اتحفظ التعديل — هيرجع للمراجعة قبل ما يظهر تاني.");
       onDone();
@@ -348,6 +474,7 @@ function EditVehicleDialog({
       toast.error(error instanceof Error ? error.message : "حصل خطأ.");
     } finally {
       setBusy(false);
+      setBusyLabel("جاري الحفظ...");
     }
   }
 
@@ -385,9 +512,15 @@ function EditVehicleDialog({
           <Label htmlFor="e-desc">الوصف</Label>
           <Textarea id="e-desc" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
         </div>
+        <VehiclePhotoPicker
+          existingPhotos={existingPhotos}
+          onRemoveExisting={(url) => setExistingPhotos((prev) => prev.filter((p) => p !== url))}
+          newFiles={newPhotoFiles}
+          onNewFilesChange={setNewPhotoFiles}
+        />
         <DialogFooter>
           <Button type="submit" disabled={busy} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">
-            {busy ? "جاري الحفظ..." : "حفظ التعديل"}
+            {busy ? busyLabel : "حفظ التعديل"}
           </Button>
         </DialogFooter>
       </form>
