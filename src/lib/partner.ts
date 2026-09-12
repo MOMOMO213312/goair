@@ -172,6 +172,26 @@ export async function getPartnerBookings(
   }));
 }
 
+/**
+ * Cancel one of this partner's own bookings. Ownership is enforced
+ * server-side by `cancel_business_booking` (checks sales_partner_id against
+ * the resolved token) — never call the underlying `cancel_booking_by_ticket`
+ * RPC directly here, it has no ownership check.
+ */
+export async function cancelBusinessBooking(
+  token: string,
+  bookingId: string,
+  reason: string | null,
+): Promise<boolean> {
+  const { data, error } = await supabase.rpc("cancel_business_booking", {
+    p_access_token: token,
+    p_booking_id: bookingId,
+    p_reason: reason,
+  });
+  if (error) throwPartnerRpcError(error);
+  return Boolean(data);
+}
+
 export function partnerDirectionLabel(direction: string | null): string {
   if (direction === "to_airport") return "إلى المطار";
   if (direction === "from_airport") return "من المطار";
