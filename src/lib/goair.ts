@@ -947,6 +947,7 @@ export type CreateRentalBookingInput = {
   startDatetime: string;
   endDatetime: string;
   pickupLocation: string;
+  referralCodeOverride?: string | null;
 };
 
 export type RentalBookingResult = {
@@ -965,6 +966,9 @@ export type RentalBookingResult = {
 export async function createRentalBookingSafe(
   input: CreateRentalBookingInput,
 ): Promise<RentalBookingResult> {
+  const pendingReferralCode =
+    input.referralCodeOverride !== undefined ? input.referralCodeOverride : getStoredReferralCode();
+
   const { data, error } = await supabase.rpc("create_rental_booking_safe", {
     p_rental_vehicle_id: input.rentalVehicleId,
     p_full_name: input.fullName,
@@ -972,6 +976,7 @@ export async function createRentalBookingSafe(
     p_start_datetime: input.startDatetime,
     p_end_datetime: input.endDatetime,
     p_pickup_location: input.pickupLocation,
+    ...(pendingReferralCode ? { p_referral_code: pendingReferralCode } : {}),
   });
   if (error) throw new Error(error.message);
   const row = (data ?? [])[0] as Record<string, unknown> | undefined;
