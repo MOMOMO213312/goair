@@ -133,6 +133,20 @@ export async function operatorSetTripStatus(
   if (error) rpcError(error);
 }
 
+export async function operatorReassignTrip(
+  token: string,
+  assignmentId: string,
+  updates: { vehicleId?: string | null; driverId?: string | null },
+): Promise<void> {
+  const { error } = await supabase.rpc("operator_reassign_trip", {
+    p_access_token: token,
+    p_assignment_id: assignmentId,
+    p_vehicle_id: updates.vehicleId ?? null,
+    p_driver_id: updates.driverId ?? null,
+  });
+  if (error) rpcError(error);
+}
+
 export type OperatorStatement = {
   id: string; periodStart: string; periodEnd: string;
   totalTrips: number; totalSeats: number; amountDueUsd: number; status: string;

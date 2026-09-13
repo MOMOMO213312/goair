@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, Clock, Users, X } from "lucide-react";
+import { Check, Clock, Repeat, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { useOperatorToken } from "@/lib/operator-session";
 import { OperatorAuthError, OperatorLoading, OperatorSection } from "@/components/operator/operator-shell";
@@ -12,17 +12,28 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   formatOperatorMoney,
+  getOperatorFleet,
   getOperatorTrips,
   getOperatorTripPassengers,
   isOperatorAuthError,
+  operatorReassignTrip,
   operatorSetTripStatus,
   OPERATOR_TRIP_STATUS_LABELS,
   OPERATOR_STATUS_TRANSITIONS,
   OPERATOR_STATUSES_REQUIRING_NOTE,
   OPERATOR_TERMINAL_STATUSES,
+  type OperatorDriver,
   type OperatorTrip,
   type OperatorTripStatus,
+  type OperatorVehicle,
 } from "@/lib/operator";
 
 const STATUS_BADGE_CLASS: Record<string, string> = {
@@ -55,12 +66,19 @@ function TripsPage() {
   const q = useQuery({ queryKey: ["operator-trips", token], queryFn: () => getOperatorTrips(token), retry: false, enabled: Boolean(token) });
   const [activeTrip, setActiveTrip] = useState<OperatorTrip | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [statusTrip, setStatusTrip] = useState<OperatorTrip | null>(null);
+  const [reassignTrip, setReassignTrip] = useState<OperatorTrip | null>(null);
+  const fleetQ = useQuery({
+    queryKey: ["operator-fleet-lite", token],
+    queryFn: () => getOperatorFleet(token),
+    enabled: Boolean(token) && Boolean(reassignTrip),
+    retry: false,
+  });
   if (!token) return null;
   if (q.isPending) return <OperatorLoading />;
   if (q.isError) return isOperatorAuthError(q.error) ? <OperatorAuthError /> : <OperatorAuthError message="حصل خطأ مؤقت." />;
 
   const trips = q.data ?? [];
-  const [statusTrip, setStatusTrip] = useState<OperatorTrip | null>(null);
 
   async function respondPending(assignmentId: string, status: "accepted" | "rejected") {
     setUpdatingId(assignmentId);
@@ -82,6 +100,23 @@ function TripsPage() {
       await qc.invalidateQueries({ queryKey: ["operator-trips", token] });
       toast.success("تم تحديث حالة الرحلة.");
       setStatusTrip(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "حصل خطأ مؤقت. حاول تاني.");
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  async function submitReassign(
+    assignmentId: string,
+    updates: { vehicleId?: string; driverId?: string },
+  ) {
+    setUpdatingId(assignmentId);
+    try {
+      await operatorReassignTrip(token, assignmentId, updates);
+      await qc.invalidateQueries({ queryKey: ["operator-trips", token] });
+      toast.success("تم تعديل الرحلة.");
+      setReassignTrip(null);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "حصل خطأ مؤقت. حاول تاني.");
     } finally {
@@ -150,15 +185,26 @@ function TripsPage() {
                           <span className="text-xs text-muted-foreground">{t.statusNote}</span>
                         ) : null}
                         {!OPERATOR_TERMINAL_STATUSES.has(t.operatorStatus) ? (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-6 gap-1 px-2 text-xs"
-                            onClick={() => setStatusTrip(t)}
-                          >
-                            <Clock className="h-3 w-3" />
-                            تحديث الحالة
-                          </Button>
+                          <div className="flex items-center gap-1.5">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 gap-1 px-2 text-xs"
+                              onClick={() => setStatusTrip(t)}
+                            >
+                              <Clock className="h-3 w-3" />
+                              تحديث الحالة
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 gap-1 px-2 text-xs"
+                              onClick={() => setReassignTrip(t)}
+                            >
+                              <Repeat className="h-3 w-3" />
+                              تغيير السواق/العربية
+                            </Button>
+                          </div>
                         ) : null}
                       </div>
                     )}
@@ -181,6 +227,15 @@ function TripsPage() {
         updating={updatingId === statusTrip?.assignmentId}
         onClose={() => setStatusTrip(null)}
         onSubmit={submitStatusChange}
+      />
+      <ReassignDialog
+        trip={reassignTrip}
+        drivers={fleetQ.data?.drivers ?? []}
+        vehicles={fleetQ.data?.vehicles ?? []}
+        loadingFleet={fleetQ.isPending}
+        updating={updatingId === reassignTrip?.assignmentId}
+        onClose={() => setReassignTrip(null)}
+        onSubmit={submitReassign}
       />
     </OperatorSection>
   );
@@ -269,6 +324,113 @@ function StatusUpdateDialog({
             className="bg-accent font-bold text-accent-foreground hover:bg-accent/90"
           >
             {updating ? "جاري الحفظ..." : "حفظ"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ReassignDialog({
+  trip,
+  drivers,
+  vehicles,
+  loadingFleet,
+  updating,
+  onClose,
+  onSubmit,
+}: {
+  trip: OperatorTrip | null;
+  drivers: OperatorDriver[];
+  vehicles: OperatorVehicle[];
+  loadingFleet: boolean;
+  updating: boolean;
+  onClose: () => void;
+  onSubmit: (assignmentId: string, updates: { vehicleId?: string; driverId?: string }) => void;
+}) {
+  const [vehicleId, setVehicleId] = useState<string>("");
+  const [driverId, setDriverId] = useState<string>("");
+
+  function handleOpenChange(open: boolean) {
+    if (!open) {
+      setVehicleId("");
+      setDriverId("");
+      onClose();
+    }
+  }
+
+  function submit() {
+    if (!trip) return;
+    const updates: { vehicleId?: string; driverId?: string } = {};
+    if (vehicleId) updates.vehicleId = vehicleId;
+    if (driverId) updates.driverId = driverId;
+    if (!updates.vehicleId && !updates.driverId) return;
+    onSubmit(trip.assignmentId, updates);
+  }
+
+  const canSubmit = Boolean(vehicleId || driverId) && !updating;
+
+  return (
+    <Dialog open={Boolean(trip)} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>تغيير السواق/العربية</DialogTitle>
+          <DialogDescription>
+            {trip ? `${trip.origin} ← ${trip.destination} — ${trip.travelDate}` : ""}
+            {trip ? ` — الحالي: ${trip.vehiclePlate} / ${trip.driverName ?? "بدون سواق"}` : ""}
+          </DialogDescription>
+        </DialogHeader>
+
+        {loadingFleet ? (
+          <p className="text-sm text-muted-foreground">جاري تحميل أسطولك…</p>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>عربية جديدة (اختياري)</Label>
+              <Select value={vehicleId} onValueChange={setVehicleId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="سيب العربية زي ما هي" />
+                </SelectTrigger>
+                <SelectContent>
+                  {vehicles.map((v) => (
+                    <SelectItem key={v.id} value={v.id}>
+                      {v.plate_number} — {v.vehicle_label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>سواق جديد (اختياري)</Label>
+              <Select value={driverId} onValueChange={setDriverId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="سيب السواق زي ما هو" />
+                </SelectTrigger>
+                <SelectContent>
+                  {drivers.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>
+                      {d.full_name} — {d.phone_number}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <p className="text-xs text-muted-foreground">
+              سيب أي حقل فاضي عشان تسيبه زي ما هو. لو العربية أو السواق ليهم مستندات منتهية، أو
+              متعيّنين على رحلة تانية قريبة في نفس اليوم، هيترفض التعديل تلقائيًا.
+            </p>
+          </div>
+        )}
+
+        <DialogFooter>
+          <Button
+            disabled={!canSubmit}
+            onClick={submit}
+            className="bg-accent font-bold text-accent-foreground hover:bg-accent/90"
+          >
+            {updating ? "جاري الحفظ..." : "حفظ التعديل"}
           </Button>
         </DialogFooter>
       </DialogContent>
