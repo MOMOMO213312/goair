@@ -1239,6 +1239,48 @@ export async function cancelSubscriptionByCode(code: string, reason: string) {
   return true;
 }
 
+export type RentalBookingRecord = {
+  id: string;
+  ticket_code: string;
+  full_name: string;
+  phone_number: string;
+  status: string;
+  start_datetime: string;
+  end_datetime: string;
+  duration_type: string;
+  pickup_location: string;
+  total_usd: number;
+  currency: string | null;
+  cancellation_reason: string | null;
+  cancelled_at: string | null;
+  vehicle_make_model: string | null;
+  vehicle_plate_number: string | null;
+  vehicle_photos: string[] | null;
+  driver_full_name: string | null;
+  driver_phone_number: string | null;
+};
+
+/** Ticket-scoped lookup — same "no account, no login" pattern as get_booking_by_ticket. */
+export async function getRentalBookingByTicket(ticketCode: string): Promise<RentalBookingRecord | null> {
+  const { data, error } = await supabase.rpc("get_rental_booking_by_ticket", {
+    p_ticket_code: ticketCode.trim(),
+  });
+  if (error) throw new Error(error.message);
+  const row = Array.isArray(data) ? data[0] : data;
+  return (row as RentalBookingRecord) ?? null;
+}
+
+export async function cancelRentalBookingByTicket(ticketCode: string, reason: string) {
+  const { data, error } = await supabase.rpc("cancel_rental_booking_by_ticket", {
+    p_ticket_code: ticketCode.trim(),
+    p_reason: reason,
+  });
+  if (error) throw new Error(error.message);
+  if (data === false)
+    throw new Error("لم نتمكن من إلغاء حجز التأجير — تأكد من كود التذكرة أو كلم الدعم.");
+  return true;
+}
+
 /** subscription_id here plays the same role `booking_id` plays for `submitPayment`. */
 export async function submitSubscriptionPayment(params: {
   subscriptionId: string;
