@@ -136,7 +136,7 @@ export async function uploadRentalVehiclePhotos(files: File[]): Promise<string[]
     const path = `${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage
       .from("rental-vehicle-photos")
-      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type || undefined });
+      .upload(path, file, { cacheControl: "3600", upsert: false, ...(file.type ? { contentType: file.type } : {}) });
     if (error) throw new Error(error.message || `فشل رفع الصورة "${file.name}".`);
     const { data } = supabase.storage.from("rental-vehicle-photos").getPublicUrl(path);
     urls.push(data.publicUrl);

@@ -28,6 +28,7 @@ import { useStockPhoto } from "@/hooks/use-stock-photo";
 import { EXPLORE_TAB_VALUES, type ExploreTab } from "@/lib/explore-tabs";
 import {
   fetchActivePackages,
+  fetchPublicLaunchMarketCountries,
   fetchSubscriptionPlans,
   type PackageTier,
   type SubscriptionPlan,
@@ -216,8 +217,6 @@ function PackageCard({ pkg }: { pkg: PackageTier }) {
 
 /* ---------------------------------- الاشتراكات ---------------------------------- */
 
-const SUB_COUNTRIES = ["مصر", "لبنان"];
-
 /** Group plans by tier so each tier shows once with its duration as a switch, not 6 flat cards. */
 function groupPlansByTier(plans: SubscriptionPlan[]): { tier: string; byDuration: Record<string, SubscriptionPlan> }[] {
   const order: string[] = [];
@@ -234,11 +233,20 @@ function groupPlansByTier(plans: SubscriptionPlan[]): { tier: string; byDuration
 
 function SubscriptionsBlock() {
   const { t, language } = useTranslation();
-  const [subCountry, setSubCountry] = useState<string>(SUB_COUNTRIES[0] ?? "مصر");
+  const [subCountry, setSubCountry] = useState<string>("");
   const [duration, setDuration] = useState<string>("annual");
+  const countriesQuery = useQuery({
+    queryKey: ["goair", "public-launch-market-countries"],
+    queryFn: fetchPublicLaunchMarketCountries,
+  });
+  const countries = countriesQuery.data ?? [];
+  // Empty until countries load, then defaults to the first live market —
+  // avoids a flash of a hardcoded "مصر" before the real list is known.
+  const effectiveCountry = subCountry || countries[0] || "";
   const { data: plans, isPending } = useQuery({
-    queryKey: ["goair", "subscription-plans", subCountry],
-    queryFn: () => fetchSubscriptionPlans(subCountry),
+    queryKey: ["goair", "subscription-plans", effectiveCountry],
+    queryFn: () => fetchSubscriptionPlans(effectiveCountry),
+    enabled: Boolean(effectiveCountry),
   });
 
   const tiers = plans ? groupPlansByTier(plans) : [];
@@ -299,12 +307,12 @@ function SubscriptionsBlock() {
                     ))}
                 </div>
               ) : null}
-              <Select value={subCountry} onValueChange={setSubCountry}>
+              <Select value={effectiveCountry} onValueChange={setSubCountry}>
                 <SelectTrigger className="h-10 w-40">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {SUB_COUNTRIES.map((c) => (
+                  {countries.map((c) => (
                     <SelectItem key={c} value={c}>
                       {getCountryLabel(c, language)}
                     </SelectItem>

@@ -345,16 +345,26 @@ export async function fetchTrips(): Promise<Trip[]> {
  */
 const FALLBACK_PUBLIC_COUNTRIES = ["مصر", "لبنان"];
 
-export async function fetchVisibleCountries(trips: Trip[]): Promise<string[]> {
-  const available = new Set(trips.map((trip) => trip.country));
-
+/**
+ * The single source of truth for "which countries is GOAIR publicly live
+ * in right now" — every country picker in the app (transfer booking,
+ * subscriptions, car rental, admin forms) should ultimately read from this,
+ * not carry its own hardcoded ["مصر", "لبنان"] array. Opening a new market
+ * (e.g. Jordan) then only needs `launch_markets.is_visible_to_public = true`
+ * flipped in the DB — no frontend redeploy.
+ *
+ * Falls back to the last-known public markets if the table isn't readable
+ * yet (e.g. anon SELECT grant missing) — keeps pickers working instead of
+ * showing zero countries.
+ */
+export async function fetchPublicLaunchMarketCountries(): Promise<string[]> {
   const { data, error } = await supabase
     .from("launch_markets")
     .select("*")
     .eq("is_visible_to_public", true);
 
   if (error || !Array.isArray(data)) {
-    return FALLBACK_PUBLIC_COUNTRIES.filter((country) => available.has(country));
+    return FALLBACK_PUBLIC_COUNTRIES;
   }
 
   const countries = (data as Record<string, unknown>[])
@@ -362,11 +372,19 @@ export async function fetchVisibleCountries(trips: Trip[]): Promise<string[]> {
     .filter((value): value is string => Boolean(value));
 
   // Table read succeeded but returned nothing usable (e.g. column
-  // name mismatch) — fall back rather than showing an empty homepage.
-  if (countries.length === 0) {
-    return FALLBACK_PUBLIC_COUNTRIES.filter((country) => available.has(country));
-  }
+  // name mismatch) — fall back rather than showing an empty picker.
+  return countries.length > 0 ? countries : FALLBACK_PUBLIC_COUNTRIES;
+}
 
+/**
+ * Public countries narrowed to ones that actually have a live scheduled
+ * fixed-route trip right now — used by the transfer booking flow, which
+ * can't offer a country with no trips in it yet even if its market row
+ * is already flagged visible.
+ */
+export async function fetchVisibleCountries(trips: Trip[]): Promise<string[]> {
+  const available = new Set(trips.map((trip) => trip.country));
+  const countries = await fetchPublicLaunchMarketCountries();
   return countries.filter((country) => available.has(country));
 }
 

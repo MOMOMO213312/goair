@@ -20,7 +20,7 @@ import {
   rentalVehicleApprovalLabel,
   type AdminRentalVehicle,
 } from "@/lib/admin";
-import { fetchRentalVehicleCategories } from "@/lib/goair";
+import { fetchPublicLaunchMarketCountries, fetchRentalVehicleCategories } from "@/lib/goair";
 
 export const Route = createFileRoute("/admin/rental-vehicles")({
   head: () => ({
@@ -29,7 +29,6 @@ export const Route = createFileRoute("/admin/rental-vehicles")({
   component: RentalVehiclesAdminPage,
 });
 
-const COUNTRIES: string[] = ["مصر", "لبنان"];
 const TRANSMISSIONS = [
   { value: "automatic", label: "أوتوماتيك" },
   { value: "manual", label: "عادي" },
@@ -45,7 +44,7 @@ function emptyNewVehicleForm() {
   return {
     partnerFullName: "",
     partnerPhone: "",
-    partnerCountry: COUNTRIES[0] ?? "مصر",
+    partnerCountry: "مصر",
     categoryId: "",
     plateNumber: "",
     makeModel: "",
@@ -75,6 +74,10 @@ function RentalVehiclesAdminPage() {
     queryKey: ["goair", "rental-vehicle-categories"],
     queryFn: fetchRentalVehicleCategories,
   });
+  const countriesQuery = useQuery({
+    queryKey: ["goair", "public-launch-market-countries"],
+    queryFn: fetchPublicLaunchMarketCountries,
+  });
 
   const [newForm, setNewForm] = useState(emptyNewVehicleForm());
   const [addBusy, setAddBusy] = useState(false);
@@ -87,6 +90,7 @@ function RentalVehiclesAdminPage() {
 
   const vehicles = vehiclesQuery.data ?? [];
   const categories = categoriesQuery.data ?? [];
+  const countryOptions = countriesQuery.data ?? [];
 
   function invalidate() {
     qc.invalidateQueries({ queryKey: ["admin-rental-vehicles", token] });
@@ -150,7 +154,7 @@ function RentalVehiclesAdminPage() {
           <Select value={newForm.partnerCountry} onValueChange={(v) => setNewForm({ ...newForm, partnerCountry: v })}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {COUNTRIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              {countryOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={newForm.categoryId} onValueChange={(v) => setNewForm({ ...newForm, categoryId: v })}>

@@ -38,6 +38,7 @@ import {
 import {
   createRentalBookingSafe,
   fetchAvailableRentalVehicles,
+  fetchPublicLaunchMarketCountries,
   fetchRentalVehicleCategories,
   formatUsd,
   friendlyErrorMessage,
@@ -74,7 +75,6 @@ export const Route = createFileRoute("/rent-a-car")({
 
 type Phase = "browse" | "book" | "confirm";
 type SortOption = "newest" | "price_asc" | "price_desc";
-const RENTAL_COUNTRIES = ["مصر", "لبنان"] as const;
 
 const CATEGORY_ICONS: Record<string, ComponentType<{ className?: string }>> = {
   economy: Wallet,
@@ -144,6 +144,12 @@ function RentACarPage() {
     queryFn: fetchRentalVehicleCategories,
   });
 
+  const countriesQuery = useQuery({
+    queryKey: ["goair", "public-launch-market-countries"],
+    queryFn: fetchPublicLaunchMarketCountries,
+  });
+  const rentalCountries = countriesQuery.data ?? [];
+
   const [phase, setPhase] = useState<Phase>("browse");
   const [selectedVehicle, setSelectedVehicle] = useState<RentalVehicle | null>(null);
 
@@ -210,7 +216,7 @@ function RentACarPage() {
       value: String(categoriesQuery.data?.length ?? 0),
       label: t("rentACarPage.heroStatCategories"),
     },
-    { value: String(RENTAL_COUNTRIES.length), label: t("rentACarPage.heroStatCountries") },
+    { value: String(rentalCountries.length), label: t("rentACarPage.heroStatCountries") },
   ];
 
   return (
@@ -309,7 +315,7 @@ function RentACarPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">{t("rentACarPage.filterAllCountries")}</SelectItem>
-                    {RENTAL_COUNTRIES.map((country) => (
+                    {rentalCountries.map((country) => (
                       <SelectItem key={country} value={country}>
                         {country}
                       </SelectItem>

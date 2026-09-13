@@ -35,6 +35,7 @@ export async function adminListAnnouncements(token: string): Promise<AdminAnnoun
   return ((data ?? []) as Record<string, unknown>[]).map((r) => ({
     id: String(r["id"]),
     message: String(r["message"] ?? ""),
+    messageEn: (r["message_en"] as string | null) ?? null,
     linkUrl: (r["link_url"] as string | null) ?? null,
     isActive: r["is_active"] === true,
     createdAt: String(r["created_at"] ?? ""),

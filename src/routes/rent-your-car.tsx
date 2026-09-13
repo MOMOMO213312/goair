@@ -11,14 +11,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { fetchRentalVehicleCategories, sendRentalPartnerApplication } from "@/lib/goair";
+import { fetchPublicLaunchMarketCountries, fetchRentalVehicleCategories, sendRentalPartnerApplication } from "@/lib/goair";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { localize } from "@/lib/i18n/localize";
 import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
 
 const pageMeta = translations[DEFAULT_LANGUAGE].rentYourCarPage.meta;
-
-const COUNTRIES = ["مصر", "لبنان"];
 
 export const Route = createFileRoute("/rent-your-car")({
   head: () => ({
@@ -51,6 +49,11 @@ function RentYourCarPage() {
     queryKey: ["goair", "rental-vehicle-categories"],
     queryFn: fetchRentalVehicleCategories,
   });
+  const countriesQuery = useQuery({
+    queryKey: ["goair", "public-launch-market-countries"],
+    queryFn: fetchPublicLaunchMarketCountries,
+  });
+  const countries = countriesQuery.data ?? [];
 
   const [form, setForm] = useState(emptyForm);
   const [busy, setBusy] = useState(false);
@@ -144,7 +147,7 @@ function RentYourCarPage() {
                   <SelectValue placeholder={t("rentYourCarPage.countryPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {COUNTRIES.map((c) => (
+                  {countries.map((c) => (
                     <SelectItem key={c} value={c}>
                       {c}
                     </SelectItem>

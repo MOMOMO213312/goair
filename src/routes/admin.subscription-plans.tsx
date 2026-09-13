@@ -17,6 +17,7 @@ import {
   isAdminAuthError,
   type AdminSubscriptionPlan,
 } from "@/lib/admin";
+import { fetchPublicLaunchMarketCountries } from "@/lib/goair";
 
 export const Route = createFileRoute("/admin/subscription-plans")({
   head: () => ({ meta: [{ title: "خطط الاشتراك — لوحة تشغيل GoAir" }, { name: "robots", content: "noindex" }] }),
@@ -24,7 +25,6 @@ export const Route = createFileRoute("/admin/subscription-plans")({
 });
 
 const ICON_OPTIONS = ["Sparkles", "Crown", "Zap", "ShieldCheck"];
-const COUNTRY_OPTIONS = ["مصر", "لبنان"];
 const TIER_OPTIONS = ["basic", "plus", "premium"];
 const DURATION_OPTIONS = ["semi_annual", "annual"];
 
@@ -60,6 +60,11 @@ function SubscriptionPlansAdminPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm());
   const [busy, setBusy] = useState(false);
+  const countriesQuery = useQuery({
+    queryKey: ["goair", "public-launch-market-countries"],
+    queryFn: fetchPublicLaunchMarketCountries,
+  });
+  const countryOptions = countriesQuery.data ?? [];
 
   if (!token) return null;
   if (q.isPending) return <AdminLoading />;
@@ -173,7 +178,7 @@ function SubscriptionPlansAdminPage() {
           <Select value={form.country} onValueChange={(v) => setForm({ ...form, country: v })}>
             <SelectTrigger><SelectValue placeholder="الدولة" /></SelectTrigger>
             <SelectContent>
-              {COUNTRY_OPTIONS.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              {countryOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={form.tier} onValueChange={(v) => setForm({ ...form, tier: v })}>
