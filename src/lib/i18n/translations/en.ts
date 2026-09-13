@@ -693,7 +693,7 @@ const en = {
   businessPromoBanner: {
     title: "For travel agencies & airlines",
     description:
-      "Offer airport transfer service to your customers and earn a commission on every booking.",
+      "Offer airport transfer service to your customers with ease, through a dedicated partner portal.",
     agencyCta: "For travel agencies",
     partnerCta: "For airlines",
   },
