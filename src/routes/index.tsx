@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Rocket, Sparkles } from "lucide-react";
 
 import heroImage from "@/assets/hero-goair-van.png";
@@ -198,6 +198,11 @@ function Home() {
             <AccordionContent>{t("home.faq.a3")}</AccordionContent>
           </AccordionItem>
         </Accordion>
+        <div className="mt-6 text-center">
+          <Link to="/faq" className="font-bold text-accent hover:underline">
+            {t("home.faq.seeMore")}
+          </Link>
+        </div>
       </section>
 
       {/* Countries GoAir covers today — real footprint, not a borrowed big number */}

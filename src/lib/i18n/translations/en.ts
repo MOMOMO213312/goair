@@ -83,6 +83,7 @@ const en = {
       a2: "The price shown per seat is fixed — you won't see a different price at checkout.",
       q3: "How do I track my booking?",
       a3: 'From the "My Bookings" page — enter the ticket code you received after booking.',
+      seeMore: "More questions",
     },
   },
   travelExperience: {
@@ -692,7 +693,7 @@ const en = {
   businessPromoBanner: {
     title: "For travel agencies & airlines",
     description:
-      "Offer airport transfer service to your customers and earn a commission on every booking.",
+      "Offer airport transfer service to your customers with ease, through a dedicated partner portal.",
     agencyCta: "For travel agencies",
     partnerCta: "For airlines",
   },
