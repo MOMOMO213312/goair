@@ -152,8 +152,22 @@ export async function getOperatorStatements(token: string): Promise<OperatorStat
   }));
 }
 
-export type OperatorDriver = { id: string; full_name: string; phone_number: string };
-export type OperatorVehicle = { id: string; plate_number: string; country: string; vehicle_label: string; capacity: number };
+export type OperatorDriver = {
+  id: string;
+  full_name: string;
+  phone_number: string;
+  license_number: string | null;
+  license_expiry: string | null;
+};
+export type OperatorVehicle = {
+  id: string;
+  plate_number: string;
+  country: string;
+  vehicle_label: string;
+  capacity: number;
+  registration_expiry: string | null;
+  insurance_expiry: string | null;
+};
 
 export async function getOperatorFleet(token: string): Promise<{ drivers: OperatorDriver[]; vehicles: OperatorVehicle[] }> {
   const { data, error } = await supabase.rpc("get_operator_fleet", { p_access_token: token });
@@ -173,6 +187,42 @@ export async function operatorAddDriver(token: string, fullName: string, phone: 
 export async function operatorAddVehicle(token: string, vehicleTypeId: string, plate: string, country: string, driverId: string | null) {
   const { error } = await supabase.rpc("operator_add_vehicle", {
     p_access_token: token, p_vehicle_type_id: vehicleTypeId, p_plate_number: plate, p_country: country, p_driver_id: driverId,
+  });
+  if (error) rpcError(error);
+}
+
+export async function operatorUpdateDriverCompliance(
+  token: string,
+  driverId: string,
+  updates: { licenseNumber?: string | null; licenseExpiry?: string | null; clearLicenseExpiry?: boolean },
+) {
+  const { error } = await supabase.rpc("operator_update_driver_compliance", {
+    p_access_token: token,
+    p_driver_id: driverId,
+    p_license_number: updates.licenseNumber ?? null,
+    p_license_expiry: updates.licenseExpiry ?? null,
+    p_clear_license_expiry: updates.clearLicenseExpiry ?? false,
+  });
+  if (error) rpcError(error);
+}
+
+export async function operatorUpdateVehicleCompliance(
+  token: string,
+  vehicleId: string,
+  updates: {
+    registrationExpiry?: string | null;
+    clearRegistrationExpiry?: boolean;
+    insuranceExpiry?: string | null;
+    clearInsuranceExpiry?: boolean;
+  },
+) {
+  const { error } = await supabase.rpc("operator_update_vehicle_compliance", {
+    p_access_token: token,
+    p_vehicle_id: vehicleId,
+    p_registration_expiry: updates.registrationExpiry ?? null,
+    p_clear_registration_expiry: updates.clearRegistrationExpiry ?? false,
+    p_insurance_expiry: updates.insuranceExpiry ?? null,
+    p_clear_insurance_expiry: updates.clearInsuranceExpiry ?? false,
   });
   if (error) rpcError(error);
 }

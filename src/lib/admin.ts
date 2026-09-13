@@ -97,12 +97,29 @@ export type AdminDriver = {
   full_name: string;
   phone_number: string;
   operator_name: string | null;
+  license_number: string | null;
+  license_expiry: string | null;
 };
 
 export async function adminListDrivers(token: string): Promise<AdminDriver[]> {
   const { data, error } = await supabase.rpc("admin_list_drivers", { p_access_token: token });
   if (error) rpcError(error);
   return (data ?? []) as AdminDriver[];
+}
+
+export async function adminUpdateDriverCompliance(
+  token: string,
+  driverId: string,
+  updates: { licenseNumber?: string | null; licenseExpiry?: string | null; clearLicenseExpiry?: boolean },
+) {
+  const { error } = await supabase.rpc("admin_update_driver", {
+    p_access_token: token,
+    p_driver_id: driverId,
+    p_license_number: updates.licenseNumber ?? null,
+    p_license_expiry: updates.licenseExpiry ?? null,
+    p_clear_license_expiry: updates.clearLicenseExpiry ?? false,
+  });
+  if (error) rpcError(error);
 }
 
 export type AdminVehicle = {
@@ -114,12 +131,37 @@ export type AdminVehicle = {
   capacity: number;
   driver_id: string | null;
   operator_name: string | null;
+  registration_expiry: string | null;
+  insurance_expiry: string | null;
 };
 
 export async function adminListVehicles(token: string): Promise<AdminVehicle[]> {
   const { data, error } = await supabase.rpc("admin_list_vehicles", { p_access_token: token });
   if (error) rpcError(error);
   return (data ?? []) as AdminVehicle[];
+}
+
+export async function adminUpdateVehicleCompliance(
+  token: string,
+  vehicleId: string,
+  updates: {
+    plateNumber?: string | null;
+    registrationExpiry?: string | null;
+    clearRegistrationExpiry?: boolean;
+    insuranceExpiry?: string | null;
+    clearInsuranceExpiry?: boolean;
+  },
+) {
+  const { error } = await supabase.rpc("admin_update_vehicle", {
+    p_access_token: token,
+    p_vehicle_id: vehicleId,
+    p_plate_number: updates.plateNumber ?? null,
+    p_registration_expiry: updates.registrationExpiry ?? null,
+    p_clear_registration_expiry: updates.clearRegistrationExpiry ?? false,
+    p_insurance_expiry: updates.insuranceExpiry ?? null,
+    p_clear_insurance_expiry: updates.clearInsuranceExpiry ?? false,
+  });
+  if (error) rpcError(error);
 }
 
 export type AdminOperator = { id: string; name: string };
