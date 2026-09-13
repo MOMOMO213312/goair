@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useOperatorToken } from "@/lib/operator-session";
-import { Pencil } from "lucide-react";
-import { useState } from "react";
+import { FileText, Pencil, Upload, X } from "lucide-react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { ComplianceBadge } from "@/components/goair/compliance-badge";
 import { OperatorAuthError, OperatorLoading, OperatorSection } from "@/components/operator/operator-shell";
@@ -11,11 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   getOperatorFleet,
+  getOperatorFleetDocUrl,
   isOperatorAuthError,
   operatorAddDriver,
   operatorAddVehicle,
   operatorUpdateDriverCompliance,
   operatorUpdateVehicleCompliance,
+  uploadOperatorFleetDoc,
   type OperatorDriver,
   type OperatorVehicle,
 } from "@/lib/operator";
@@ -71,6 +73,91 @@ function FleetPage() {
   );
 }
 
+/**
+ * زرار رفع/عرض/حذف مستند واحد (رخصة، بطاقة، استمارة، تأمين). بيتخزّن الملف
+ * فوري لحظة الرفع (مش لما تدوس "حفظ") عشان مايضيعش لو المستخدم قفل الفورم.
+ */
+function DocSlot({
+  label,
+  path,
+  uploadFn,
+  onUploaded,
+  onCleared,
+}: {
+  label: string;
+  path: string | null;
+  uploadFn: (file: File) => Promise<string>;
+  onUploaded: (path: string) => Promise<void>;
+  onCleared: () => Promise<void>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  async function handleView() {
+    if (!path) return;
+    try {
+      const url = await getOperatorFleetDocUrl(path);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "تعذّر فتح الملف.");
+    }
+  }
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setBusy(true);
+    try {
+      const uploadedPath = await uploadFn(file);
+      await onUploaded(uploadedPath);
+      toast.success("تم رفع الملف.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "فشل رفع الملف.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleClear() {
+    setBusy(true);
+    try {
+      await onCleared();
+      toast.success("تم حذف الملف.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "حصل خطأ.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex min-w-40 flex-1 flex-col gap-1 text-xs text-muted-foreground">
+      <span>{label}</span>
+      <div className="flex items-center gap-1.5">
+        {path ? (
+          <>
+            <Button type="button" size="sm" variant="outline" className="h-8 gap-1 px-2 text-xs" disabled={busy} onClick={handleView}>
+              <FileText className="size-3.5" aria-hidden /> عرض
+            </Button>
+            <Button type="button" size="icon" variant="ghost" className="size-8" disabled={busy} onClick={() => inputRef.current?.click()} title="استبدال الملف">
+              <Upload className="size-3.5" aria-hidden />
+            </Button>
+            <Button type="button" size="icon" variant="ghost" className="size-8 text-destructive hover:text-destructive" disabled={busy} onClick={handleClear} title="حذف الملف">
+              <X className="size-3.5" aria-hidden />
+            </Button>
+          </>
+        ) : (
+          <Button type="button" size="sm" variant="outline" className="h-8 gap-1 px-2 text-xs" disabled={busy} onClick={() => inputRef.current?.click()}>
+            <Upload className="size-3.5" aria-hidden /> {busy ? "جارِ الرفع..." : "رفع صورة"}
+          </Button>
+        )}
+      </div>
+      <input ref={inputRef} type="file" accept="image/*,.pdf" className="hidden" onChange={handleFile} />
+    </div>
+  );
+}
+
 function DriverComplianceRow({ driver, token, onUpdated }: { driver: OperatorDriver; token: string; onUpdated: () => void }) {
   const [editing, setEditing] = useState(false);
   const [licenseNumber, setLicenseNumber] = useState(driver.license_number ?? "");
@@ -110,10 +197,24 @@ function DriverComplianceRow({ driver, token, onUpdated }: { driver: OperatorDri
         </div>
       </div>
       {editing ? (
-        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-muted/40 p-2.5">
+        <div className="mt-2 flex flex-wrap items-end gap-2 rounded-lg bg-muted/40 p-2.5">
           <Input placeholder="رقم الرخصة" value={licenseNumber} onChange={(e) => setLicenseNumber(e.target.value)} className="min-w-32 flex-1" />
           <Input type="date" value={licenseExpiry} onChange={(e) => setLicenseExpiry(e.target.value)} className="min-w-40 flex-1" aria-label="تاريخ انتهاء الرخصة" />
           <Button size="sm" disabled={busy} onClick={save} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">حفظ</Button>
+          <DocSlot
+            label="صورة رخصة القيادة"
+            path={driver.license_doc_url}
+            uploadFn={(file) => uploadOperatorFleetDoc("drivers", driver.id, "license", file)}
+            onUploaded={async (path) => { await operatorUpdateDriverCompliance(token, driver.id, { licenseDocUrl: path }); onUpdated(); }}
+            onCleared={async () => { await operatorUpdateDriverCompliance(token, driver.id, { clearLicenseDoc: true }); onUpdated(); }}
+          />
+          <DocSlot
+            label="صورة البطاقة الشخصية"
+            path={driver.id_doc_url}
+            uploadFn={(file) => uploadOperatorFleetDoc("drivers", driver.id, "id", file)}
+            onUploaded={async (path) => { await operatorUpdateDriverCompliance(token, driver.id, { idDocUrl: path }); onUpdated(); }}
+            onCleared={async () => { await operatorUpdateDriverCompliance(token, driver.id, { clearIdDoc: true }); onUpdated(); }}
+          />
         </div>
       ) : null}
     </li>
@@ -160,7 +261,7 @@ function VehicleComplianceRow({ vehicle, token, onUpdated }: { vehicle: Operator
         </div>
       </div>
       {editing ? (
-        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-muted/40 p-2.5">
+        <div className="mt-2 flex flex-wrap items-end gap-2 rounded-lg bg-muted/40 p-2.5">
           <label className="flex min-w-40 flex-1 flex-col gap-1 text-xs text-muted-foreground">
             انتهاء الترخيص
             <Input type="date" value={registrationExpiry} onChange={(e) => setRegistrationExpiry(e.target.value)} />
@@ -169,7 +270,21 @@ function VehicleComplianceRow({ vehicle, token, onUpdated }: { vehicle: Operator
             انتهاء التأمين
             <Input type="date" value={insuranceExpiry} onChange={(e) => setInsuranceExpiry(e.target.value)} />
           </label>
-          <Button size="sm" disabled={busy} onClick={save} className="self-end bg-accent font-bold text-accent-foreground hover:bg-accent/90">حفظ</Button>
+          <Button size="sm" disabled={busy} onClick={save} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">حفظ</Button>
+          <DocSlot
+            label="صورة استمارة العربية"
+            path={vehicle.registration_doc_url}
+            uploadFn={(file) => uploadOperatorFleetDoc("vehicles", vehicle.id, "registration", file)}
+            onUploaded={async (path) => { await operatorUpdateVehicleCompliance(token, vehicle.id, { registrationDocUrl: path }); onUpdated(); }}
+            onCleared={async () => { await operatorUpdateVehicleCompliance(token, vehicle.id, { clearRegistrationDoc: true }); onUpdated(); }}
+          />
+          <DocSlot
+            label="صورة بوليصة التأمين"
+            path={vehicle.insurance_doc_url}
+            uploadFn={(file) => uploadOperatorFleetDoc("vehicles", vehicle.id, "insurance", file)}
+            onUploaded={async (path) => { await operatorUpdateVehicleCompliance(token, vehicle.id, { insuranceDocUrl: path }); onUpdated(); }}
+            onCleared={async () => { await operatorUpdateVehicleCompliance(token, vehicle.id, { clearInsuranceDoc: true }); onUpdated(); }}
+          />
         </div>
       ) : null}
     </li>

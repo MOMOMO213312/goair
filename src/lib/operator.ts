@@ -172,6 +172,8 @@ export type OperatorDriver = {
   phone_number: string;
   license_number: string | null;
   license_expiry: string | null;
+  license_doc_url: string | null;
+  id_doc_url: string | null;
 };
 export type OperatorVehicle = {
   id: string;
@@ -181,7 +183,46 @@ export type OperatorVehicle = {
   capacity: number;
   registration_expiry: string | null;
   insurance_expiry: string | null;
+  registration_doc_url: string | null;
+  insurance_doc_url: string | null;
 };
+
+const OPERATOR_FLEET_DOCS_BUCKET = "operator-fleet-docs";
+const MAX_FLEET_DOC_SIZE_MB = 10;
+
+/**
+ * Uploads a compliance document (license/ID/registration/insurance) to the
+ * private operator-fleet-docs bucket. Storage RLS scopes access to the
+ * driver/vehicle's own operator (via portal_members + auth.uid()) plus
+ * internal staff. Returns the storage PATH (not a public URL, since the
+ * bucket is private) — save this path in the relevant *_doc_url column.
+ */
+export async function uploadOperatorFleetDoc(
+  entityType: "drivers" | "vehicles",
+  entityId: string,
+  docKind: string,
+  file: File,
+): Promise<string> {
+  if (file.size > MAX_FLEET_DOC_SIZE_MB * 1024 * 1024) {
+    throw new Error(`الملف "${file.name}" أكبر من ${MAX_FLEET_DOC_SIZE_MB} ميجا.`);
+  }
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `${entityType}/${entityId}/${docKind}-${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage
+    .from(OPERATOR_FLEET_DOCS_BUCKET)
+    .upload(path, file, { cacheControl: "3600", upsert: false, ...(file.type ? { contentType: file.type } : {}) });
+  if (error) throw new Error(error.message || `فشل رفع الملف "${file.name}".`);
+  return path;
+}
+
+/** Generates a short-lived signed URL to view/download a private fleet doc. */
+export async function getOperatorFleetDocUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from(OPERATOR_FLEET_DOCS_BUCKET)
+    .createSignedUrl(path, 60 * 10);
+  if (error || !data?.signedUrl) throw new Error(error?.message || "تعذّر فتح الملف.");
+  return data.signedUrl;
+}
 
 export async function getOperatorFleet(token: string): Promise<{ drivers: OperatorDriver[]; vehicles: OperatorVehicle[] }> {
   const { data, error } = await supabase.rpc("get_operator_fleet", { p_access_token: token });
@@ -208,7 +249,15 @@ export async function operatorAddVehicle(token: string, vehicleTypeId: string, p
 export async function operatorUpdateDriverCompliance(
   token: string,
   driverId: string,
-  updates: { licenseNumber?: string | null; licenseExpiry?: string | null; clearLicenseExpiry?: boolean },
+  updates: {
+    licenseNumber?: string | null;
+    licenseExpiry?: string | null;
+    clearLicenseExpiry?: boolean;
+    licenseDocUrl?: string | null;
+    clearLicenseDoc?: boolean;
+    idDocUrl?: string | null;
+    clearIdDoc?: boolean;
+  },
 ) {
   const { error } = await supabase.rpc("operator_update_driver_compliance", {
     p_access_token: token,
@@ -216,6 +265,10 @@ export async function operatorUpdateDriverCompliance(
     p_license_number: updates.licenseNumber ?? null,
     p_license_expiry: updates.licenseExpiry ?? null,
     p_clear_license_expiry: updates.clearLicenseExpiry ?? false,
+    p_license_doc_url: updates.licenseDocUrl ?? null,
+    p_clear_license_doc: updates.clearLicenseDoc ?? false,
+    p_id_doc_url: updates.idDocUrl ?? null,
+    p_clear_id_doc: updates.clearIdDoc ?? false,
   });
   if (error) rpcError(error);
 }
@@ -228,6 +281,10 @@ export async function operatorUpdateVehicleCompliance(
     clearRegistrationExpiry?: boolean;
     insuranceExpiry?: string | null;
     clearInsuranceExpiry?: boolean;
+    registrationDocUrl?: string | null;
+    clearRegistrationDoc?: boolean;
+    insuranceDocUrl?: string | null;
+    clearInsuranceDoc?: boolean;
   },
 ) {
   const { error } = await supabase.rpc("operator_update_vehicle_compliance", {
@@ -237,6 +294,10 @@ export async function operatorUpdateVehicleCompliance(
     p_clear_registration_expiry: updates.clearRegistrationExpiry ?? false,
     p_insurance_expiry: updates.insuranceExpiry ?? null,
     p_clear_insurance_expiry: updates.clearInsuranceExpiry ?? false,
+    p_registration_doc_url: updates.registrationDocUrl ?? null,
+    p_clear_registration_doc: updates.clearRegistrationDoc ?? false,
+    p_insurance_doc_url: updates.insuranceDocUrl ?? null,
+    p_clear_insurance_doc: updates.clearInsuranceDoc ?? false,
   });
   if (error) rpcError(error);
 }
