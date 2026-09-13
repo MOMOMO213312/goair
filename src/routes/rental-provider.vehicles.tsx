@@ -42,7 +42,12 @@ import {
   uploadRentalVehiclePhotos,
   type RentalProviderVehicle,
 } from "@/lib/rental-provider";
-import { fetchRentalPickupAreas, fetchRentalVehicleCategories, RENTAL_CITIES_BY_COUNTRY } from "@/lib/goair";
+import {
+  fetchRentalCitiesWithPresetAreas,
+  fetchRentalPickupAreas,
+  fetchRentalVehicleCategories,
+  RENTAL_CITIES_BY_COUNTRY,
+} from "@/lib/goair";
 
 export const Route = createFileRoute("/rental-provider/vehicles")({
   head: () => ({ meta: [{ title: "عرباتي — بوابة مزوّد التأجير" }, { name: "robots", content: "noindex" }] }),
@@ -323,7 +328,14 @@ function PickupAreaFields({
   onPickupAreaCustomChange: (v: string) => void;
 }) {
   const trimmedCity = city.trim();
-  const cityOptions = RENTAL_CITIES_BY_COUNTRY[country] ?? [];
+  const presetCitiesQuery = useQuery({
+    queryKey: ["rental-preset-cities", country],
+    queryFn: () => fetchRentalCitiesWithPresetAreas(country),
+    enabled: Boolean(country),
+  });
+  const cityOptions = Array.from(
+    new Set([...(RENTAL_CITIES_BY_COUNTRY[country] ?? []), ...(presetCitiesQuery.data ?? [])]),
+  );
   const cityIsPreset = cityOptions.includes(trimmedCity);
   const showCustomCity = trimmedCity !== "" && !cityIsPreset;
 

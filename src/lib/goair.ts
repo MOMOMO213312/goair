@@ -908,6 +908,24 @@ export async function fetchRentalPickupAreas(country: string, city: string): Pro
   }));
 }
 
+/** Distinct cities that already have curated pickup areas in rental_pickup_areas for a country.
+ * Merge this with RENTAL_CITIES_BY_COUNTRY in the UI so a city an admin adds curated areas for
+ * later shows up in the dropdown automatically, without needing a code change. */
+export async function fetchRentalCitiesWithPresetAreas(country: string): Promise<string[]> {
+  if (!country) return [];
+  const { data, error } = await supabase
+    .from("rental_pickup_areas")
+    .select("city")
+    .eq("country", country)
+    .eq("is_active", true);
+  if (error) throw new Error(error.message);
+  const cities = new Set<string>();
+  for (const row of (data ?? []) as { city: string }[]) {
+    if (row.city) cities.add(row.city);
+  }
+  return Array.from(cities);
+}
+
 export type RentalDurationType = "hourly" | "daily" | "multi_day";
 
 export type RentalPriceQuote = {
