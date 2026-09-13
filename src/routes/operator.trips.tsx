@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, Clock, Repeat, Users, X } from "lucide-react";
+import { Ban, Check, Clock, Repeat, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { useOperatorToken } from "@/lib/operator-session";
 import { OperatorAuthError, OperatorLoading, OperatorSection } from "@/components/operator/operator-shell";
@@ -68,6 +68,7 @@ function TripsPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [statusTrip, setStatusTrip] = useState<OperatorTrip | null>(null);
   const [reassignTrip, setReassignTrip] = useState<OperatorTrip | null>(null);
+  const [cancelTrip, setCancelTrip] = useState<OperatorTrip | null>(null);
   const fleetQ = useQuery({
     queryKey: ["operator-fleet-lite", token],
     queryFn: () => getOperatorFleet(token),
@@ -117,6 +118,20 @@ function TripsPage() {
       await qc.invalidateQueries({ queryKey: ["operator-trips", token] });
       toast.success("تم تعديل الرحلة.");
       setReassignTrip(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "حصل خطأ مؤقت. حاول تاني.");
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  async function submitCancel(assignmentId: string, note: string) {
+    setUpdatingId(assignmentId);
+    try {
+      await operatorSetTripStatus(token, assignmentId, "cancelled", note);
+      await qc.invalidateQueries({ queryKey: ["operator-trips", token] });
+      toast.success("تم إلغاء الرحلة.");
+      setCancelTrip(null);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "حصل خطأ مؤقت. حاول تاني.");
     } finally {
@@ -204,6 +219,19 @@ function TripsPage() {
                               <Repeat className="h-3 w-3" />
                               تغيير السواق/العربية
                             </Button>
+                            {(OPERATOR_STATUS_TRANSITIONS[t.operatorStatus] ?? []).includes(
+                              "cancelled",
+                            ) ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 gap-1 px-2 text-xs text-destructive"
+                                onClick={() => setCancelTrip(t)}
+                              >
+                                <Ban className="h-3 w-3" />
+                                إلغاء الرحلة
+                              </Button>
+                            ) : null}
                           </div>
                         ) : null}
                       </div>
@@ -236,6 +264,12 @@ function TripsPage() {
         updating={updatingId === reassignTrip?.assignmentId}
         onClose={() => setReassignTrip(null)}
         onSubmit={submitReassign}
+      />
+      <CancelDialog
+        trip={cancelTrip}
+        updating={updatingId === cancelTrip?.assignmentId}
+        onClose={() => setCancelTrip(null)}
+        onSubmit={submitCancel}
       />
     </OperatorSection>
   );
@@ -431,6 +465,62 @@ function ReassignDialog({
             className="bg-accent font-bold text-accent-foreground hover:bg-accent/90"
           >
             {updating ? "جاري الحفظ..." : "حفظ التعديل"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function CancelDialog({
+  trip,
+  updating,
+  onClose,
+  onSubmit,
+}: {
+  trip: OperatorTrip | null;
+  updating: boolean;
+  onClose: () => void;
+  onSubmit: (assignmentId: string, note: string) => void;
+}) {
+  const [note, setNote] = useState("");
+
+  function handleOpenChange(open: boolean) {
+    if (!open) {
+      setNote("");
+      onClose();
+    }
+  }
+
+  function submit() {
+    if (!trip || !note.trim()) return;
+    onSubmit(trip.assignmentId, note.trim());
+  }
+
+  return (
+    <Dialog open={Boolean(trip)} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>إلغاء الرحلة</DialogTitle>
+          <DialogDescription>
+            {trip ? `${trip.origin} ← ${trip.destination} — ${trip.travelDate}` : ""}
+            {" — الإلغاء نهائي ومينفعش يترجع منه."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-1.5">
+          <Label>سبب الإلغاء (مطلوب)</Label>
+          <Textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="اكتب سبب الإلغاء..."
+            rows={3}
+          />
+        </div>
+
+        <DialogFooter>
+          <Button variant="destructive" disabled={!note.trim() || updating} onClick={submit}>
+            {updating ? "جاري الإلغاء..." : "تأكيد الإلغاء"}
           </Button>
         </DialogFooter>
       </DialogContent>
