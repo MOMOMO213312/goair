@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { LegalDraftNotice } from "@/components/goair/legal/legal-draft-notice";
 import { SectionHeader } from "@/components/goair/section-header";
 import { Card } from "@/components/ui/card";
 import { privacyContent, type LegalBlock } from "@/lib/i18n/legal-content";
@@ -42,8 +41,6 @@ function PrivacyPage() {
     <div className="bg-mist/30 pb-16 pt-10 sm:pt-14">
       <div className="mx-auto max-w-3xl px-4">
         <SectionHeader title={t("privacyPage.title")} description={t("privacyPage.lastUpdated")} />
-
-        <LegalDraftNotice text={t("privacyPage.draftNotice")} />
 
         <Card className="p-6 sm:p-8">
           {sections.map((section) => (
