@@ -22,7 +22,7 @@ export type ComboboxOption = {
 
 type SearchComboboxProps = {
   id?: string;
-  label: string;
+  label?: string;
   placeholder: string;
   emptyText?: string;
   options: ComboboxOption[];
@@ -46,7 +46,7 @@ export function SearchCombobox({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
+      {label ? <Label htmlFor={id}>{label}</Label> : null}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -55,6 +55,7 @@ export function SearchCombobox({
             variant="outline"
             role="combobox"
             aria-expanded={open}
+            aria-label={!label ? placeholder : undefined}
             disabled={disabled || options.length === 0}
             className={cn(
               "h-11 w-full justify-between border-input bg-background px-3 font-normal hover:bg-background",

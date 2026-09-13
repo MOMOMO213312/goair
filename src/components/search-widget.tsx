@@ -308,7 +308,6 @@ export function SearchWidget({
         ) : (
           <>
             <SearchCombobox
-              label={t("searchWidget.arrivalAirportLabel")}
               placeholder={t("searchWidget.arrivalAirportPlaceholder")}
               emptyText={t("searchWidget.arrivalAirportEmpty")}
               options={airportOptions}
@@ -321,7 +320,6 @@ export function SearchWidget({
             />
 
             <SearchCombobox
-              label={t("searchWidget.arrivalDestinationLabel")}
               placeholder={t("searchWidget.arrivalDestinationPlaceholder")}
               emptyText={t("searchWidget.arrivalDestinationEmpty")}
               options={destinationOptions}
