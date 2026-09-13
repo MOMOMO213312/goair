@@ -1,4 +1,5 @@
 import { clearStoredReferralCode, getStoredReferralCode } from "./referral";
+import { clearStoredEcosystemLink, getStoredEcosystemLink } from "./ecosystemLink";
 import {
   generateDepartureTimes,
   resolveServiceWindow,
@@ -289,6 +290,7 @@ export type CreatePrivateBookingInput = {
 export async function createPrivateBookingSafe(input: CreatePrivateBookingInput) {
   const pendingReferralCode =
     input.referralCodeOverride !== undefined ? input.referralCodeOverride : getStoredReferralCode();
+  const pendingEcosystemLink = getStoredEcosystemLink();
 
   const { data, error } = await supabase.rpc("create_private_booking_safe", {
     p_trip_id: input.tripId,
@@ -312,6 +314,12 @@ export async function createPrivateBookingSafe(input: CreatePrivateBookingInput)
     ...(input.customerEmail && input.customerEmail.trim()
       ? { p_customer_email: input.customerEmail.trim() }
       : {}),
+    ...(pendingEcosystemLink
+      ? {
+          p_external_platform: pendingEcosystemLink.platform,
+          p_external_booking_reference: pendingEcosystemLink.reference,
+        }
+      : {}),
   });
 
   if (error) throw new Error(error.message);
@@ -320,6 +328,7 @@ export async function createPrivateBookingSafe(input: CreatePrivateBookingInput)
   if (!ticketCode)
     throw new Error("تم إنشاء الحجز لكن لم يرجع كود التذكرة — كلمنا فورًا على الدعم.");
   clearStoredReferralCode();
+  clearStoredEcosystemLink();
   sendBookingConfirmationEmail(input.customerEmail, ticketCode);
   return { ticketCode, raw: row };
 }
@@ -584,6 +593,7 @@ function isMissingDepartureParam(error: { message?: string; code?: string }) {
 export async function createBookingSafe(input: CreateBookingInput) {
   const pendingReferralCode =
     input.referralCodeOverride !== undefined ? input.referralCodeOverride : getStoredReferralCode();
+  const pendingEcosystemLink = getStoredEcosystemLink();
   const generated = isGeneratedScheduleId(input.scheduleId);
 
   const baseArgs: Record<string, unknown> = {
@@ -607,6 +617,12 @@ export async function createBookingSafe(input: CreateBookingInput) {
       : {}),
     ...(input.customerEmail && input.customerEmail.trim()
       ? { p_customer_email: input.customerEmail.trim() }
+      : {}),
+    ...(pendingEcosystemLink
+      ? {
+          p_external_platform: pendingEcosystemLink.platform,
+          p_external_booking_reference: pendingEcosystemLink.reference,
+        }
       : {}),
   };
 
@@ -634,6 +650,7 @@ export async function createBookingSafe(input: CreateBookingInput) {
   if (!ticketCode)
     throw new Error("تم إنشاء الحجز لكن لم يرجع كود التذكرة — كلمنا فورًا على الدعم.");
   clearStoredReferralCode();
+  clearStoredEcosystemLink();
   sendBookingConfirmationEmail(input.customerEmail, ticketCode);
   return { ticketCode, raw: row };
 }

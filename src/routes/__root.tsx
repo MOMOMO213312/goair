@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { captureReferralFromUrl } from "@/lib/referral";
+import { captureEcosystemLinkFromUrl } from "@/lib/ecosystemLink";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Toaster } from "@/components/ui/sonner";
@@ -149,6 +150,7 @@ function RootComponent() {
 
   useEffect(() => {
     captureReferralFromUrl();
+    captureEcosystemLinkFromUrl();
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(() => {
