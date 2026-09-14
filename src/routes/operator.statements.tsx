@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useOperatorToken } from "@/lib/operator-session";
 import { OperatorAuthError, OperatorLoading, OperatorSection } from "@/components/operator/operator-shell";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatOperatorMoney, getOperatorStatements, isOperatorAuthError } from "@/lib/operator";
+import { formatOperatorMoney, getOperatorDashboard, getOperatorStatements, isOperatorAuthError } from "@/lib/operator";
 
 export const Route = createFileRoute("/operator/statements")({
   head: () => ({ meta: [{ title: "كشوف الحساب — بوابة شركة النقل" }, { name: "robots", content: "noindex" }] }),
@@ -13,13 +13,29 @@ export const Route = createFileRoute("/operator/statements")({
 function StatementsPage() {
   const token = useOperatorToken();
   const q = useQuery({ queryKey: ["operator-statements", token], queryFn: () => getOperatorStatements(token), retry: false, enabled: Boolean(token) });
+  const dashboardQuery = useQuery({ queryKey: ["operator-dashboard", token], queryFn: () => getOperatorDashboard(token), retry: false, enabled: Boolean(token) });
   if (!token) return null;
   if (q.isPending) return <OperatorLoading />;
   if (q.isError) return isOperatorAuthError(q.error) ? <OperatorAuthError /> : <OperatorAuthError message="حصل خطأ مؤقت." />;
 
   const rows = q.data ?? [];
+  const pendingSettlementUsd = dashboardQuery.data?.pendingSettlementUsd ?? 0;
+  const pendingSettlementCount = dashboardQuery.data?.pendingSettlementCount ?? 0;
+
   return (
-    <OperatorSection title="كشوف الحساب">
+    <div className="space-y-6">
+      {pendingSettlementCount > 0 ? (
+        <OperatorSection
+          title="مستحق عليك لـ GoAir"
+          description="فلوس حجوزات بعتها لعملائك واستلمتها بنفسك (كاش/تحويل) — لسه معلّقة."
+        >
+          <p className="text-sm text-muted-foreground">
+            <span className="font-bold text-accent">{formatOperatorMoney(pendingSettlementUsd)}</span> من{" "}
+            {pendingSettlementCount} حجز.
+          </p>
+        </OperatorSection>
+      ) : null}
+      <OperatorSection title="كشوف الحساب">
       {rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">أول كشف حساب هيظهر هنا بعد نهاية أول شهر.</p>
       ) : (
@@ -48,6 +64,7 @@ function StatementsPage() {
           </Table>
         </div>
       )}
-    </OperatorSection>
+      </OperatorSection>
+    </div>
   );
 }

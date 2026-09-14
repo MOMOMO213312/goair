@@ -39,6 +39,7 @@ function OperatorLayout() {
             <nav className="flex flex-wrap gap-2">
               {[
                 { to: "/operator", label: "نظرة عامة", exact: true },
+                { to: "/operator/sell", label: "بيع لعميلي" },
                 { to: "/operator/trips", label: "الرحلات المخصصة" },
                 { to: "/operator/fleet", label: "أسطولي" },
                 { to: "/operator/statements", label: "كشوف الحساب" },

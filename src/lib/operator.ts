@@ -27,6 +27,12 @@ export type OperatorDashboard = {
   currentMonthAmountDueUsd: number;
   lifetimeTrips: number;
   lifetimeAmountDueUsd: number;
+  /** Referral code for this operator's own `partners` row (partner_type = 'operator') — used to attribute bookings the operator sells directly to its own customers via /operator/sell. Null until the operator's linked partners row exists. */
+  salesReferralCode: string | null;
+  /** Total the operator still owes GoAir for bookings it sold and collected payment for itself (cash/transfer), not yet settled. */
+  pendingSettlementUsd: number;
+  /** Number of bookings behind pendingSettlementUsd. */
+  pendingSettlementCount: number;
 };
 
 function num(v: unknown) { const n = Number(v ?? 0); return Number.isFinite(n) ? n : 0; }
@@ -48,6 +54,9 @@ export async function getOperatorDashboard(token: string): Promise<OperatorDashb
     currentMonthTrips: num(row["current_month_trips"]),
     currentMonthAmountDueUsd: num(row["current_month_amount_due_usd"]),
     lifetimeTrips: num(row["lifetime_trips"]),
+    salesReferralCode: row["sales_referral_code"] == null ? null : String(row["sales_referral_code"]),
+    pendingSettlementUsd: num(row["pending_settlement_usd"]),
+    pendingSettlementCount: num(row["pending_settlement_count"]),
     lifetimeAmountDueUsd: num(row["lifetime_amount_due_usd"]),
   };
 }

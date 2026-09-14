@@ -283,6 +283,17 @@ export type CreatePrivateBookingInput = {
   groundHandlingServiceIds?: string[];
   /** One name per seat, saved to `booking_passengers` — array length must exactly match `seatsCount`. */
   passengerNames?: string[] | null;
+  /**
+   * How payment for this booking is collected. Only meaningful when the
+   * referral code resolves to a transport operator's own `partners` row
+   * (partner_type = 'operator') selling directly to its own customer —
+   * the DB silently ignores this for any other referral source and always
+   * uses the normal GoAir gateway flow. Omit/'goair_gateway' for the usual
+   * flow; 'collected_by_operator' when the operator took cash/transfer from
+   * its own customer directly, which the DB then tracks as a pending
+   * settlement the operator owes back to GoAir.
+   */
+  paymentCollection?: "goair_gateway" | "collected_by_operator";
 };
 
 /** Reserve a whole vehicle for one group — flat price, no shared-capacity contention. */
@@ -312,6 +323,7 @@ export async function createPrivateBookingSafe(input: CreatePrivateBookingInput)
     ...(input.customerEmail && input.customerEmail.trim()
       ? { p_customer_email: input.customerEmail.trim() }
       : {}),
+    ...(input.paymentCollection ? { p_payment_collection: input.paymentCollection } : {}),
   });
 
   if (error) throw new Error(error.message);
@@ -557,6 +569,12 @@ export type CreateBookingInput = {
    * list (or omit/null for the normal single-contact booking).
    */
   passengerNames?: string[] | null;
+  /**
+   * How payment for this booking is collected — see the matching field on
+   * `CreatePrivateBookingInput` for the full explanation. Omit for the usual
+   * GoAir-gateway flow.
+   */
+  paymentCollection?: "goair_gateway" | "collected_by_operator";
 };
 
 /** A configured hourly departure (or legacy fallback slot) that has no stored `schedules` row yet. */
@@ -608,6 +626,7 @@ export async function createBookingSafe(input: CreateBookingInput) {
     ...(input.customerEmail && input.customerEmail.trim()
       ? { p_customer_email: input.customerEmail.trim() }
       : {}),
+    ...(input.paymentCollection ? { p_payment_collection: input.paymentCollection } : {}),
   };
 
   let { data, error } = await supabase.rpc("create_booking_safe", {
