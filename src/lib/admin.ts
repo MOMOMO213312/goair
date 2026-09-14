@@ -107,6 +107,21 @@ export async function adminListDrivers(token: string): Promise<AdminDriver[]> {
   return (data ?? []) as AdminDriver[];
 }
 
+export async function adminUpdateDriverCompliance(
+  token: string,
+  driverId: string,
+  updates: { licenseNumber?: string | null; licenseExpiry?: string | null; clearLicenseExpiry?: boolean },
+) {
+  const { error } = await supabase.rpc("admin_update_driver", {
+    p_access_token: token,
+    p_driver_id: driverId,
+    p_license_number: updates.licenseNumber ?? null,
+    p_license_expiry: updates.licenseExpiry ?? null,
+    p_clear_license_expiry: updates.clearLicenseExpiry ?? false,
+  });
+  if (error) rpcError(error);
+}
+
 export type AdminVehicle = {
   id: string;
   plate_number: string;
@@ -126,40 +141,11 @@ export async function adminListVehicles(token: string): Promise<AdminVehicle[]> 
   return (data ?? []) as AdminVehicle[];
 }
 
-/**
- * Compliance status derived client-side from an expiry date — a missing
- * date means "never entered", not "expired"; admin_assign_trip only ever
- * hard-blocks on a confirmed-expired date, never on a missing one.
- */
-export type ComplianceStatus = "unverified" | "valid" | "expiring_soon" | "expired";
-
-export function getComplianceStatus(expiry: string | null, warnWithinDays = 30): ComplianceStatus {
-  if (!expiry) return "unverified";
-  const daysLeft = (new Date(expiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
-  if (daysLeft < 0) return "expired";
-  if (daysLeft <= warnWithinDays) return "expiring_soon";
-  return "valid";
-}
-
-export async function adminUpdateDriverCompliance(
-  token: string,
-  driverId: string,
-  input: { licenseNumber?: string | null; licenseExpiry?: string | null; clearLicenseExpiry?: boolean },
-) {
-  const { error } = await supabase.rpc("admin_update_driver", {
-    p_access_token: token,
-    p_driver_id: driverId,
-    p_license_number: input.licenseNumber ?? null,
-    p_license_expiry: input.licenseExpiry ?? null,
-    p_clear_license_expiry: input.clearLicenseExpiry ?? false,
-  });
-  if (error) rpcError(error);
-}
-
 export async function adminUpdateVehicleCompliance(
   token: string,
   vehicleId: string,
-  input: {
+  updates: {
+    plateNumber?: string | null;
     registrationExpiry?: string | null;
     clearRegistrationExpiry?: boolean;
     insuranceExpiry?: string | null;
@@ -169,10 +155,11 @@ export async function adminUpdateVehicleCompliance(
   const { error } = await supabase.rpc("admin_update_vehicle", {
     p_access_token: token,
     p_vehicle_id: vehicleId,
-    p_registration_expiry: input.registrationExpiry ?? null,
-    p_clear_registration_expiry: input.clearRegistrationExpiry ?? false,
-    p_insurance_expiry: input.insuranceExpiry ?? null,
-    p_clear_insurance_expiry: input.clearInsuranceExpiry ?? false,
+    p_plate_number: updates.plateNumber ?? null,
+    p_registration_expiry: updates.registrationExpiry ?? null,
+    p_clear_registration_expiry: updates.clearRegistrationExpiry ?? false,
+    p_insurance_expiry: updates.insuranceExpiry ?? null,
+    p_clear_insurance_expiry: updates.clearInsuranceExpiry ?? false,
   });
   if (error) rpcError(error);
 }

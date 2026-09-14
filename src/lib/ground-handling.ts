@@ -98,6 +98,23 @@ export function groundHandlingServiceStatusLabel(status: string) {
   return SERVICE_STATUS_LABELS[status as GroundHandlingServiceStatus] ?? status;
 }
 
+const REQUESTER_TYPE_LABELS: Record<string, string> = {
+  airline: "شركة طيران",
+  agency: "وكالة سفريات",
+  operator: "شركة نقل",
+};
+
+/** Label for who submitted a service request: "من شركة كذا (نوع)" when a Partner/Operator
+ * requested it after booking, or "حجز العميل مباشرة" when it came from checkout. */
+export function groundHandlingRequesterLabel(request: {
+  requestedByName: string | null;
+  requestedByType: string | null;
+}): string {
+  if (!request.requestedByName) return "حجز العميل مباشرة";
+  const typeLabel = request.requestedByType ? REQUESTER_TYPE_LABELS[request.requestedByType] ?? request.requestedByType : null;
+  return typeLabel ? `من ${request.requestedByName} (${typeLabel})` : `من ${request.requestedByName}`;
+}
+
 const STATEMENT_STATUS_LABELS: Record<GroundHandlingStatementStatus, string> = {
   draft: "مسودة",
   sent: "مرسلة",
@@ -188,6 +205,11 @@ export type GroundHandlingRequest = {
   isUrgent: boolean;
   assignedStaffId: string | null;
   assignedStaffName: string | null;
+  /** partners.partner_type ('airline' | 'agency' | 'operator') of whoever requested this
+   * addon on an existing booking; null means the customer picked it at checkout. */
+  requestedByType: string | null;
+  /** Company name when requestedByType is set; null for customer-originated requests. */
+  requestedByName: string | null;
 };
 
 function mapRequest(row: Record<string, unknown>): GroundHandlingRequest {
@@ -215,6 +237,8 @@ function mapRequest(row: Record<string, unknown>): GroundHandlingRequest {
     isUrgent: Boolean(row["is_urgent"]),
     assignedStaffId: (row["assigned_staff_id"] as string | null) ?? null,
     assignedStaffName: (row["assigned_staff_name"] as string | null) ?? null,
+    requestedByType: (row["requested_by_type"] as string | null) ?? null,
+    requestedByName: (row["requested_by_name"] as string | null) ?? null,
   };
 }
 

@@ -41,11 +41,16 @@ import {
   isoDaysAgo,
   isPartnerAuthError,
   partnerDirectionLabel,
+  requestPartnerAddonService,
   todayIso,
   type PartnerBooking,
 } from "@/lib/partner";
-import { Download } from "lucide-react";
+import { Download, PlusCircle } from "lucide-react";
 import { friendlyErrorMessage } from "@/lib/goair";
+import {
+  AddonServiceRequestDialog,
+  type AddonServiceRequestTarget,
+} from "@/components/shared/addon-service-request-dialog";
 
 export const Route = createFileRoute("/partner/bookings")({
   head: () => ({
@@ -72,6 +77,7 @@ function BookingsPage() {
   const [applied, setApplied] = useState({ from: isoDaysAgo(30), to: todayIso() });
   const [cancelTarget, setCancelTarget] = useState<PartnerBooking | null>(null);
   const [cancelReason, setCancelReason] = useState("");
+  const [addonTarget, setAddonTarget] = useState<AddonServiceRequestTarget | null>(null);
 
   const query = useQuery({
     queryKey: ["partner-bookings", token, applied.from, applied.to],
@@ -94,6 +100,19 @@ function BookingsPage() {
     },
     onError: (error) => {
       toast.error(friendlyErrorMessage(error, "لم نتمكن من إلغاء الحجز."));
+    },
+  });
+
+  const addonMutation = useMutation({
+    mutationFn: (params: { addonServiceIds: string[]; groundHandlingServiceIds: string[] }) =>
+      requestPartnerAddonService(token, addonTarget!.bookingId, params.addonServiceIds, params.groundHandlingServiceIds),
+    onSuccess: () => {
+      toast.success("تم إرسال طلب الخدمة الإضافية.");
+      setAddonTarget(null);
+      queryClient.invalidateQueries({ queryKey: ["partner-bookings"] });
+    },
+    onError: (error) => {
+      toast.error(friendlyErrorMessage(error, "لم نتمكن من إرسال طلب الخدمة."));
     },
   });
 
@@ -210,22 +229,43 @@ function BookingsPage() {
                   <TableCell>{formatPartnerMoney(row.expectedTotalUsd)}</TableCell>
                   <TableCell className="font-bold text-accent">{formatPartnerMoney(row.commissionUsd)}</TableCell>
                   <TableCell>
-                    {isCancellable(row.status) ? (
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => {
-                          setCancelReason("");
-                          setCancelTarget(row);
-                        }}
-                      >
-                        إلغاء
-                      </Button>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {isCancellable(row.status) ? (
+                        <>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="gap-1"
+                            onClick={() =>
+                              setAddonTarget({
+                                bookingId: row.id,
+                                label: `${row.fullName} — ${row.origin} ← ${row.destination} — ${formatDate(row.travelDate)}`,
+                                airportCode: row.airportCode,
+                                travelDate: row.travelDate,
+                              })
+                            }
+                          >
+                            <PlusCircle className="size-3.5" aria-hidden />
+                            خدمة إضافية
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => {
+                              setCancelReason("");
+                              setCancelTarget(row);
+                            }}
+                          >
+                            إلغاء
+                          </Button>
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -286,6 +326,13 @@ function BookingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AddonServiceRequestDialog
+        target={addonTarget}
+        submitting={addonMutation.isPending}
+        onClose={() => setAddonTarget(null)}
+        onSubmit={(params) => addonMutation.mutate(params)}
+      />
     </PartnerSection>
   );
 }

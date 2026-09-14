@@ -2,10 +2,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useAdminToken } from "@/lib/admin-session";
+import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { AdminAuthError, AdminLoading } from "@/components/admin/admin-shell";
+import { ComplianceBadge } from "@/components/goair/compliance-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,35 +20,17 @@ import {
   adminListVehicles,
   adminUpdateDriverCompliance,
   adminUpdateVehicleCompliance,
-  getComplianceStatus,
   isAdminAuthError,
   type AdminDriver,
   type AdminVehicle,
-  type ComplianceStatus,
 } from "@/lib/admin";
+import { driverComplianceStatus, vehicleComplianceStatus } from "@/lib/compliance";
 import { fetchVisibleCountries, fetchVehicleTypes, fetchTrips } from "@/lib/goair";
 
 export const Route = createFileRoute("/admin/fleet")({
   head: () => ({ meta: [{ title: "السائقين والعربيات — لوحة تشغيل GoAir" }, { name: "robots", content: "noindex" }] }),
   component: FleetPage,
 });
-
-const COMPLIANCE_BADGE: Record<ComplianceStatus, { label: string; className: string }> = {
-  unverified: { label: "بيانات ناقصة", className: "bg-mist text-muted-foreground" },
-  valid: { label: "سارية", className: "bg-emerald-100 text-emerald-800" },
-  expiring_soon: { label: "قربت تخلص", className: "bg-amber-100 text-amber-800" },
-  expired: { label: "منتهية", className: "bg-red-100 text-red-800" },
-};
-
-function ComplianceBadge({ label, expiry }: { label: string; expiry: string | null }) {
-  const status = getComplianceStatus(expiry);
-  const badge = COMPLIANCE_BADGE[status];
-  return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${badge.className}`}>
-      {label}: {expiry ?? badge.label}
-    </span>
-  );
-}
 
 function FleetPage() {
   const token = useAdminToken();
@@ -95,7 +79,7 @@ function FleetPage() {
         <AddDriverForm token={token} operators={operatorsQuery.data ?? []} onAdded={refreshDrivers} />
         <ul className="mt-5 divide-y divide-border/60">
           {(driversQuery.data ?? []).map((d) => (
-            <DriverRow key={d.id} token={token} driver={d} onUpdated={refreshDrivers} />
+            <DriverRow key={d.id} driver={d} token={token} onUpdated={refreshDrivers} />
           ))}
           {(driversQuery.data ?? []).length === 0 ? (
             <li className="py-4 text-center text-sm text-muted-foreground">مفيش سائقين مضافين لسه.</li>
@@ -115,7 +99,7 @@ function FleetPage() {
         />
         <ul className="mt-5 divide-y divide-border/60">
           {(vehiclesQuery.data ?? []).map((v) => (
-            <VehicleRow key={v.id} token={token} vehicle={v} onUpdated={refreshVehicles} />
+            <VehicleRow key={v.id} vehicle={v} token={token} onUpdated={refreshVehicles} />
           ))}
           {(vehiclesQuery.data ?? []).length === 0 ? (
             <li className="py-4 text-center text-sm text-muted-foreground">مفيش عربيات مضافة لسه.</li>
@@ -127,18 +111,19 @@ function FleetPage() {
 }
 
 function DriverRow({
-  token,
   driver,
+  token,
   onUpdated,
 }: {
-  token: string;
   driver: AdminDriver;
+  token: string;
   onUpdated: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [licenseNumber, setLicenseNumber] = useState(driver.license_number ?? "");
   const [licenseExpiry, setLicenseExpiry] = useState(driver.license_expiry ?? "");
   const [busy, setBusy] = useState(false);
+  const status = driverComplianceStatus(driver);
 
   async function save() {
     setBusy(true);
@@ -148,7 +133,7 @@ function DriverRow({
         licenseExpiry: licenseExpiry || null,
         clearLicenseExpiry: !licenseExpiry,
       });
-      toast.success("تم تحديث بيانات السواق.");
+      toast.success("تم تحديث بيانات السائق.");
       setEditing(false);
       onUpdated();
     } catch (error) {
@@ -161,25 +146,21 @@ function DriverRow({
   return (
     <li className="py-2.5 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
+        <div className="min-w-0">
           <span className="font-bold text-primary">{driver.full_name}</span>{" "}
           <span className="text-muted-foreground">
             — {driver.phone_number}{driver.operator_name ? ` — ${driver.operator_name}` : " — عربية GoAir مباشرة"}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={() => setEditing((v) => !v)}
-          className="text-xs font-bold text-accent underline-offset-2 hover:underline"
-        >
-          {editing ? "إلغاء" : "الرخصة"}
-        </button>
-      </div>
-      <div className="mt-1.5">
-        <ComplianceBadge label="الرخصة" expiry={driver.license_expiry} />
+        <div className="flex shrink-0 items-center gap-2">
+          <ComplianceBadge status={status} />
+          <Button size="icon" variant="ghost" className="size-7" onClick={() => setEditing((v) => !v)}>
+            <Pencil className="size-3.5" aria-hidden />
+          </Button>
+        </div>
       </div>
       {editing ? (
-        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-border/70 bg-mist/40 p-2.5">
+        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-muted/40 p-2.5">
           <Input
             placeholder="رقم الرخصة"
             value={licenseNumber}
@@ -191,8 +172,9 @@ function DriverRow({
             value={licenseExpiry}
             onChange={(e) => setLicenseExpiry(e.target.value)}
             className="min-w-40 flex-1"
+            aria-label="تاريخ انتهاء الرخصة"
           />
-          <Button type="button" size="sm" disabled={busy} onClick={save} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">
+          <Button size="sm" disabled={busy} onClick={save} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">
             حفظ
           </Button>
         </div>
@@ -202,18 +184,19 @@ function DriverRow({
 }
 
 function VehicleRow({
-  token,
   vehicle,
+  token,
   onUpdated,
 }: {
-  token: string;
   vehicle: AdminVehicle;
+  token: string;
   onUpdated: () => void;
 }) {
   const [editing, setEditing] = useState(false);
   const [registrationExpiry, setRegistrationExpiry] = useState(vehicle.registration_expiry ?? "");
   const [insuranceExpiry, setInsuranceExpiry] = useState(vehicle.insurance_expiry ?? "");
   const [busy, setBusy] = useState(false);
+  const status = vehicleComplianceStatus(vehicle);
 
   async function save() {
     setBusy(true);
@@ -237,36 +220,39 @@ function VehicleRow({
   return (
     <li className="py-2.5 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
+        <div className="min-w-0">
           <span className="font-bold text-primary">{vehicle.plate_number}</span>{" "}
           <span className="text-muted-foreground">
             — {vehicle.vehicle_label} ({vehicle.capacity} مقعد) — {vehicle.country}
             {vehicle.operator_name ? ` — ${vehicle.operator_name}` : " — GoAir مباشرة"}
           </span>
         </div>
-        <button
-          type="button"
-          onClick={() => setEditing((v) => !v)}
-          className="text-xs font-bold text-accent underline-offset-2 hover:underline"
-        >
-          {editing ? "إلغاء" : "الترخيص والتأمين"}
-        </button>
-      </div>
-      <div className="mt-1.5 flex flex-wrap gap-1.5">
-        <ComplianceBadge label="الترخيص" expiry={vehicle.registration_expiry} />
-        <ComplianceBadge label="التأمين" expiry={vehicle.insurance_expiry} />
+        <div className="flex shrink-0 items-center gap-2">
+          <ComplianceBadge status={status} />
+          <Button size="icon" variant="ghost" className="size-7" onClick={() => setEditing((v) => !v)}>
+            <Pencil className="size-3.5" aria-hidden />
+          </Button>
+        </div>
       </div>
       {editing ? (
-        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg border border-border/70 bg-mist/40 p-2.5">
-          <div className="flex flex-1 flex-col gap-1">
-            <label className="text-[11px] text-muted-foreground">تاريخ انتهاء الترخيص</label>
-            <Input type="date" value={registrationExpiry} onChange={(e) => setRegistrationExpiry(e.target.value)} />
-          </div>
-          <div className="flex flex-1 flex-col gap-1">
-            <label className="text-[11px] text-muted-foreground">تاريخ انتهاء التأمين</label>
-            <Input type="date" value={insuranceExpiry} onChange={(e) => setInsuranceExpiry(e.target.value)} />
-          </div>
-          <Button type="button" size="sm" disabled={busy} onClick={save} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">
+        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-muted/40 p-2.5">
+          <label className="flex min-w-40 flex-1 flex-col gap-1 text-xs text-muted-foreground">
+            انتهاء الترخيص
+            <Input
+              type="date"
+              value={registrationExpiry}
+              onChange={(e) => setRegistrationExpiry(e.target.value)}
+            />
+          </label>
+          <label className="flex min-w-40 flex-1 flex-col gap-1 text-xs text-muted-foreground">
+            انتهاء التأمين
+            <Input
+              type="date"
+              value={insuranceExpiry}
+              onChange={(e) => setInsuranceExpiry(e.target.value)}
+            />
+          </label>
+          <Button size="sm" disabled={busy} onClick={save} className="self-end bg-accent font-bold text-accent-foreground hover:bg-accent/90">
             حفظ
           </Button>
         </div>

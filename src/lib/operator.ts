@@ -27,6 +27,12 @@ export type OperatorDashboard = {
   currentMonthAmountDueUsd: number;
   lifetimeTrips: number;
   lifetimeAmountDueUsd: number;
+  /** Referral code for this operator's own `partners` row (partner_type = 'operator') — used to attribute bookings the operator sells directly to its own customers via /operator/sell. Null until the operator's linked partners row exists. */
+  salesReferralCode: string | null;
+  /** Total the operator still owes GoAir for bookings it sold and collected payment for itself (cash/transfer), not yet settled. */
+  pendingSettlementUsd: number;
+  /** Number of bookings behind pendingSettlementUsd. */
+  pendingSettlementCount: number;
 };
 
 function num(v: unknown) { const n = Number(v ?? 0); return Number.isFinite(n) ? n : 0; }
@@ -48,6 +54,9 @@ export async function getOperatorDashboard(token: string): Promise<OperatorDashb
     currentMonthTrips: num(row["current_month_trips"]),
     currentMonthAmountDueUsd: num(row["current_month_amount_due_usd"]),
     lifetimeTrips: num(row["lifetime_trips"]),
+    salesReferralCode: row["sales_referral_code"] == null ? null : String(row["sales_referral_code"]),
+    pendingSettlementUsd: num(row["pending_settlement_usd"]),
+    pendingSettlementCount: num(row["pending_settlement_count"]),
     lifetimeAmountDueUsd: num(row["lifetime_amount_due_usd"]),
   };
 }
@@ -63,6 +72,8 @@ export type OperatorTrip = {
   destination: string; origin: string; seatsCount: number; amountDueUsd: number;
   driverName: string | null; vehiclePlate: string; operatorStatus: OperatorTripStatus;
   statusNote: string | null; statusUpdatedAt: string | null;
+  /** Needed to look up the right ground-handling catalog for an addon-service request. */
+  airportCode: string | null;
 };
 
 export async function getOperatorTrips(token: string): Promise<OperatorTrip[]> {
@@ -81,7 +92,29 @@ export async function getOperatorTrips(token: string): Promise<OperatorTrip[]> {
     operatorStatus: String(r["operator_status"] ?? "pending"),
     statusNote: (r["status_note"] as string | null) ?? null,
     statusUpdatedAt: (r["status_updated_at"] as string | null) ?? null,
+    airportCode: (r["airport_code"] as string | null) ?? null,
   }));
+}
+
+/**
+ * Adds an addon/ground-handling service to a booking this Operator sold or is
+ * executing — without creating a new transfer request. Ground Handling then
+ * sees it via `get_ground_handling_requests` tagged with this operator's name.
+ */
+export async function operatorRequestAddonService(
+  token: string,
+  bookingId: string,
+  addonServiceIds: string[],
+  groundHandlingServiceIds: string[],
+): Promise<number> {
+  const { data, error } = await supabase.rpc("operator_request_addon_service", {
+    p_access_token: token,
+    p_booking_id: bookingId,
+    p_addon_service_ids: addonServiceIds.length > 0 ? addonServiceIds : null,
+    p_ground_handling_service_ids: groundHandlingServiceIds.length > 0 ? groundHandlingServiceIds : null,
+  });
+  if (error) rpcError(error);
+  return num(data);
 }
 
 export const OPERATOR_TRIP_STATUS_LABELS: Record<string, string> = {
@@ -133,6 +166,20 @@ export async function operatorSetTripStatus(
   if (error) rpcError(error);
 }
 
+export async function operatorReassignTrip(
+  token: string,
+  assignmentId: string,
+  updates: { vehicleId?: string | null; driverId?: string | null },
+): Promise<void> {
+  const { error } = await supabase.rpc("operator_reassign_trip", {
+    p_access_token: token,
+    p_assignment_id: assignmentId,
+    p_vehicle_id: updates.vehicleId ?? null,
+    p_driver_id: updates.driverId ?? null,
+  });
+  if (error) rpcError(error);
+}
+
 export type OperatorStatement = {
   id: string; periodStart: string; periodEnd: string;
   totalTrips: number; totalSeats: number; amountDueUsd: number; status: string;
@@ -152,8 +199,63 @@ export async function getOperatorStatements(token: string): Promise<OperatorStat
   }));
 }
 
-export type OperatorDriver = { id: string; full_name: string; phone_number: string; license_number: string | null; license_expiry: string | null };
-export type OperatorVehicle = { id: string; plate_number: string; country: string; vehicle_label: string; capacity: number; registration_expiry: string | null; insurance_expiry: string | null };
+export type OperatorDriver = {
+  id: string;
+  full_name: string;
+  phone_number: string;
+  license_number: string | null;
+  license_expiry: string | null;
+  license_doc_url: string | null;
+  id_doc_url: string | null;
+};
+export type OperatorVehicle = {
+  id: string;
+  plate_number: string;
+  country: string;
+  vehicle_label: string;
+  capacity: number;
+  registration_expiry: string | null;
+  insurance_expiry: string | null;
+  registration_doc_url: string | null;
+  insurance_doc_url: string | null;
+};
+
+const OPERATOR_FLEET_DOCS_BUCKET = "operator-fleet-docs";
+const MAX_FLEET_DOC_SIZE_MB = 10;
+
+/**
+ * Uploads a compliance document (license/ID/registration/insurance) to the
+ * private operator-fleet-docs bucket. Storage RLS scopes access to the
+ * driver/vehicle's own operator (via portal_members + auth.uid()) plus
+ * internal staff. Returns the storage PATH (not a public URL, since the
+ * bucket is private) — save this path in the relevant *_doc_url column.
+ */
+export async function uploadOperatorFleetDoc(
+  entityType: "drivers" | "vehicles",
+  entityId: string,
+  docKind: string,
+  file: File,
+): Promise<string> {
+  if (file.size > MAX_FLEET_DOC_SIZE_MB * 1024 * 1024) {
+    throw new Error(`الملف "${file.name}" أكبر من ${MAX_FLEET_DOC_SIZE_MB} ميجا.`);
+  }
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `${entityType}/${entityId}/${docKind}-${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage
+    .from(OPERATOR_FLEET_DOCS_BUCKET)
+    .upload(path, file, { cacheControl: "3600", upsert: false, ...(file.type ? { contentType: file.type } : {}) });
+  if (error) throw new Error(error.message || `فشل رفع الملف "${file.name}".`);
+  return path;
+}
+
+/** Generates a short-lived signed URL to view/download a private fleet doc. */
+export async function getOperatorFleetDocUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from(OPERATOR_FLEET_DOCS_BUCKET)
+    .createSignedUrl(path, 60 * 10);
+  if (error || !data?.signedUrl) throw new Error(error?.message || "تعذّر فتح الملف.");
+  return data.signedUrl;
+}
 
 export async function getOperatorFleet(token: string): Promise<{ drivers: OperatorDriver[]; vehicles: OperatorVehicle[] }> {
   const { data, error } = await supabase.rpc("get_operator_fleet", { p_access_token: token });
@@ -165,42 +267,6 @@ export async function getOperatorFleet(token: string): Promise<{ drivers: Operat
   };
 }
 
-export async function operatorUpdateDriverCompliance(
-  token: string,
-  driverId: string,
-  input: { licenseNumber?: string | null; licenseExpiry?: string | null; clearLicenseExpiry?: boolean },
-) {
-  const { error } = await supabase.rpc("operator_update_driver_compliance", {
-    p_access_token: token,
-    p_driver_id: driverId,
-    p_license_number: input.licenseNumber ?? null,
-    p_license_expiry: input.licenseExpiry ?? null,
-    p_clear_license_expiry: input.clearLicenseExpiry ?? false,
-  });
-  if (error) rpcError(error);
-}
-
-export async function operatorUpdateVehicleCompliance(
-  token: string,
-  vehicleId: string,
-  input: {
-    registrationExpiry?: string | null;
-    clearRegistrationExpiry?: boolean;
-    insuranceExpiry?: string | null;
-    clearInsuranceExpiry?: boolean;
-  },
-) {
-  const { error } = await supabase.rpc("operator_update_vehicle_compliance", {
-    p_access_token: token,
-    p_vehicle_id: vehicleId,
-    p_registration_expiry: input.registrationExpiry ?? null,
-    p_clear_registration_expiry: input.clearRegistrationExpiry ?? false,
-    p_insurance_expiry: input.insuranceExpiry ?? null,
-    p_clear_insurance_expiry: input.clearInsuranceExpiry ?? false,
-  });
-  if (error) rpcError(error);
-}
-
 export async function operatorAddDriver(token: string, fullName: string, phone: string) {
   const { error } = await supabase.rpc("operator_add_driver", { p_access_token: token, p_full_name: fullName, p_phone_number: phone });
   if (error) rpcError(error);
@@ -209,6 +275,62 @@ export async function operatorAddDriver(token: string, fullName: string, phone: 
 export async function operatorAddVehicle(token: string, vehicleTypeId: string, plate: string, country: string, driverId: string | null) {
   const { error } = await supabase.rpc("operator_add_vehicle", {
     p_access_token: token, p_vehicle_type_id: vehicleTypeId, p_plate_number: plate, p_country: country, p_driver_id: driverId,
+  });
+  if (error) rpcError(error);
+}
+
+export async function operatorUpdateDriverCompliance(
+  token: string,
+  driverId: string,
+  updates: {
+    licenseNumber?: string | null;
+    licenseExpiry?: string | null;
+    clearLicenseExpiry?: boolean;
+    licenseDocUrl?: string | null;
+    clearLicenseDoc?: boolean;
+    idDocUrl?: string | null;
+    clearIdDoc?: boolean;
+  },
+) {
+  const { error } = await supabase.rpc("operator_update_driver_compliance", {
+    p_access_token: token,
+    p_driver_id: driverId,
+    p_license_number: updates.licenseNumber ?? null,
+    p_license_expiry: updates.licenseExpiry ?? null,
+    p_clear_license_expiry: updates.clearLicenseExpiry ?? false,
+    p_license_doc_url: updates.licenseDocUrl ?? null,
+    p_clear_license_doc: updates.clearLicenseDoc ?? false,
+    p_id_doc_url: updates.idDocUrl ?? null,
+    p_clear_id_doc: updates.clearIdDoc ?? false,
+  });
+  if (error) rpcError(error);
+}
+
+export async function operatorUpdateVehicleCompliance(
+  token: string,
+  vehicleId: string,
+  updates: {
+    registrationExpiry?: string | null;
+    clearRegistrationExpiry?: boolean;
+    insuranceExpiry?: string | null;
+    clearInsuranceExpiry?: boolean;
+    registrationDocUrl?: string | null;
+    clearRegistrationDoc?: boolean;
+    insuranceDocUrl?: string | null;
+    clearInsuranceDoc?: boolean;
+  },
+) {
+  const { error } = await supabase.rpc("operator_update_vehicle_compliance", {
+    p_access_token: token,
+    p_vehicle_id: vehicleId,
+    p_registration_expiry: updates.registrationExpiry ?? null,
+    p_clear_registration_expiry: updates.clearRegistrationExpiry ?? false,
+    p_insurance_expiry: updates.insuranceExpiry ?? null,
+    p_clear_insurance_expiry: updates.clearInsuranceExpiry ?? false,
+    p_registration_doc_url: updates.registrationDocUrl ?? null,
+    p_clear_registration_doc: updates.clearRegistrationDoc ?? false,
+    p_insurance_doc_url: updates.insuranceDocUrl ?? null,
+    p_clear_insurance_doc: updates.clearInsuranceDoc ?? false,
   });
   if (error) rpcError(error);
 }

@@ -66,7 +66,6 @@ const en = {
     },
     hero: {
       badge: "Egypt & Lebanon — available now",
-      preLaunchBadge: "Early version — pre-launch",
       title: "Your Airport Ride, Made Simple.",
       subtitle: "Comfortable shared rides to Cairo, Sphinx and Borg El Arab Airports.",
       imageAlt: "Airport runway at sunset",
@@ -83,6 +82,7 @@ const en = {
       a2: "The price shown per seat is fixed — you won't see a different price at checkout.",
       q3: "How do I track my booking?",
       a3: 'From the "My Bookings" page — enter the ticket code you received after booking.',
+      seeMore: "More questions",
     },
   },
   travelExperience: {
@@ -570,6 +570,7 @@ const en = {
       "Enter your ticket code to view or cancel a booking, or your subscription code to view your membership.",
     tabs: {
       booking: "Trip booking",
+      rental: "Car rental",
       subscription: "Subscription",
     },
     booking: {
@@ -589,6 +590,29 @@ const en = {
         total: "Total",
         status: "Status",
       },
+      cancelledNote: "This booking is cancelled.",
+      cancelButton: "Cancel booking",
+    },
+    rental: {
+      ticketLabel: "Rental booking code",
+      ticketPlaceholder: "e.g. 0839de5ebba3",
+      searchButton: "Search",
+      emptyTicketError: "Enter the rental booking code.",
+      notFoundError: "No rental booking found with this code.",
+      searchError: "Something went wrong while searching.",
+      cancelSuccess: "Rental booking cancelled.",
+      cancelError: "We couldn't cancel the booking.",
+      cancelReason: "Cancelled by customer",
+      fields: {
+        name: "Name",
+        vehicle: "Vehicle",
+        pickup: "Pickup location",
+        from: "From",
+        to: "To",
+        total: "Total",
+        status: "Status",
+      },
+      driverLabel: "Driver",
       cancelledNote: "This booking is cancelled.",
       cancelButton: "Cancel booking",
     },
@@ -692,7 +716,7 @@ const en = {
   businessPromoBanner: {
     title: "For travel agencies & airlines",
     description:
-      "Offer airport transfer service to your customers and earn a commission on every booking.",
+      "Offer airport transfer service to your customers with ease, through a dedicated partner portal.",
     agencyCta: "For travel agencies",
     partnerCta: "For airlines",
   },
@@ -876,9 +900,7 @@ const en = {
       description: "The terms and conditions for booking GoAir trips.",
     },
     title: "Terms & Conditions",
-    lastUpdated: "Last updated: to be set before launch.",
-    draftNotice:
-      "Important notice: this document is an initial draft based on competitive research (not copied from any specific platform) to help you get started quickly — it is not approved legal wording. Since GoAir will launch in Egypt and Lebanon together, and each country has different consumer protection and transport laws, this document must be reviewed by a licensed lawyer in both countries before actual launch or accepting any real payment.",
+    lastUpdated: "Last updated: September 2026",
   },
   privacyPage: {
     meta: {
@@ -886,9 +908,7 @@ const en = {
       description: "How GoAir collects, uses, and protects your data.",
     },
     title: "Privacy Policy",
-    lastUpdated: "Last updated: to be set before launch.",
-    draftNotice:
-      "Important notice: this document is an initial draft, not approved legal wording. Since GoAir will launch in Egypt and Lebanon together, this document must be reviewed by a licensed lawyer in both countries before actual launch — data protection laws in Egypt and Lebanon differ from each other, and each country needs a separate review.",
+    lastUpdated: "Last updated: September 2026",
   },
   contactPage: {
     meta: {

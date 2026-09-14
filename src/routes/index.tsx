@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { Rocket, Sparkles } from "lucide-react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { Sparkles } from "lucide-react";
 
 import heroImage from "@/assets/hero-goair-van.png";
 import { AnnouncementTicker } from "@/components/goair/announcement-ticker";
@@ -117,10 +117,6 @@ function Home() {
                 <Sparkles className="size-3.5 text-accent" />
                 {t("home.hero.badge")}
               </p>
-              <p className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-bold text-accent">
-                <Rocket className="size-3.5" />
-                {t("home.hero.preLaunchBadge")}
-              </p>
             </div>
             <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.1] text-primary-foreground sm:text-6xl">
               {t("home.hero.title")}
@@ -198,6 +194,11 @@ function Home() {
             <AccordionContent>{t("home.faq.a3")}</AccordionContent>
           </AccordionItem>
         </Accordion>
+        <div className="mt-6 text-center">
+          <Link to="/faq" className="font-bold text-accent hover:underline">
+            {t("home.faq.seeMore")}
+          </Link>
+        </div>
       </section>
 
       {/* Countries GoAir covers today — real footprint, not a borrowed big number */}

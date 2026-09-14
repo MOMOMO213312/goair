@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useOperatorToken } from "@/lib/operator-session";
 import { OperatorAuthError, OperatorLoading, OperatorStatCard } from "@/components/operator/operator-shell";
 import { formatOperatorMoney, getOperatorDashboard, isOperatorAuthError, PAYOUT_MODEL_LABELS } from "@/lib/operator";
@@ -40,6 +40,29 @@ function OperatorOverview() {
         <OperatorStatCard label="إجمالي الرحلات (كل الوقت)" value={String(d.lifetimeTrips)} />
         <OperatorStatCard label="إجمالي المستحق (كل الوقت)" value={formatOperatorMoney(d.lifetimeAmountDueUsd)} />
       </div>
+      {d.salesReferralCode ? (
+        <div className="rounded-xl border border-border/80 bg-card p-5 shadow-[var(--shadow-card)]">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="font-display text-base font-extrabold text-primary">بيع مباشر لعملائك</h3>
+              {d.pendingSettlementCount > 0 ? (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  عندك <span className="font-bold text-accent">{formatOperatorMoney(d.pendingSettlementUsd)}</span> مستحقة
+                  عليك لـ GoAir من {d.pendingSettlementCount} حجز استلمت فلوسه بنفسك.
+                </p>
+              ) : (
+                <p className="mt-1 text-sm text-muted-foreground">احجز مباشرة لعميلك — هتتحوّل تلقائيًا لأسطولك.</p>
+              )}
+            </div>
+            <Link
+              to="/operator/sell"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-foreground hover:bg-accent/90"
+            >
+              بيع لعميلي
+            </Link>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

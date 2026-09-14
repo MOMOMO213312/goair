@@ -283,6 +283,17 @@ export type CreatePrivateBookingInput = {
   groundHandlingServiceIds?: string[];
   /** One name per seat, saved to `booking_passengers` — array length must exactly match `seatsCount`. */
   passengerNames?: string[] | null;
+  /**
+   * How payment for this booking is collected. Only meaningful when the
+   * referral code resolves to a transport operator's own `partners` row
+   * (partner_type = 'operator') selling directly to its own customer —
+   * the DB silently ignores this for any other referral source and always
+   * uses the normal GoAir gateway flow. Omit/'goair_gateway' for the usual
+   * flow; 'collected_by_operator' when the operator took cash/transfer from
+   * its own customer directly, which the DB then tracks as a pending
+   * settlement the operator owes back to GoAir.
+   */
+  paymentCollection?: "goair_gateway" | "collected_by_operator";
 };
 
 /** Reserve a whole vehicle for one group — flat price, no shared-capacity contention. */
@@ -312,6 +323,7 @@ export async function createPrivateBookingSafe(input: CreatePrivateBookingInput)
     ...(input.customerEmail && input.customerEmail.trim()
       ? { p_customer_email: input.customerEmail.trim() }
       : {}),
+    ...(input.paymentCollection ? { p_payment_collection: input.paymentCollection } : {}),
   });
 
   if (error) throw new Error(error.message);
@@ -557,6 +569,12 @@ export type CreateBookingInput = {
    * list (or omit/null for the normal single-contact booking).
    */
   passengerNames?: string[] | null;
+  /**
+   * How payment for this booking is collected — see the matching field on
+   * `CreatePrivateBookingInput` for the full explanation. Omit for the usual
+   * GoAir-gateway flow.
+   */
+  paymentCollection?: "goair_gateway" | "collected_by_operator";
 };
 
 /** A configured hourly departure (or legacy fallback slot) that has no stored `schedules` row yet. */
@@ -608,6 +626,7 @@ export async function createBookingSafe(input: CreateBookingInput) {
     ...(input.customerEmail && input.customerEmail.trim()
       ? { p_customer_email: input.customerEmail.trim() }
       : {}),
+    ...(input.paymentCollection ? { p_payment_collection: input.paymentCollection } : {}),
   };
 
   let { data, error } = await supabase.rpc("create_booking_safe", {
@@ -908,6 +927,24 @@ export async function fetchRentalPickupAreas(country: string, city: string): Pro
   }));
 }
 
+/** Distinct cities that already have curated pickup areas in rental_pickup_areas for a country.
+ * Merge this with RENTAL_CITIES_BY_COUNTRY in the UI so a city an admin adds curated areas for
+ * later shows up in the dropdown automatically, without needing a code change. */
+export async function fetchRentalCitiesWithPresetAreas(country: string): Promise<string[]> {
+  if (!country) return [];
+  const { data, error } = await supabase
+    .from("rental_pickup_areas")
+    .select("city")
+    .eq("country", country)
+    .eq("is_active", true);
+  if (error) throw new Error(error.message);
+  const cities = new Set<string>();
+  for (const row of (data ?? []) as { city: string }[]) {
+    if (row.city) cities.add(row.city);
+  }
+  return Array.from(cities);
+}
+
 export type RentalDurationType = "hourly" | "daily" | "multi_day";
 
 export type RentalPriceQuote = {
@@ -947,6 +984,7 @@ export type CreateRentalBookingInput = {
   startDatetime: string;
   endDatetime: string;
   pickupLocation: string;
+  referralCodeOverride?: string | null;
 };
 
 export type RentalBookingResult = {
@@ -965,6 +1003,9 @@ export type RentalBookingResult = {
 export async function createRentalBookingSafe(
   input: CreateRentalBookingInput,
 ): Promise<RentalBookingResult> {
+  const pendingReferralCode =
+    input.referralCodeOverride !== undefined ? input.referralCodeOverride : getStoredReferralCode();
+
   const { data, error } = await supabase.rpc("create_rental_booking_safe", {
     p_rental_vehicle_id: input.rentalVehicleId,
     p_full_name: input.fullName,
@@ -972,6 +1013,7 @@ export async function createRentalBookingSafe(
     p_start_datetime: input.startDatetime,
     p_end_datetime: input.endDatetime,
     p_pickup_location: input.pickupLocation,
+    ...(pendingReferralCode ? { p_referral_code: pendingReferralCode } : {}),
   });
   if (error) throw new Error(error.message);
   const row = (data ?? [])[0] as Record<string, unknown> | undefined;
@@ -1213,6 +1255,48 @@ export async function cancelSubscriptionByCode(code: string, reason: string) {
   });
   if (error) throw new Error(error.message);
   if (data === false) throw new Error("لم نتمكن من إلغاء الاشتراك — تأكد من الكود أو كلم الدعم.");
+  return true;
+}
+
+export type RentalBookingRecord = {
+  id: string;
+  ticket_code: string;
+  full_name: string;
+  phone_number: string;
+  status: string;
+  start_datetime: string;
+  end_datetime: string;
+  duration_type: string;
+  pickup_location: string;
+  total_usd: number;
+  currency: string | null;
+  cancellation_reason: string | null;
+  cancelled_at: string | null;
+  vehicle_make_model: string | null;
+  vehicle_plate_number: string | null;
+  vehicle_photos: string[] | null;
+  driver_full_name: string | null;
+  driver_phone_number: string | null;
+};
+
+/** Ticket-scoped lookup — same "no account, no login" pattern as get_booking_by_ticket. */
+export async function getRentalBookingByTicket(ticketCode: string): Promise<RentalBookingRecord | null> {
+  const { data, error } = await supabase.rpc("get_rental_booking_by_ticket", {
+    p_ticket_code: ticketCode.trim(),
+  });
+  if (error) throw new Error(error.message);
+  const row = Array.isArray(data) ? data[0] : data;
+  return (row as RentalBookingRecord) ?? null;
+}
+
+export async function cancelRentalBookingByTicket(ticketCode: string, reason: string) {
+  const { data, error } = await supabase.rpc("cancel_rental_booking_by_ticket", {
+    p_ticket_code: ticketCode.trim(),
+    p_reason: reason,
+  });
+  if (error) throw new Error(error.message);
+  if (data === false)
+    throw new Error("لم نتمكن من إلغاء حجز التأجير — تأكد من كود التذكرة أو كلم الدعم.");
   return true;
 }
 

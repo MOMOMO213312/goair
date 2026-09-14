@@ -9,12 +9,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   cancelBookingByTicket,
+  cancelRentalBookingByTicket,
   cancelSubscriptionByCode,
   formatUsd,
   friendlyErrorMessage,
   getBookingByTicket,
+  getRentalBookingByTicket,
   getSubscriptionByCode,
   type BookingRecord,
+  type RentalBookingRecord,
   type SubscriptionRecord,
 } from "@/lib/goair";
 import { useTranslation } from "@/lib/i18n/language-context";
@@ -44,12 +47,17 @@ export const Route = createFileRoute("/my-bookings")({
 function MyBookingsPage() {
   const { t } = useTranslation();
   const initial = Route.useSearch();
-  const [mode, setMode] = useState<"booking" | "subscription">("booking");
+  const [mode, setMode] = useState<"booking" | "rental" | "subscription">("booking");
 
   const [code, setCode] = useState(initial.ticket);
   const [booking, setBooking] = useState<BookingRecord | null>(null);
   const [busy, setBusy] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+
+  const [rentalCode, setRentalCode] = useState("");
+  const [rentalBooking, setRentalBooking] = useState<RentalBookingRecord | null>(null);
+  const [rentalBusy, setRentalBusy] = useState(false);
+  const [rentalCancelling, setRentalCancelling] = useState(false);
 
   const [subCode, setSubCode] = useState("");
   const [subscription, setSubscription] = useState<SubscriptionRecord | null>(null);
@@ -88,6 +96,41 @@ function MyBookingsPage() {
       toast.error(friendlyErrorMessage(error, t("myBookingsPage.subscription.cancelError")));
     } finally {
       setSubCancelling(false);
+    }
+  }
+
+  async function lookupRental(event: React.FormEvent) {
+    event.preventDefault();
+    if (rentalCode.trim().length < 4) {
+      toast.error(t("myBookingsPage.rental.emptyTicketError"));
+      return;
+    }
+    setRentalBusy(true);
+    try {
+      const result = await getRentalBookingByTicket(rentalCode);
+      if (!result) {
+        toast.error(t("myBookingsPage.rental.notFoundError"));
+        setRentalBooking(null);
+      } else {
+        setRentalBooking(result);
+      }
+    } catch (error) {
+      toast.error(friendlyErrorMessage(error, t("myBookingsPage.rental.searchError")));
+    } finally {
+      setRentalBusy(false);
+    }
+  }
+
+  async function cancelRental() {
+    setRentalCancelling(true);
+    try {
+      await cancelRentalBookingByTicket(rentalCode, t("myBookingsPage.rental.cancelReason"));
+      toast.success(t("myBookingsPage.rental.cancelSuccess"));
+      setRentalBooking(await getRentalBookingByTicket(rentalCode));
+    } catch (error) {
+      toast.error(friendlyErrorMessage(error, t("myBookingsPage.rental.cancelError")));
+    } finally {
+      setRentalCancelling(false);
     }
   }
 
@@ -160,6 +203,16 @@ function MyBookingsPage() {
         </button>
         <button
           type="button"
+          onClick={() => setMode("rental")}
+          className={cn(
+            "rounded-md px-4 py-1.5 text-sm font-bold transition-colors",
+            mode === "rental" ? "bg-card text-primary shadow-sm" : "text-muted-foreground",
+          )}
+        >
+          {t("myBookingsPage.tabs.rental")}
+        </button>
+        <button
+          type="button"
           onClick={() => setMode("subscription")}
           className={cn(
             "rounded-md px-4 py-1.5 text-sm font-bold transition-colors",
@@ -219,6 +272,105 @@ function MyBookingsPage() {
             >
               {cancelling ? <Loader2 className="size-4 animate-spin" /> : <XCircle className="size-4" />}
               {t("myBookingsPage.booking.cancelButton")}
+            </Button>
+          )}
+        </Card>
+      ) : null}
+      </>
+      ) : mode === "rental" ? (
+      <>
+      <form onSubmit={lookupRental} className="mt-6 flex items-end gap-3">
+        <div className="flex-1 space-y-2">
+          <Label htmlFor="rental-ticket">{t("myBookingsPage.rental.ticketLabel")}</Label>
+          <Input
+            id="rental-ticket"
+            value={rentalCode}
+            onChange={(event) => setRentalCode(event.target.value)}
+            placeholder={t("myBookingsPage.rental.ticketPlaceholder")}
+          />
+        </div>
+        <Button type="submit" disabled={rentalBusy} className="h-10">
+          {rentalBusy ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />}
+          {t("myBookingsPage.rental.searchButton")}
+        </Button>
+      </form>
+
+      {rentalBooking ? (
+        <Card className="mt-8 rounded-xl p-6 shadow-[var(--shadow-card)]">
+          <dl className="space-y-2.5 text-sm">
+            <Row label={t("myBookingsPage.rental.fields.name")} value={rentalBooking.full_name} />
+            <Row
+              label={t("myBookingsPage.rental.fields.vehicle")}
+              value={rentalBooking.vehicle_make_model ?? "—"}
+            />
+            <Row
+              label={t("myBookingsPage.rental.fields.pickup")}
+              value={rentalBooking.pickup_location}
+            />
+            <Row
+              label={t("myBookingsPage.rental.fields.from")}
+              value={new Date(rentalBooking.start_datetime).toLocaleString()}
+            />
+            <Row
+              label={t("myBookingsPage.rental.fields.to")}
+              value={new Date(rentalBooking.end_datetime).toLocaleString()}
+            />
+            <Row
+              label={t("myBookingsPage.rental.fields.total")}
+              value={formatUsd(Number(rentalBooking.total_usd))}
+            />
+            <Row label={t("myBookingsPage.rental.fields.status")} value={rentalBooking.status} />
+          </dl>
+
+          {rentalBooking.driver_full_name || rentalBooking.driver_phone_number ? (
+            <div className="mt-5 rounded-lg border border-accent/30 bg-accent/5 p-4">
+              <p className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
+                <span className="size-2 rounded-full bg-accent" />
+                {t("myBookingsPage.rental.driverLabel")}
+              </p>
+              <div className="mt-3 space-y-2 text-sm">
+                {rentalBooking.driver_full_name ? (
+                  <div className="flex items-center gap-2 text-primary">
+                    <UserRound className="size-4 shrink-0 text-accent" aria-hidden />
+                    <span className="font-bold">{rentalBooking.driver_full_name}</span>
+                  </div>
+                ) : null}
+                {rentalBooking.driver_phone_number ? (
+                  <a
+                    href={`tel:${rentalBooking.driver_phone_number}`}
+                    className="flex items-center gap-1 text-accent hover:underline"
+                  >
+                    <Phone className="size-3.5" aria-hidden />
+                    {rentalBooking.driver_phone_number}
+                  </a>
+                ) : null}
+                {rentalBooking.vehicle_plate_number ? (
+                  <div className="flex items-center gap-2 text-primary">
+                    <Car className="size-4 shrink-0 text-accent" aria-hidden />
+                    <span>{rentalBooking.vehicle_plate_number}</span>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+
+          {rentalBooking.status === "cancelled" ? (
+            <p className="mt-5 text-sm font-bold text-destructive">
+              {t("myBookingsPage.rental.cancelledNote")}
+            </p>
+          ) : rentalBooking.status === "completed" ? null : (
+            <Button
+              variant="outline"
+              disabled={rentalCancelling}
+              onClick={cancelRental}
+              className="mt-6 w-full border-destructive/40 text-destructive hover:bg-destructive/10"
+            >
+              {rentalCancelling ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <XCircle className="size-4" />
+              )}
+              {t("myBookingsPage.rental.cancelButton")}
             </Button>
           )}
         </Card>

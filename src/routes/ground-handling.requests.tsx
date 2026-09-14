@@ -14,6 +14,7 @@ import {
   assignGroundHandlingStaff,
   listGroundHandlingStaff,
   groundHandlingStatusLabel,
+  groundHandlingRequesterLabel,
   formatGroundHandlingDate,
   isGroundHandlingAuthError,
   REQUEST_STATUS_ORDER,
@@ -184,6 +185,9 @@ function RequestCard({
             {request.terminal ? ` · ${request.terminal}` : ""}
             {request.direction ? ` · ${request.direction === "arrival" ? "وصول" : "مغادرة"}` : ""}
             {request.ticketCode ? ` · تذكرة ${request.ticketCode}` : ""}
+          </p>
+          <p className="mt-0.5 text-xs font-semibold text-muted-foreground">
+            {groundHandlingRequesterLabel(request)}
           </p>
           {request.assignedStaffName ? (
             <p className="mt-0.5 text-xs font-bold text-primary">الموظف المسؤول: {request.assignedStaffName}</p>
