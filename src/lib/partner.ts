@@ -137,6 +137,9 @@ export type PartnerBooking = {
   direction: string | null;
   /** Shared id linking the outbound and return legs of a round-trip booking. Null for one-way. */
   roundTripGroupId: string | null;
+  /** Needed to request a ground-handling addon service without a new transfer request. */
+  ticketCode: string | null;
+  airportCode: string | null;
 };
 
 export async function getPartnerBookings(
@@ -169,7 +172,30 @@ export async function getPartnerBookings(
     passengerNames: ((row["passenger_names"] as string[] | null) ?? []).filter(Boolean),
     direction: (row["direction"] as string | null) ?? null,
     roundTripGroupId: (row["round_trip_group_id"] as string | null) ?? null,
+    ticketCode: (row["ticket_code"] as string | null) ?? null,
+    airportCode: (row["airport_code"] as string | null) ?? null,
   }));
+}
+
+/**
+ * Adds an addon/ground-handling service to a booking this Partner sold —
+ * without creating a new transfer request. Ground Handling then sees it via
+ * `get_ground_handling_requests` tagged with this partner's name/type.
+ */
+export async function requestPartnerAddonService(
+  token: string,
+  bookingId: string,
+  addonServiceIds: string[],
+  groundHandlingServiceIds: string[],
+): Promise<number> {
+  const { data, error } = await supabase.rpc("partner_request_addon_service", {
+    p_access_token: token,
+    p_booking_id: bookingId,
+    p_addon_service_ids: addonServiceIds.length > 0 ? addonServiceIds : null,
+    p_ground_handling_service_ids: groundHandlingServiceIds.length > 0 ? groundHandlingServiceIds : null,
+  });
+  if (error) throwPartnerRpcError(error);
+  return num(data);
 }
 
 /**

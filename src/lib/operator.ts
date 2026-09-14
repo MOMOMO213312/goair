@@ -72,6 +72,8 @@ export type OperatorTrip = {
   destination: string; origin: string; seatsCount: number; amountDueUsd: number;
   driverName: string | null; vehiclePlate: string; operatorStatus: OperatorTripStatus;
   statusNote: string | null; statusUpdatedAt: string | null;
+  /** Needed to look up the right ground-handling catalog for an addon-service request. */
+  airportCode: string | null;
 };
 
 export async function getOperatorTrips(token: string): Promise<OperatorTrip[]> {
@@ -90,7 +92,29 @@ export async function getOperatorTrips(token: string): Promise<OperatorTrip[]> {
     operatorStatus: String(r["operator_status"] ?? "pending"),
     statusNote: (r["status_note"] as string | null) ?? null,
     statusUpdatedAt: (r["status_updated_at"] as string | null) ?? null,
+    airportCode: (r["airport_code"] as string | null) ?? null,
   }));
+}
+
+/**
+ * Adds an addon/ground-handling service to a booking this Operator sold or is
+ * executing — without creating a new transfer request. Ground Handling then
+ * sees it via `get_ground_handling_requests` tagged with this operator's name.
+ */
+export async function operatorRequestAddonService(
+  token: string,
+  bookingId: string,
+  addonServiceIds: string[],
+  groundHandlingServiceIds: string[],
+): Promise<number> {
+  const { data, error } = await supabase.rpc("operator_request_addon_service", {
+    p_access_token: token,
+    p_booking_id: bookingId,
+    p_addon_service_ids: addonServiceIds.length > 0 ? addonServiceIds : null,
+    p_ground_handling_service_ids: groundHandlingServiceIds.length > 0 ? groundHandlingServiceIds : null,
+  });
+  if (error) rpcError(error);
+  return num(data);
 }
 
 export const OPERATOR_TRIP_STATUS_LABELS: Record<string, string> = {

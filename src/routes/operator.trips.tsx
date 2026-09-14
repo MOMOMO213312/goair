@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Ban, Check, Clock, Repeat, Users, X } from "lucide-react";
+import { Ban, Check, Clock, PlusCircle, Repeat, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { useOperatorToken } from "@/lib/operator-session";
 import { OperatorAuthError, OperatorLoading, OperatorSection } from "@/components/operator/operator-shell";
@@ -25,16 +25,22 @@ import {
   getOperatorTripPassengers,
   isOperatorAuthError,
   operatorReassignTrip,
+  operatorRequestAddonService,
   operatorSetTripStatus,
   OPERATOR_TRIP_STATUS_LABELS,
   OPERATOR_STATUS_TRANSITIONS,
   OPERATOR_STATUSES_REQUIRING_NOTE,
   OPERATOR_TERMINAL_STATUSES,
   type OperatorDriver,
+  type OperatorPassenger,
   type OperatorTrip,
   type OperatorTripStatus,
   type OperatorVehicle,
 } from "@/lib/operator";
+import {
+  AddonServiceRequestDialog,
+  type AddonServiceRequestTarget,
+} from "@/components/shared/addon-service-request-dialog";
 
 const STATUS_BADGE_CLASS: Record<string, string> = {
   accepted: "text-emerald-600",
@@ -69,6 +75,8 @@ function TripsPage() {
   const [statusTrip, setStatusTrip] = useState<OperatorTrip | null>(null);
   const [reassignTrip, setReassignTrip] = useState<OperatorTrip | null>(null);
   const [cancelTrip, setCancelTrip] = useState<OperatorTrip | null>(null);
+  const [addonTarget, setAddonTarget] = useState<AddonServiceRequestTarget | null>(null);
+  const [addonSubmitting, setAddonSubmitting] = useState(false);
   const fleetQ = useQuery({
     queryKey: ["operator-fleet-lite", token],
     queryFn: () => getOperatorFleet(token),
@@ -136,6 +144,26 @@ function TripsPage() {
       toast.error(e instanceof Error ? e.message : "حصل خطأ مؤقت. حاول تاني.");
     } finally {
       setUpdatingId(null);
+    }
+  }
+
+  async function submitAddonRequest(params: { addonServiceIds: string[]; groundHandlingServiceIds: string[] }) {
+    if (!addonTarget) return;
+    setAddonSubmitting(true);
+    try {
+      await operatorRequestAddonService(
+        token,
+        addonTarget.bookingId,
+        params.addonServiceIds,
+        params.groundHandlingServiceIds,
+      );
+      await qc.invalidateQueries({ queryKey: ["operator-trip-passengers"] });
+      toast.success("تم إرسال طلب الخدمة الإضافية.");
+      setAddonTarget(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "لم نتمكن من إرسال طلب الخدمة.");
+    } finally {
+      setAddonSubmitting(false);
     }
   }
 
@@ -249,7 +277,25 @@ function TripsPage() {
           </Table>
         </div>
       )}
-      <PassengerDialog trip={activeTrip} token={token} onClose={() => setActiveTrip(null)} />
+      <PassengerDialog
+        trip={activeTrip}
+        token={token}
+        onClose={() => setActiveTrip(null)}
+        onRequestAddon={(passenger, trip) =>
+          setAddonTarget({
+            bookingId: passenger.bookingId,
+            label: `${passenger.fullName} — ${trip.origin} ← ${trip.destination} — ${trip.travelDate}`,
+            airportCode: trip.airportCode,
+            travelDate: trip.travelDate,
+          })
+        }
+      />
+      <AddonServiceRequestDialog
+        target={addonTarget}
+        submitting={addonSubmitting}
+        onClose={() => setAddonTarget(null)}
+        onSubmit={submitAddonRequest}
+      />
       <StatusUpdateDialog
         trip={statusTrip}
         updating={updatingId === statusTrip?.assignmentId}
@@ -528,7 +574,17 @@ function CancelDialog({
   );
 }
 
-function PassengerDialog({ trip, token, onClose }: { trip: OperatorTrip | null; token: string; onClose: () => void }) {
+function PassengerDialog({
+  trip,
+  token,
+  onClose,
+  onRequestAddon,
+}: {
+  trip: OperatorTrip | null;
+  token: string;
+  onClose: () => void;
+  onRequestAddon: (passenger: OperatorPassenger, trip: OperatorTrip) => void;
+}) {
   const pq = useQuery({
     queryKey: ["operator-trip-passengers", token, trip?.assignmentId],
     queryFn: () => getOperatorTripPassengers(token, trip!.assignmentId),
@@ -572,6 +628,20 @@ function PassengerDialog({ trip, token, onClose }: { trip: OperatorTrip | null; 
                   <span>الشنط: {p.luggageCount}</span>
                   <span className="col-span-2">نقطة اللقاء: {p.meetingPoint ?? "—"}</span>
                 </div>
+                {trip ? (
+                  <div className="mt-2 flex justify-end">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-7 gap-1 px-2 text-xs"
+                      onClick={() => onRequestAddon(p, trip)}
+                    >
+                      <PlusCircle className="h-3.5 w-3.5" />
+                      طلب خدمة إضافية
+                    </Button>
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
