@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useAdminToken } from "@/lib/admin-session";
-import { Pencil } from "lucide-react";
+import { FileText, Pencil } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -18,9 +18,14 @@ import {
   adminListDrivers,
   adminListOperators,
   adminListVehicles,
+  adminReviewDriver,
+  adminReviewVehicle,
   adminUpdateDriverCompliance,
   adminUpdateVehicleCompliance,
+  getAdminFleetDocUrl,
   isAdminAuthError,
+  REVIEW_STATUS_BADGE_CLASS,
+  REVIEW_STATUS_LABELS,
   type AdminDriver,
   type AdminVehicle,
 } from "@/lib/admin";
@@ -110,6 +115,55 @@ function FleetPage() {
   );
 }
 
+/** زرار عرض مستند مرفوع (بيفتح رابط موقّت في تاب جديد). */
+function DocLink({ label, path }: { label: string; path: string | null }) {
+  const [busy, setBusy] = useState(false);
+  if (!path) return <span className="text-xs text-muted-foreground">{label}: لسه ملحقّش</span>;
+  async function open() {
+    setBusy(true);
+    try {
+      const url = await getAdminFleetDocUrl(path!);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "تعذّر فتح الملف.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Button type="button" size="sm" variant="outline" className="h-7 gap-1 px-2 text-xs" disabled={busy} onClick={open}>
+      <FileText className="size-3.5" aria-hidden /> {label}
+    </Button>
+  );
+}
+
+/** زرارين قبول/رفض + عرض حالة المراجعة الحالية — للسواق أو العربية. */
+function ReviewControls({
+  reviewStatus,
+  onReview,
+}: {
+  reviewStatus: string;
+  onReview: (status: "approved" | "rejected") => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${REVIEW_STATUS_BADGE_CLASS[reviewStatus] ?? "bg-muted text-muted-foreground"}`}>
+        {REVIEW_STATUS_LABELS[reviewStatus] ?? reviewStatus}
+      </span>
+      {reviewStatus !== "approved" ? (
+        <Button size="sm" className="h-7 bg-primary px-2 text-xs font-bold text-primary-foreground hover:bg-primary/90" onClick={() => onReview("approved")}>
+          قبول
+        </Button>
+      ) : null}
+      {reviewStatus !== "rejected" ? (
+        <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => onReview("rejected")}>
+          رفض
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
 function DriverRow({
   driver,
   token,
@@ -143,6 +197,19 @@ function DriverRow({
     }
   }
 
+  async function review(status: "approved" | "rejected") {
+    setBusy(true);
+    try {
+      await adminReviewDriver(token, driver.id, status);
+      toast.success(status === "approved" ? "تم قبول مستندات السائق." : "تم رفض مستندات السائق.");
+      onUpdated();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <li className="py-2.5 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -158,6 +225,11 @@ function DriverRow({
             <Pencil className="size-3.5" aria-hidden />
           </Button>
         </div>
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-center gap-2">
+        <DocLink label="رخصة القيادة" path={driver.license_doc_url} />
+        <DocLink label="البطاقة الشخصية" path={driver.id_doc_url} />
+        <ReviewControls reviewStatus={driver.review_status} onReview={review} />
       </div>
       {editing ? (
         <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-muted/40 p-2.5">
@@ -217,6 +289,19 @@ function VehicleRow({
     }
   }
 
+  async function review(status: "approved" | "rejected") {
+    setBusy(true);
+    try {
+      await adminReviewVehicle(token, vehicle.id, status);
+      toast.success(status === "approved" ? "تم قبول مستندات العربية." : "تم رفض مستندات العربية.");
+      onUpdated();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <li className="py-2.5 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -233,6 +318,11 @@ function VehicleRow({
             <Pencil className="size-3.5" aria-hidden />
           </Button>
         </div>
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-center gap-2">
+        <DocLink label="استمارة العربية" path={vehicle.registration_doc_url} />
+        <DocLink label="بوليصة التأمين" path={vehicle.insurance_doc_url} />
+        <ReviewControls reviewStatus={vehicle.review_status} onReview={review} />
       </div>
       {editing ? (
         <div className="mt-2 flex flex-wrap items-center gap-2 rounded-lg bg-muted/40 p-2.5">

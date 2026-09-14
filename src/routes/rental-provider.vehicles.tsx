@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useRef, useState } from "react";
-import { ImagePlus, X } from "lucide-react";
+import { FileText, ImagePlus, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -34,11 +34,14 @@ import {
   addRentalProviderVehicle,
   APPROVAL_STATUS_LABELS,
   getRentalProviderProfile,
+  getRentalVehicleDocUrl,
   isRentalProviderAuthError,
   listRentalProviderVehicles,
   MAX_VEHICLE_PHOTOS,
   updateRentalProviderVehicle,
+  updateRentalProviderVehicleDocs,
   updateRentalProviderVehiclePickupArea,
+  uploadRentalVehicleDoc,
   uploadRentalVehiclePhotos,
   type RentalProviderVehicle,
 } from "@/lib/rental-provider";
@@ -581,6 +584,91 @@ function VehicleFormDialog({
   );
 }
 
+/**
+ * زرار رفع/عرض/حذف مستند واحد (استمارة العربية، رخصة السواق، بطاقته). بيتخزّن
+ * الملف فوري لحظة الرفع، ونفس الرفع بيرجّع العربية لـ"قيد المراجعة" تلقائيًا.
+ */
+function DocSlot({
+  label,
+  path,
+  uploadFn,
+  onUploaded,
+  onCleared,
+}: {
+  label: string;
+  path: string | null;
+  uploadFn: (file: File) => Promise<string>;
+  onUploaded: (path: string) => Promise<void>;
+  onCleared: () => Promise<void>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  async function handleView() {
+    if (!path) return;
+    try {
+      const url = await getRentalVehicleDocUrl(path);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "تعذّر فتح الملف.");
+    }
+  }
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setBusy(true);
+    try {
+      const uploadedPath = await uploadFn(file);
+      await onUploaded(uploadedPath);
+      toast.success("تم رفع الملف — العربية رجعت قيد المراجعة.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "فشل رفع الملف.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleClear() {
+    setBusy(true);
+    try {
+      await onCleared();
+      toast.success("تم حذف الملف.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "حصل خطأ.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex min-w-40 flex-1 flex-col gap-1 text-xs text-muted-foreground">
+      <span>{label}</span>
+      <div className="flex items-center gap-1.5">
+        {path ? (
+          <>
+            <Button type="button" size="sm" variant="outline" className="h-8 gap-1 px-2 text-xs" disabled={busy} onClick={handleView}>
+              <FileText className="size-3.5" aria-hidden /> عرض
+            </Button>
+            <Button type="button" size="icon" variant="ghost" className="size-8" disabled={busy} onClick={() => inputRef.current?.click()} title="استبدال الملف">
+              <Upload className="size-3.5" aria-hidden />
+            </Button>
+            <Button type="button" size="icon" variant="ghost" className="size-8 text-destructive hover:text-destructive" disabled={busy} onClick={handleClear} title="حذف الملف">
+              <X className="size-3.5" aria-hidden />
+            </Button>
+          </>
+        ) : (
+          <Button type="button" size="sm" variant="outline" className="h-8 gap-1 px-2 text-xs" disabled={busy} onClick={() => inputRef.current?.click()}>
+            <Upload className="size-3.5" aria-hidden /> {busy ? "جارِ الرفع..." : "رفع صورة"}
+          </Button>
+        )}
+      </div>
+      <input ref={inputRef} type="file" accept="image/*,.pdf" className="hidden" onChange={handleFile} />
+    </div>
+  );
+}
+
 function EditVehicleDialog({
   vehicle,
   token,
@@ -590,6 +678,8 @@ function EditVehicleDialog({
   token: string;
   onDone: () => void;
 }) {
+  const queryClient = useQueryClient();
+  const refreshDocs = () => queryClient.invalidateQueries({ queryKey: ["rental-provider", "vehicles", token] });
   const [plateNumber, setPlateNumber] = useState(vehicle.plateNumber);
   const [makeModel, setMakeModel] = useState(vehicle.makeModel);
   const [dailyRate, setDailyRate] = useState(String(vehicle.dailyRateUsd));
@@ -692,6 +782,32 @@ function EditVehicleDialog({
           newFiles={newPhotoFiles}
           onNewFilesChange={setNewPhotoFiles}
         />
+        <div className="space-y-2 rounded-lg border border-border/60 p-3">
+          <Label>المستندات القانونية (لازمة لاعتماد العربية)</Label>
+          <div className="flex flex-wrap gap-3">
+            <DocSlot
+              label="صورة استمارة العربية"
+              path={vehicle.vehicleLicenseDocUrl}
+              uploadFn={(file) => uploadRentalVehicleDoc(vehicle.id, "vehicle-license", file)}
+              onUploaded={async (path) => { await updateRentalProviderVehicleDocs(token, vehicle.id, { vehicleLicenseDocUrl: path }); refreshDocs(); }}
+              onCleared={async () => { await updateRentalProviderVehicleDocs(token, vehicle.id, { clearVehicleLicenseDoc: true }); refreshDocs(); }}
+            />
+            <DocSlot
+              label="صورة رخصة قيادة السواق"
+              path={vehicle.driverLicenseDocUrl}
+              uploadFn={(file) => uploadRentalVehicleDoc(vehicle.id, "driver-license", file)}
+              onUploaded={async (path) => { await updateRentalProviderVehicleDocs(token, vehicle.id, { driverLicenseDocUrl: path }); refreshDocs(); }}
+              onCleared={async () => { await updateRentalProviderVehicleDocs(token, vehicle.id, { clearDriverLicenseDoc: true }); refreshDocs(); }}
+            />
+            <DocSlot
+              label="صورة بطاقة السواق"
+              path={vehicle.driverIdDocUrl}
+              uploadFn={(file) => uploadRentalVehicleDoc(vehicle.id, "driver-id", file)}
+              onUploaded={async (path) => { await updateRentalProviderVehicleDocs(token, vehicle.id, { driverIdDocUrl: path }); refreshDocs(); }}
+              onCleared={async () => { await updateRentalProviderVehicleDocs(token, vehicle.id, { clearDriverIdDoc: true }); refreshDocs(); }}
+            />
+          </div>
+        </div>
         <DialogFooter>
           <Button type="submit" disabled={busy} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">
             {busy ? busyLabel : "حفظ التعديل"}

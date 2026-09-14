@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { FileText } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAdminToken } from "@/lib/admin-session";
@@ -16,6 +17,7 @@ import {
   adminAddRentalVehicle,
   adminListRentalVehicles,
   adminUpdateRentalVehicle,
+  getAdminRentalVehicleDocUrl,
   isAdminAuthError,
   rentalVehicleApprovalLabel,
   type AdminRentalVehicle,
@@ -261,6 +263,27 @@ function RentalVehiclesAdminPage() {
   );
 }
 
+function DocLink({ label, path }: { label: string; path: string | null }) {
+  const [busy, setBusy] = useState(false);
+  if (!path) return <span className="text-xs text-muted-foreground">{label}: لسه ملحقّش</span>;
+  async function open() {
+    setBusy(true);
+    try {
+      const url = await getAdminRentalVehicleDocUrl(path!);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "تعذّر فتح الملف.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <Button type="button" size="sm" variant="outline" className="h-7 gap-1 px-2 text-xs" disabled={busy} onClick={open}>
+      <FileText className="size-3.5" aria-hidden /> {label}
+    </Button>
+  );
+}
+
 function VehicleRow({
   vehicle,
   token,
@@ -383,6 +406,11 @@ function VehicleRow({
             {vehicle.insuranceIncluded ? " · تأمين متضمن" : " · بدون تأمين"}
           </p>
           <p className="mt-0.5 text-xs font-bold text-accent">{rentalVehicleApprovalLabel(vehicle.approvalStatus)}</p>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            <DocLink label="استمارة العربية" path={vehicle.vehicleLicenseDocUrl} />
+            <DocLink label="رخصة السواق" path={vehicle.driverLicenseDocUrl} />
+            <DocLink label="بطاقة السواق" path={vehicle.driverIdDocUrl} />
+          </div>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
           {vehicle.approvalStatus !== "approved" ? (
