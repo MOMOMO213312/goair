@@ -210,7 +210,46 @@ export type GroundHandlingRequest = {
   requestedByType: string | null;
   /** Company name when requestedByType is set; null for customer-originated requests. */
   requestedByName: string | null;
+  slaDueAt: string | null;
 };
+
+/** SLA traffic-light status for a request. Null when the service has no SLA set. */
+export type GroundHandlingSlaStatus = "on_track" | "at_risk" | "breached" | null;
+
+const SLA_CLOSED_STATUSES: GroundHandlingRequestStatus[] = ["completed", "cancelled"];
+
+/**
+ * At-risk threshold: request flips from on_track to at_risk once less than
+ * 20% of its original SLA window remains (min 5 minutes), so partners get a
+ * heads-up before it actually breaches.
+ */
+export function computeGroundHandlingSlaStatus(
+  slaDueAt: string | null,
+  status: GroundHandlingRequestStatus,
+  createdAt?: string | null,
+): GroundHandlingSlaStatus {
+  if (!slaDueAt || SLA_CLOSED_STATUSES.includes(status)) return null;
+  const due = new Date(slaDueAt).getTime();
+  const now = Date.now();
+  if (Number.isNaN(due)) return null;
+  if (now > due) return "breached";
+
+  const start = createdAt ? new Date(createdAt).getTime() : now;
+  const totalWindowMs = Math.max(due - start, 1);
+  const remainingMs = due - now;
+  const atRiskThresholdMs = Math.min(totalWindowMs * 0.2, 60 * 60 * 1000);
+  return remainingMs <= Math.max(atRiskThresholdMs, 5 * 60 * 1000) ? "at_risk" : "on_track";
+}
+
+const SLA_STATUS_LABELS: Record<NonNullable<GroundHandlingSlaStatus>, string> = {
+  on_track: "🟢 في الموعد",
+  at_risk: "🟡 قرب الموعد",
+  breached: "🔴 اتأخر",
+};
+
+export function groundHandlingSlaStatusLabel(status: GroundHandlingSlaStatus): string | null {
+  return status ? SLA_STATUS_LABELS[status] : null;
+}
 
 function mapRequest(row: Record<string, unknown>): GroundHandlingRequest {
   return {
@@ -239,6 +278,7 @@ function mapRequest(row: Record<string, unknown>): GroundHandlingRequest {
     assignedStaffName: (row["assigned_staff_name"] as string | null) ?? null,
     requestedByType: (row["requested_by_type"] as string | null) ?? null,
     requestedByName: (row["requested_by_name"] as string | null) ?? null,
+    slaDueAt: (row["sla_due_at"] as string | null) ?? null,
   };
 }
 
@@ -434,6 +474,7 @@ export type GroundHandlingService = {
   operatingHoursEnd: string | null;
   dailyCapacity: number | null;
   priceUsd: number;
+  slaMinutes: number | null;
   status: GroundHandlingServiceStatus;
   pendingAction: GroundHandlingServicePendingAction;
   adminNotes: string | null;
@@ -453,6 +494,7 @@ function mapService(row: Record<string, unknown>): GroundHandlingService {
     operatingHoursEnd: (row["operating_hours_end"] as string | null) ?? null,
     dailyCapacity: row["daily_capacity"] == null ? null : Number(row["daily_capacity"]),
     priceUsd: Number(row["price_usd"] ?? 0),
+    slaMinutes: row["sla_minutes"] == null ? null : Number(row["sla_minutes"]),
     status: (row["status"] as GroundHandlingServiceStatus) ?? "pending_review",
     pendingAction: (row["pending_action"] as GroundHandlingServicePendingAction) ?? null,
     adminNotes: (row["admin_notes"] as string | null) ?? null,
@@ -477,6 +519,8 @@ export type GroundHandlingServiceInput = {
   operatingHoursEnd: string | null;
   dailyCapacity: number | null;
   priceUsd: number;
+  /** Target minutes to complete the service once requested. Null = no SLA tracked. */
+  slaMinutes: number | null;
 };
 
 export async function createGroundHandlingService(
@@ -495,6 +539,7 @@ export async function createGroundHandlingService(
     p_operating_hours_end: input.operatingHoursEnd,
     p_daily_capacity: input.dailyCapacity,
     p_price_usd: input.priceUsd,
+    p_sla_minutes: input.slaMinutes,
   });
   if (error) rpcError(error);
   const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown>;
@@ -519,6 +564,7 @@ export async function updateGroundHandlingService(
     p_operating_hours_end: input.operatingHoursEnd,
     p_daily_capacity: input.dailyCapacity,
     p_price_usd: input.priceUsd,
+    p_sla_minutes: input.slaMinutes,
   });
   if (error) rpcError(error);
 }

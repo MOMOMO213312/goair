@@ -18,6 +18,8 @@ import {
   formatGroundHandlingDate,
   isGroundHandlingAuthError,
   REQUEST_STATUS_ORDER,
+  computeGroundHandlingSlaStatus,
+  groundHandlingSlaStatusLabel,
   type GroundHandlingRequest,
   type GroundHandlingRequestStatus,
 } from "@/lib/ground-handling";
@@ -127,6 +129,13 @@ function RequestCard({
   const [busy, setBusy] = useState(false);
   const isClosed = request.status === "completed" || request.status === "cancelled";
   const next = NEXT_STATUS[request.status];
+  const slaStatus = computeGroundHandlingSlaStatus(request.slaDueAt, request.status, request.bookedAt);
+  const slaLabel = groundHandlingSlaStatusLabel(slaStatus);
+  const SLA_BADGE_CLASSES: Record<string, string> = {
+    on_track: "bg-emerald-50 text-emerald-700",
+    at_risk: "bg-amber-50 text-amber-700",
+    breached: "bg-destructive/10 text-destructive",
+  };
 
   async function advance() {
     if (!next) return;
@@ -193,9 +202,16 @@ function RequestCard({
             <p className="mt-0.5 text-xs font-bold text-primary">الموظف المسؤول: {request.assignedStaffName}</p>
           ) : null}
         </div>
-        <span className="shrink-0 rounded-full bg-mist px-3 py-1 text-xs font-bold text-primary">
-          {groundHandlingStatusLabel(request.status)}
-        </span>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <span className="rounded-full bg-mist px-3 py-1 text-xs font-bold text-primary">
+            {groundHandlingStatusLabel(request.status)}
+          </span>
+          {slaLabel ? (
+            <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${SLA_BADGE_CLASSES[slaStatus as string]}`}>
+              {slaLabel}
+            </span>
+          ) : null}
+        </div>
       </div>
 
       {!isClosed ? (

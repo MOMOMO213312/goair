@@ -40,6 +40,8 @@ import {
   groundHandlingServiceStatusLabel,
   groundHandlingStatementStatusLabel,
   groundHandlingStatusLabel,
+  computeGroundHandlingSlaStatus,
+  groundHandlingSlaStatusLabel,
   REQUEST_STATUS_ORDER,
   type GroundHandlingPartner,
   type GroundHandlingRequestStatus,
@@ -598,9 +600,23 @@ function RequestsTab({ token }: { token: string }) {
                     <p className="mt-1 text-sm text-primary">ملاحظات: {req.partnerNotes}</p>
                   ) : null}
                 </div>
-                <span className="shrink-0 rounded-full bg-mist px-3 py-1 text-xs font-bold text-primary">
-                  {groundHandlingStatusLabel(req.status)}
-                </span>
+                <div className="flex shrink-0 flex-col items-end gap-1">
+                  <span className="rounded-full bg-mist px-3 py-1 text-xs font-bold text-primary">
+                    {groundHandlingStatusLabel(req.status)}
+                  </span>
+                  {(() => {
+                    const slaStatus = computeGroundHandlingSlaStatus(req.slaDueAt, req.status);
+                    const label = groundHandlingSlaStatusLabel(slaStatus);
+                    if (!label) return null;
+                    const tone =
+                      slaStatus === "breached"
+                        ? "bg-destructive/10 text-destructive"
+                        : slaStatus === "at_risk"
+                          ? "bg-amber-50 text-amber-700"
+                          : "bg-emerald-50 text-emerald-700";
+                    return <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${tone}`}>{label}</span>;
+                  })()}
+                </div>
               </div>
             </Card>
           ))}
@@ -768,7 +784,10 @@ function ServicesReviewTab({
                       المتطلبات: {s.requirements}
                     </p>
                   ) : null}
-                  <p className="mt-1 text-sm font-bold text-primary">{s.priceUsd.toFixed(2)}$</p>
+                  <p className="mt-1 text-sm font-bold text-primary">
+                    {s.priceUsd.toFixed(2)}$
+                    {s.slaMinutes ? <span className="mr-2 font-normal text-muted-foreground">· SLA {s.slaMinutes} دقيقة</span> : null}
+                  </p>
                   {s.status === "rejected" && s.adminNotes ? (
                     <p className="mt-1 text-sm text-destructive">
                       سبب الرفض السابق: {s.adminNotes}

@@ -49,6 +49,7 @@ const emptyForm: GroundHandlingServiceInput = {
   operatingHoursEnd: "",
   dailyCapacity: null,
   priceUsd: 0,
+  slaMinutes: null,
 };
 
 function ServicesPage() {
@@ -131,7 +132,10 @@ function ServicesPage() {
                     {s.direction ? ` · ${s.direction === "arrival" ? "وصول" : "مغادرة"}` : ""}
                     {s.operatingHoursStart ? ` · ${s.operatingHoursStart}–${s.operatingHoursEnd}` : ""}
                   </p>
-                  <p className="mt-0.5 text-sm font-bold text-primary">${s.priceUsd.toFixed(2)}</p>
+                  <p className="mt-0.5 text-sm font-bold text-primary">
+                    ${s.priceUsd.toFixed(2)}
+                    {s.slaMinutes ? <span className="mr-2 font-normal text-muted-foreground">· SLA {s.slaMinutes} دقيقة</span> : null}
+                  </p>
                 </div>
                 <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${STATUS_TONE[s.status] ?? "bg-mist text-primary"}`}>
                   {groundHandlingServiceStatusLabel(s.status)}
@@ -199,6 +203,7 @@ function ServiceFormDialog({
           operatingHoursEnd: service.operatingHoursEnd ?? "",
           dailyCapacity: service.dailyCapacity,
           priceUsd: service.priceUsd,
+          slaMinutes: service.slaMinutes,
         }
       : emptyForm,
   );
@@ -222,6 +227,7 @@ function ServiceFormDialog({
             operatingHoursEnd: service.operatingHoursEnd ?? "",
             dailyCapacity: service.dailyCapacity,
             priceUsd: service.priceUsd,
+          slaMinutes: service.slaMinutes,
           }
         : emptyForm,
     );
@@ -308,16 +314,29 @@ function ServiceFormDialog({
               <Input type="time" value={form.operatingHoursEnd ?? ""} onChange={(e) => setForm({ ...form, operatingHoursEnd: e.target.value })} />
             </div>
           </div>
-          <div className="space-y-1.5">
-            <Label>التكلفة المتفق عليها مع GOAIR (دولار)</Label>
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
-              required
-              value={form.priceUsd}
-              onChange={(e) => setForm({ ...form, priceUsd: Number(e.target.value) })}
-            />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>التكلفة المتفق عليها مع GOAIR (دولار)</Label>
+              <Input
+                type="number"
+                min={0}
+                step="0.01"
+                required
+                value={form.priceUsd}
+                onChange={(e) => setForm({ ...form, priceUsd: Number(e.target.value) })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>مدة الـSLA (دقايق)</Label>
+              <Input
+                type="number"
+                min={1}
+                placeholder="مثلاً 15"
+                value={form.slaMinutes ?? ""}
+                onChange={(e) => setForm({ ...form, slaMinutes: e.target.value ? Number(e.target.value) : null })}
+              />
+              <p className="text-[11px] text-muted-foreground">الوقت المستهدف لإنجاز الطلب من لحظة الحجز. سيبها فاضية لو مفيش موعد نهائي محدد.</p>
+            </div>
           </div>
           <p className="text-xs text-muted-foreground">
             أي إضافة أو تعديل يتم إرساله إلى GOAIR للمراجعة، ولن تصبح الخدمة متاحة للعملاء إلا بعد الموافقة.
