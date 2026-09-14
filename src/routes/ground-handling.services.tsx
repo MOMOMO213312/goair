@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Plus } from "lucide-react";
 
 import { GHLoading, GHEmpty, GHAuthError } from "@/components/ground-handling/ground-handling-shell";
+import { PhotoPicker } from "@/components/shared/photo-picker";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,8 @@ import {
   requestGroundHandlingServiceDeletion,
   groundHandlingServiceStatusLabel,
   isGroundHandlingAuthError,
+  uploadGroundHandlingServicePhotos,
+  MAX_SERVICE_PHOTOS,
   type GroundHandlingService,
   type GroundHandlingServiceInput,
 } from "@/lib/ground-handling";
@@ -50,6 +53,7 @@ const emptyForm: GroundHandlingServiceInput = {
   dailyCapacity: null,
   priceUsd: 0,
   slaMinutes: null,
+  photos: [],
 };
 
 function ServicesPage() {
@@ -124,7 +128,11 @@ function ServicesPage() {
           {services.map((s) => (
             <Card key={s.id} className="space-y-2 rounded-xl border-border/80 p-4 shadow-[var(--shadow-card)]">
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
+                <div className="flex min-w-0 gap-3">
+                  {s.photos[0] ? (
+                    <img src={s.photos[0]} alt={s.name} className="h-16 w-16 shrink-0 rounded-lg object-cover" />
+                  ) : null}
+                  <div>
                   <p className="font-display text-base font-bold text-primary">{s.name}</p>
                   <p className="mt-0.5 text-sm text-muted-foreground">
                     {s.airportCode}
@@ -136,6 +144,7 @@ function ServicesPage() {
                     ${s.priceUsd.toFixed(2)}
                     {s.slaMinutes ? <span className="mr-2 font-normal text-muted-foreground">· SLA {s.slaMinutes} دقيقة</span> : null}
                   </p>
+                  </div>
                 </div>
                 <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${STATUS_TONE[s.status] ?? "bg-mist text-primary"}`}>
                   {groundHandlingServiceStatusLabel(s.status)}
@@ -204,16 +213,19 @@ function ServiceFormDialog({
           dailyCapacity: service.dailyCapacity,
           priceUsd: service.priceUsd,
           slaMinutes: service.slaMinutes,
+          photos: service.photos,
         }
       : emptyForm,
   );
   const [busy, setBusy] = useState(false);
+  const [newPhotoFiles, setNewPhotoFiles] = useState<File[]>([]);
 
   // Reset the form whenever a different service (or "new") is opened.
   const [openedFor, setOpenedFor] = useState<string | null>(null);
   const key = service?.id ?? "new";
   if (open && key !== openedFor) {
     setOpenedFor(key);
+    setNewPhotoFiles([]);
     setForm(
       service
         ? {
@@ -228,6 +240,7 @@ function ServiceFormDialog({
             dailyCapacity: service.dailyCapacity,
             priceUsd: service.priceUsd,
           slaMinutes: service.slaMinutes,
+          photos: service.photos,
           }
         : emptyForm,
     );
@@ -237,11 +250,17 @@ function ServiceFormDialog({
     e.preventDefault();
     setBusy(true);
     try {
+      let photos = form.photos;
+      if (newPhotoFiles.length > 0) {
+        const uploaded = await uploadGroundHandlingServicePhotos(newPhotoFiles);
+        photos = [...form.photos, ...uploaded];
+      }
+      const payload: GroundHandlingServiceInput = { ...form, photos };
       if (service) {
-        await updateGroundHandlingService(token, service.id, form);
+        await updateGroundHandlingService(token, service.id, payload);
         toast.success("تم إرسال التعديل إلى GOAIR للمراجعة.");
       } else {
-        await createGroundHandlingService(token, form);
+        await createGroundHandlingService(token, payload);
         toast.success("تم إرسال الخدمة إلى GOAIR للمراجعة.");
       }
       onOpenChange(false);
@@ -268,6 +287,14 @@ function ServiceFormDialog({
             <Label>الوصف</Label>
             <Textarea rows={2} value={form.description ?? ""} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </div>
+          <PhotoPicker
+            label="صور الخدمة"
+            maxCount={MAX_SERVICE_PHOTOS}
+            existingPhotos={form.photos}
+            onRemoveExisting={(url) => setForm({ ...form, photos: form.photos.filter((p) => p !== url) })}
+            newFiles={newPhotoFiles}
+            onNewFilesChange={setNewPhotoFiles}
+          />
           <div className="space-y-1.5">
             <Label>المتطلبات</Label>
             <Textarea rows={2} value={form.requirements ?? ""} onChange={(e) => setForm({ ...form, requirements: e.target.value })} />

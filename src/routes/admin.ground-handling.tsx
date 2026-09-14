@@ -899,7 +899,11 @@ function ServicesReviewTab({
               className="rounded-xl border-border/80 p-4 shadow-[var(--shadow-card)]"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
+                <div className="flex min-w-0 gap-3">
+                  {s.photos?.[0] ? (
+                    <img src={s.photos[0]} alt={s.name} className="h-16 w-16 shrink-0 rounded-lg object-cover" />
+                  ) : null}
+                  <div className="min-w-0">
                   <p className="font-display text-base font-bold text-primary">{s.name}</p>
                   <p className="mt-0.5 text-sm text-muted-foreground">
                     {s.partnerName} · {s.airportCode}
@@ -923,6 +927,7 @@ function ServicesReviewTab({
                       سبب الرفض السابق: {s.adminNotes}
                     </p>
                   ) : null}
+                  </div>
                 </div>
                 <div className="flex shrink-0 flex-col items-end gap-2">
                   <span className="rounded-full bg-mist px-3 py-1 text-xs font-bold text-primary">

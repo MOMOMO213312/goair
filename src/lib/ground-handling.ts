@@ -475,6 +475,8 @@ export type GroundHandlingService = {
   dailyCapacity: number | null;
   priceUsd: number;
   slaMinutes: number | null;
+  /** Public photo URLs, most representative first. Max 6. */
+  photos: string[];
   status: GroundHandlingServiceStatus;
   pendingAction: GroundHandlingServicePendingAction;
   adminNotes: string | null;
@@ -495,6 +497,7 @@ function mapService(row: Record<string, unknown>): GroundHandlingService {
     dailyCapacity: row["daily_capacity"] == null ? null : Number(row["daily_capacity"]),
     priceUsd: Number(row["price_usd"] ?? 0),
     slaMinutes: row["sla_minutes"] == null ? null : Number(row["sla_minutes"]),
+    photos: (row["photos"] as string[] | null) ?? [],
     status: (row["status"] as GroundHandlingServiceStatus) ?? "pending_review",
     pendingAction: (row["pending_action"] as GroundHandlingServicePendingAction) ?? null,
     adminNotes: (row["admin_notes"] as string | null) ?? null,
@@ -521,7 +524,33 @@ export type GroundHandlingServiceInput = {
   priceUsd: number;
   /** Target minutes to complete the service once requested. Null = no SLA tracked. */
   slaMinutes: number | null;
+  /** Public photo URLs, most representative first. Max 6. */
+  photos: string[];
 };
+
+// أقصى عدد صور لكل خدمة، وأقصى حجم للصورة الواحدة (ميجابايت).
+export const MAX_SERVICE_PHOTOS = 6;
+export const MAX_SERVICE_PHOTO_SIZE_MB = 5;
+
+// بيرفع كل صورة لباكت "ground-handling-service-photos" (public) ويرجع الروابط
+// العامة بنفس الترتيب. أي صورة تفشل بتوقف الرفع كله وترمي خطأ واضح.
+export async function uploadGroundHandlingServicePhotos(files: File[]): Promise<string[]> {
+  const urls: string[] = [];
+  for (const file of files) {
+    if (file.size > MAX_SERVICE_PHOTO_SIZE_MB * 1024 * 1024) {
+      throw new Error(`الصورة "${file.name}" أكبر من ${MAX_SERVICE_PHOTO_SIZE_MB} ميجا.`);
+    }
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage
+      .from("ground-handling-service-photos")
+      .upload(path, file, { cacheControl: "3600", upsert: false, ...(file.type ? { contentType: file.type } : {}) });
+    if (error) throw new Error(error.message || `فشل رفع الصورة "${file.name}".`);
+    const { data } = supabase.storage.from("ground-handling-service-photos").getPublicUrl(path);
+    urls.push(data.publicUrl);
+  }
+  return urls;
+}
 
 export async function createGroundHandlingService(
   token: string,
@@ -540,6 +569,7 @@ export async function createGroundHandlingService(
     p_daily_capacity: input.dailyCapacity,
     p_price_usd: input.priceUsd,
     p_sla_minutes: input.slaMinutes,
+    p_photos: input.photos,
   });
   if (error) rpcError(error);
   const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown>;
@@ -565,6 +595,7 @@ export async function updateGroundHandlingService(
     p_daily_capacity: input.dailyCapacity,
     p_price_usd: input.priceUsd,
     p_sla_minutes: input.slaMinutes,
+    p_photos: input.photos,
   });
   if (error) rpcError(error);
 }
