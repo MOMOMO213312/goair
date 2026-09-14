@@ -99,6 +99,10 @@ export type AdminDriver = {
   operator_name: string | null;
   license_number: string | null;
   license_expiry: string | null;
+  license_doc_url: string | null;
+  id_doc_url: string | null;
+  review_status: string;
+  admin_notes: string | null;
 };
 
 export async function adminListDrivers(token: string): Promise<AdminDriver[]> {
@@ -122,6 +126,21 @@ export async function adminUpdateDriverCompliance(
   if (error) rpcError(error);
 }
 
+export async function adminReviewDriver(
+  token: string,
+  driverId: string,
+  reviewStatus: "pending_review" | "approved" | "rejected",
+  adminNotes?: string | null,
+) {
+  const { error } = await supabase.rpc("admin_review_driver", {
+    p_access_token: token,
+    p_driver_id: driverId,
+    p_review_status: reviewStatus,
+    p_admin_notes: adminNotes ?? null,
+  });
+  if (error) rpcError(error);
+}
+
 export type AdminVehicle = {
   id: string;
   plate_number: string;
@@ -133,6 +152,10 @@ export type AdminVehicle = {
   operator_name: string | null;
   registration_expiry: string | null;
   insurance_expiry: string | null;
+  registration_doc_url: string | null;
+  insurance_doc_url: string | null;
+  review_status: string;
+  admin_notes: string | null;
 };
 
 export async function adminListVehicles(token: string): Promise<AdminVehicle[]> {
@@ -163,6 +186,33 @@ export async function adminUpdateVehicleCompliance(
   });
   if (error) rpcError(error);
 }
+
+export async function adminReviewVehicle(
+  token: string,
+  vehicleId: string,
+  reviewStatus: "pending_review" | "approved" | "rejected",
+  adminNotes?: string | null,
+) {
+  const { error } = await supabase.rpc("admin_review_vehicle", {
+    p_access_token: token,
+    p_vehicle_id: vehicleId,
+    p_review_status: reviewStatus,
+    p_admin_notes: adminNotes ?? null,
+  });
+  if (error) rpcError(error);
+}
+
+export const REVIEW_STATUS_LABELS: Record<string, string> = {
+  pending_review: "قيد المراجعة",
+  approved: "معتمد",
+  rejected: "مرفوض",
+};
+
+export const REVIEW_STATUS_BADGE_CLASS: Record<string, string> = {
+  pending_review: "bg-amber-100 text-amber-700",
+  approved: "bg-emerald-100 text-emerald-700",
+  rejected: "bg-destructive/10 text-destructive",
+};
 
 export type AdminOperator = { id: string; name: string };
 
@@ -976,6 +1026,9 @@ export type AdminRentalVehicle = {
   adminNotes: string | null;
   isActive: boolean;
   createdAt: string;
+  vehicleLicenseDocUrl: string | null;
+  driverLicenseDocUrl: string | null;
+  driverIdDocUrl: string | null;
 };
 
 function mapAdminRentalVehicle(row: Record<string, unknown>): AdminRentalVehicle {
@@ -1007,7 +1060,23 @@ function mapAdminRentalVehicle(row: Record<string, unknown>): AdminRentalVehicle
     adminNotes: (row["admin_notes"] as string | null) ?? null,
     isActive: Boolean(row["is_active"]),
     createdAt: String(row["created_at"] ?? ""),
+    vehicleLicenseDocUrl: (row["vehicle_license_doc_url"] as string | null) ?? null,
+    driverLicenseDocUrl: (row["driver_license_doc_url"] as string | null) ?? null,
+    driverIdDocUrl: (row["driver_id_doc_url"] as string | null) ?? null,
   };
+}
+
+/** رابط مؤقت (10 دقايق) لعرض مستند من bucket المشغل أو التأجير — للأدمن بس. */
+export async function getAdminFleetDocUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.storage.from("operator-fleet-docs").createSignedUrl(path, 60 * 10);
+  if (error || !data?.signedUrl) throw new Error(error?.message || "تعذّر فتح الملف.");
+  return data.signedUrl;
+}
+
+export async function getAdminRentalVehicleDocUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.storage.from("rental-vehicle-documents").createSignedUrl(path, 60 * 10);
+  if (error || !data?.signedUrl) throw new Error(error?.message || "تعذّر فتح الملف.");
+  return data.signedUrl;
 }
 
 export async function adminListRentalVehicles(token: string): Promise<AdminRentalVehicle[]> {

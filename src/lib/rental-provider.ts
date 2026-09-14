@@ -83,6 +83,9 @@ export type RentalProviderVehicle = {
   approvalStatus: string;
   isActive: boolean;
   createdAt: string;
+  vehicleLicenseDocUrl: string | null;
+  driverLicenseDocUrl: string | null;
+  driverIdDocUrl: string | null;
 };
 
 function mapVehicle(row: Record<string, unknown>): RentalProviderVehicle {
@@ -110,6 +113,9 @@ function mapVehicle(row: Record<string, unknown>): RentalProviderVehicle {
     approvalStatus: String(row["approval_status"]),
     isActive: Boolean(row["is_active"]),
     createdAt: String(row["created_at"]),
+    vehicleLicenseDocUrl: (row["vehicle_license_doc_url"] as string | null) ?? null,
+    driverLicenseDocUrl: (row["driver_license_doc_url"] as string | null) ?? null,
+    driverIdDocUrl: (row["driver_id_doc_url"] as string | null) ?? null,
   };
 }
 
@@ -142,6 +148,58 @@ export async function uploadRentalVehiclePhotos(files: File[]): Promise<string[]
     urls.push(data.publicUrl);
   }
   return urls;
+}
+
+// أقصى حجم لملف مستند العربية/الرخصة (ميجابايت) — نفس حد مستندات المشغل.
+export const MAX_RENTAL_VEHICLE_DOC_SIZE_MB = 10;
+const RENTAL_VEHICLE_DOCS_BUCKET = "rental-vehicle-documents";
+
+// بيرفع مستند واحد (استمارة العربية / رخصة السواق / بطاقته) جوه مجلد خاص
+// بالعربية نفسها، عشان الـ storage RLS يقدر يتحقق إن العربية دي فعلاً تابعة
+// للمزوّد اللي رافع الملف. بيرجع الـ path (الباكت خاص، مش عام).
+export async function uploadRentalVehicleDoc(vehicleId: string, docKind: "vehicle-license" | "driver-license" | "driver-id", file: File): Promise<string> {
+  if (file.size > MAX_RENTAL_VEHICLE_DOC_SIZE_MB * 1024 * 1024) {
+    throw new Error(`الملف "${file.name}" أكبر من ${MAX_RENTAL_VEHICLE_DOC_SIZE_MB} ميجا.`);
+  }
+  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `${vehicleId}/${docKind}-${crypto.randomUUID()}.${ext}`;
+  const { error } = await supabase.storage
+    .from(RENTAL_VEHICLE_DOCS_BUCKET)
+    .upload(path, file, { cacheControl: "3600", upsert: false, ...(file.type ? { contentType: file.type } : {}) });
+  if (error) throw new Error(error.message || `فشل رفع الملف "${file.name}".`);
+  return path;
+}
+
+/** بيولّد رابط مؤقت (10 دقايق) لعرض/تنزيل مستند خاص. */
+export async function getRentalVehicleDocUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.storage.from(RENTAL_VEHICLE_DOCS_BUCKET).createSignedUrl(path, 60 * 10);
+  if (error || !data?.signedUrl) throw new Error(error?.message || "تعذّر فتح الملف.");
+  return data.signedUrl;
+}
+
+export async function updateRentalProviderVehicleDocs(
+  token: string,
+  vehicleId: string,
+  updates: {
+    vehicleLicenseDocUrl?: string | null;
+    clearVehicleLicenseDoc?: boolean;
+    driverLicenseDocUrl?: string | null;
+    clearDriverLicenseDoc?: boolean;
+    driverIdDocUrl?: string | null;
+    clearDriverIdDoc?: boolean;
+  },
+): Promise<void> {
+  const { error } = await supabase.rpc("rental_partner_update_vehicle_docs", {
+    p_access_token: token,
+    p_vehicle_id: vehicleId,
+    p_vehicle_license_doc_url: updates.vehicleLicenseDocUrl ?? null,
+    p_clear_vehicle_license_doc: updates.clearVehicleLicenseDoc ?? false,
+    p_driver_license_doc_url: updates.driverLicenseDocUrl ?? null,
+    p_clear_driver_license_doc: updates.clearDriverLicenseDoc ?? false,
+    p_driver_id_doc_url: updates.driverIdDocUrl ?? null,
+    p_clear_driver_id_doc: updates.clearDriverIdDoc ?? false,
+  });
+  if (error) rpcError(error);
 }
 
 export async function addRentalProviderVehicle(
