@@ -42,6 +42,11 @@ import {
   groundHandlingStatusLabel,
   computeGroundHandlingSlaStatus,
   groundHandlingSlaStatusLabel,
+  adminListGroundHandlingIncidents,
+  adminUpdateGroundHandlingIncident,
+  groundHandlingIncidentSeverityLabel,
+  groundHandlingIncidentStatusLabel,
+  type GroundHandlingIncidentStatus,
   REQUEST_STATUS_ORDER,
   type GroundHandlingPartner,
   type GroundHandlingRequestStatus,
@@ -88,6 +93,7 @@ function AdminGroundHandlingPage() {
         <TabsTrigger value="requests">طلبات الخدمات</TabsTrigger>
         <TabsTrigger value="services">مراجعة الخدمات</TabsTrigger>
         <TabsTrigger value="statements">التسويات المالية</TabsTrigger>
+        <TabsTrigger value="incidents">المشاكل</TabsTrigger>
       </TabsList>
 
       <TabsContent value="partners">
@@ -101,6 +107,9 @@ function AdminGroundHandlingPage() {
       </TabsContent>
       <TabsContent value="statements">
         <StatementsTab token={token} partners={partners} />
+      </TabsContent>
+      <TabsContent value="incidents">
+        <IncidentsTab token={token} />
       </TabsContent>
     </Tabs>
   );
@@ -620,6 +629,127 @@ function RequestsTab({ token }: { token: string }) {
               </div>
             </Card>
           ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function IncidentsTab({ token }: { token: string }) {
+  const [status, setStatus] = useState<GroundHandlingIncidentStatus | null>("open");
+  const queryClient = useQueryClient();
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [notesById, setNotesById] = useState<Record<string, string>>({});
+
+  const incidentsQuery = useQuery({
+    queryKey: ["admin-ground-handling-incidents", token, status],
+    queryFn: () => adminListGroundHandlingIncidents(token, status),
+    retry: false,
+  });
+
+  const incidents = incidentsQuery.data ?? [];
+
+  async function setIncidentStatus(id: string, next: GroundHandlingIncidentStatus) {
+    setBusyId(id);
+    try {
+      await adminUpdateGroundHandlingIncident(token, id, next, notesById[id] ?? null);
+      toast.success("تم تحديث حالة المشكلة.");
+      queryClient.invalidateQueries({ queryKey: ["admin-ground-handling-incidents", token] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  const STATUS_TABS: { value: GroundHandlingIncidentStatus | null; label: string }[] = [
+    { value: "open", label: "مفتوحة" },
+    { value: "in_progress", label: "جاري الحل" },
+    { value: "resolved", label: "تم الحل" },
+    { value: null, label: "الكل" },
+  ];
+
+  return (
+    <div className="mt-4">
+      <div className="mb-3 flex flex-wrap gap-2">
+        {STATUS_TABS.map((t) => (
+          <FilterPill key={t.label} active={status === t.value} onClick={() => setStatus(t.value)} label={t.label} />
+        ))}
+      </div>
+
+      {incidentsQuery.isPending ? (
+        <AdminLoading />
+      ) : incidentsQuery.isError ? (
+        <Card className="rounded-xl border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          حصل خطأ في تحميل المشاكل.
+        </Card>
+      ) : incidents.length === 0 ? (
+        <Card className="rounded-xl border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          مفيش مشاكل في القسم ده. 🎉
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {incidents.map((inc) => {
+            const SEVERITY_TONE: Record<string, string> = {
+              low: "bg-mist text-muted-foreground",
+              medium: "bg-amber-50 text-amber-700",
+              high: "bg-orange-50 text-orange-700",
+              critical: "bg-destructive/10 text-destructive",
+            };
+            return (
+              <Card key={inc.id} className="space-y-2 rounded-xl border-border/80 p-4 shadow-[var(--shadow-card)]">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-display text-base font-bold text-primary">
+                      {inc.serviceName} — {inc.partnerName}
+                    </p>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                      {inc.passengerName}
+                      {inc.ticketCode ? ` · تذكرة ${inc.ticketCode}` : ""}
+                    </p>
+                    <p className="mt-1 text-sm">{inc.description}</p>
+                    {inc.resolutionNotes ? (
+                      <p className="mt-1 text-sm text-emerald-700">الحل: {inc.resolutionNotes}</p>
+                    ) : null}
+                  </div>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${SEVERITY_TONE[inc.severity]}`}>
+                      {groundHandlingIncidentSeverityLabel(inc.severity)}
+                    </span>
+                    <span className="rounded-full bg-mist px-3 py-1 text-xs font-bold text-primary">
+                      {groundHandlingIncidentStatusLabel(inc.status)}
+                    </span>
+                  </div>
+                </div>
+
+                {inc.status !== "resolved" ? (
+                  <>
+                    <Textarea
+                      placeholder="ملاحظات الحل (اختياري)"
+                      rows={2}
+                      value={notesById[inc.id] ?? ""}
+                      onChange={(e) => setNotesById({ ...notesById, [inc.id]: e.target.value })}
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      {inc.status === "open" ? (
+                        <Button size="sm" variant="outline" disabled={busyId === inc.id} onClick={() => setIncidentStatus(inc.id, "in_progress")}>
+                          جاري الحل
+                        </Button>
+                      ) : null}
+                      <Button
+                        size="sm"
+                        disabled={busyId === inc.id}
+                        className="bg-primary font-bold text-primary-foreground hover:bg-primary/90"
+                        onClick={() => setIncidentStatus(inc.id, "resolved")}
+                      >
+                        تسجيل كـ"تم الحل"
+                      </Button>
+                    </div>
+                  </>
+                ) : null}
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>

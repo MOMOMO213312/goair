@@ -40,6 +40,7 @@ function GroundHandlingLayout() {
   const navItems = [
     { to: "/ground-handling", label: "لوحة التحكم", exact: true },
     { to: "/ground-handling/requests", label: "طلبات الخدمات" },
+    { to: "/ground-handling/incidents", label: "المشاكل" },
     { to: "/ground-handling/flights", label: "الرحلات" },
     { to: "/ground-handling/travelers", label: "المسافرون" },
     { to: "/ground-handling/services", label: "إدارة الخدمات" },

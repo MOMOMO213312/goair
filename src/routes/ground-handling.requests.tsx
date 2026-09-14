@@ -9,6 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   getGroundHandlingRequests,
   updateGroundHandlingRequestStatus,
   assignGroundHandlingStaff,
@@ -20,6 +27,9 @@ import {
   REQUEST_STATUS_ORDER,
   computeGroundHandlingSlaStatus,
   groundHandlingSlaStatusLabel,
+  reportGroundHandlingIncident,
+  groundHandlingIncidentSeverityLabel,
+  type GroundHandlingIncidentSeverity,
   type GroundHandlingRequest,
   type GroundHandlingRequestStatus,
 } from "@/lib/ground-handling";
@@ -127,6 +137,10 @@ function RequestCard({
 }) {
   const [notes, setNotes] = useState(request.partnerNotes ?? "");
   const [busy, setBusy] = useState(false);
+  const [incidentOpen, setIncidentOpen] = useState(false);
+  const [incidentDescription, setIncidentDescription] = useState("");
+  const [incidentSeverity, setIncidentSeverity] = useState<GroundHandlingIncidentSeverity>("medium");
+  const [incidentBusy, setIncidentBusy] = useState(false);
   const isClosed = request.status === "completed" || request.status === "cancelled";
   const next = NEXT_STATUS[request.status];
   const slaStatus = computeGroundHandlingSlaStatus(request.slaDueAt, request.status, request.bookedAt);
@@ -136,6 +150,22 @@ function RequestCard({
     at_risk: "bg-amber-50 text-amber-700",
     breached: "bg-destructive/10 text-destructive",
   };
+
+  async function submitIncident() {
+    if (!incidentDescription.trim()) return;
+    setIncidentBusy(true);
+    try {
+      await reportGroundHandlingIncident(token, request.requestId, incidentDescription.trim(), incidentSeverity);
+      toast.success("تم تسجيل المشكلة، وهتظهر لفريق GoAir في صفحة المشاكل.");
+      setIncidentOpen(false);
+      setIncidentDescription("");
+      setIncidentSeverity("medium");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
+    } finally {
+      setIncidentBusy(false);
+    }
+  }
 
   async function advance() {
     if (!next) return;
@@ -242,11 +272,68 @@ function RequestCard({
             <Button size="sm" variant="outline" disabled={busy} onClick={cancel}>
               إلغاء الطلب
             </Button>
+            <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setIncidentOpen(true)}>
+              ⚠ الإبلاغ عن مشكلة
+            </Button>
           </div>
         </>
       ) : request.partnerNotes ? (
         <p className="text-sm text-muted-foreground">ملاحظات: {request.partnerNotes}</p>
       ) : null}
+
+      {isClosed ? (
+        <div>
+          <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setIncidentOpen(true)}>
+            ⚠ الإبلاغ عن مشكلة
+          </Button>
+        </div>
+      ) : null}
+
+      <Dialog open={incidentOpen} onOpenChange={setIncidentOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>الإبلاغ عن مشكلة — {request.serviceName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-sm font-bold text-muted-foreground">درجة الخطورة</label>
+              <Select value={incidentSeverity} onValueChange={(v) => setIncidentSeverity(v as GroundHandlingIncidentSeverity)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(["low", "medium", "high", "critical"] as GroundHandlingIncidentSeverity[]).map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {groundHandlingIncidentSeverityLabel(s)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-bold text-muted-foreground">وصف المشكلة</label>
+              <Textarea
+                rows={4}
+                placeholder="مثلاً: الموظف اتأخر عن الموعد، أو الراكب معترض على الخدمة..."
+                value={incidentDescription}
+                onChange={(e) => setIncidentDescription(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIncidentOpen(false)}>
+              إلغاء
+            </Button>
+            <Button
+              disabled={incidentBusy || !incidentDescription.trim()}
+              className="bg-destructive font-bold text-destructive-foreground hover:bg-destructive/90"
+              onClick={submitIncident}
+            >
+              {incidentBusy ? "بيتسجل..." : "تسجيل المشكلة"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

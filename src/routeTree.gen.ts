@@ -47,6 +47,7 @@ import { Route as AdminSubscriptionPlansRouteImport } from './routes/admin.subsc
 import { Route as AdminTeamRouteImport } from './routes/admin.team'
 import { Route as GroundHandlingIndexRouteImport } from './routes/ground-handling.index'
 import { Route as GroundHandlingFlightsRouteImport } from './routes/ground-handling.flights'
+import { Route as GroundHandlingIncidentsRouteImport } from './routes/ground-handling.incidents'
 import { Route as GroundHandlingReportsRouteImport } from './routes/ground-handling.reports'
 import { Route as GroundHandlingRequestsRouteImport } from './routes/ground-handling.requests'
 import { Route as GroundHandlingServicesRouteImport } from './routes/ground-handling.services'
@@ -264,6 +265,11 @@ const GroundHandlingFlightsRoute = GroundHandlingFlightsRouteImport.update({
   path: '/flights',
   getParentRoute: () => GroundHandlingRoute,
 } as any)
+const GroundHandlingIncidentsRoute = GroundHandlingIncidentsRouteImport.update({
+  id: '/incidents',
+  path: '/incidents',
+  getParentRoute: () => GroundHandlingRoute,
+} as any)
 const GroundHandlingReportsRoute = GroundHandlingReportsRouteImport.update({
   id: '/reports',
   path: '/reports',
@@ -433,6 +439,7 @@ export interface FileRoutesByFullPath {
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
   '/admin/team': typeof AdminTeamRoute
   '/ground-handling/flights': typeof GroundHandlingFlightsRoute
+  '/ground-handling/incidents': typeof GroundHandlingIncidentsRoute
   '/ground-handling/reports': typeof GroundHandlingReportsRoute
   '/ground-handling/requests': typeof GroundHandlingRequestsRoute
   '/ground-handling/services': typeof GroundHandlingServicesRoute
@@ -494,6 +501,7 @@ export interface FileRoutesByTo {
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
   '/admin/team': typeof AdminTeamRoute
   '/ground-handling/flights': typeof GroundHandlingFlightsRoute
+  '/ground-handling/incidents': typeof GroundHandlingIncidentsRoute
   '/ground-handling/reports': typeof GroundHandlingReportsRoute
   '/ground-handling/requests': typeof GroundHandlingRequestsRoute
   '/ground-handling/services': typeof GroundHandlingServicesRoute
@@ -561,6 +569,7 @@ export interface FileRoutesById {
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
   '/admin/team': typeof AdminTeamRoute
   '/ground-handling/flights': typeof GroundHandlingFlightsRoute
+  '/ground-handling/incidents': typeof GroundHandlingIncidentsRoute
   '/ground-handling/reports': typeof GroundHandlingReportsRoute
   '/ground-handling/requests': typeof GroundHandlingRequestsRoute
   '/ground-handling/services': typeof GroundHandlingServicesRoute
@@ -629,6 +638,7 @@ export interface FileRouteTypes {
     | '/admin/subscription-plans'
     | '/admin/team'
     | '/ground-handling/flights'
+    | '/ground-handling/incidents'
     | '/ground-handling/reports'
     | '/ground-handling/requests'
     | '/ground-handling/services'
@@ -690,6 +700,7 @@ export interface FileRouteTypes {
     | '/admin/subscription-plans'
     | '/admin/team'
     | '/ground-handling/flights'
+    | '/ground-handling/incidents'
     | '/ground-handling/reports'
     | '/ground-handling/requests'
     | '/ground-handling/services'
@@ -756,6 +767,7 @@ export interface FileRouteTypes {
     | '/admin/subscription-plans'
     | '/admin/team'
     | '/ground-handling/flights'
+    | '/ground-handling/incidents'
     | '/ground-handling/reports'
     | '/ground-handling/requests'
     | '/ground-handling/services'
@@ -1078,6 +1090,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GroundHandlingFlightsRouteImport
       parentRoute: typeof GroundHandlingRoute
     }
+    '/ground-handling/incidents': {
+      id: '/ground-handling/incidents'
+      path: '/incidents'
+      fullPath: '/ground-handling/incidents'
+      preLoaderRoute: typeof GroundHandlingIncidentsRouteImport
+      parentRoute: typeof GroundHandlingRoute
+    }
     '/ground-handling/reports': {
       id: '/ground-handling/reports'
       path: '/reports'
@@ -1303,6 +1322,7 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface GroundHandlingRouteChildren {
   GroundHandlingFlightsRoute: typeof GroundHandlingFlightsRoute
+  GroundHandlingIncidentsRoute: typeof GroundHandlingIncidentsRoute
   GroundHandlingReportsRoute: typeof GroundHandlingReportsRoute
   GroundHandlingRequestsRoute: typeof GroundHandlingRequestsRoute
   GroundHandlingServicesRoute: typeof GroundHandlingServicesRoute
@@ -1315,6 +1335,7 @@ interface GroundHandlingRouteChildren {
 
 const GroundHandlingRouteChildren: GroundHandlingRouteChildren = {
   GroundHandlingFlightsRoute: GroundHandlingFlightsRoute,
+  GroundHandlingIncidentsRoute: GroundHandlingIncidentsRoute,
   GroundHandlingReportsRoute: GroundHandlingReportsRoute,
   GroundHandlingRequestsRoute: GroundHandlingRequestsRoute,
   GroundHandlingServicesRoute: GroundHandlingServicesRoute,

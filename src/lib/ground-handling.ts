@@ -760,6 +760,108 @@ export async function getGroundHandlingUnsettledSummary(
 }
 
 // ---------------------------------------------------------------------------
+// 9. Incidents
+// ---------------------------------------------------------------------------
+
+export type GroundHandlingIncidentSeverity = "low" | "medium" | "high" | "critical";
+export type GroundHandlingIncidentStatus = "open" | "in_progress" | "resolved";
+
+export type GroundHandlingIncident = {
+  id: string;
+  bookingAddonServiceId: string;
+  severity: GroundHandlingIncidentSeverity;
+  description: string;
+  status: GroundHandlingIncidentStatus;
+  resolutionNotes: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+  serviceName: string;
+  passengerName: string;
+  ticketCode: string | null;
+};
+
+const INCIDENT_SEVERITY_LABELS: Record<GroundHandlingIncidentSeverity, string> = {
+  low: "بسيطة",
+  medium: "متوسطة",
+  high: "عالية",
+  critical: "حرجة",
+};
+
+export function groundHandlingIncidentSeverityLabel(severity: GroundHandlingIncidentSeverity): string {
+  return INCIDENT_SEVERITY_LABELS[severity] ?? severity;
+}
+
+const INCIDENT_STATUS_LABELS: Record<GroundHandlingIncidentStatus, string> = {
+  open: "مفتوحة",
+  in_progress: "جاري الحل",
+  resolved: "تم الحل",
+};
+
+export function groundHandlingIncidentStatusLabel(status: GroundHandlingIncidentStatus): string {
+  return INCIDENT_STATUS_LABELS[status] ?? status;
+}
+
+function mapIncident(row: Record<string, unknown>): GroundHandlingIncident {
+  return {
+    id: String(row["id"]),
+    bookingAddonServiceId: String(row["booking_addon_service_id"]),
+    severity: (row["severity"] as GroundHandlingIncidentSeverity) ?? "medium",
+    description: String(row["description"] ?? ""),
+    status: (row["status"] as GroundHandlingIncidentStatus) ?? "open",
+    resolutionNotes: (row["resolution_notes"] as string | null) ?? null,
+    resolvedAt: (row["resolved_at"] as string | null) ?? null,
+    createdAt: String(row["created_at"]),
+    serviceName: String(row["service_name"] ?? ""),
+    passengerName: String(row["passenger_name"] ?? ""),
+    ticketCode: (row["ticket_code"] as string | null) ?? null,
+  };
+}
+
+export async function reportGroundHandlingIncident(
+  token: string,
+  requestId: string,
+  description: string,
+  severity: GroundHandlingIncidentSeverity = "medium",
+): Promise<GroundHandlingIncident> {
+  const { data, error } = await supabase.rpc("report_ground_handling_incident", {
+    p_access_token: token,
+    p_request_id: requestId,
+    p_description: description,
+    p_severity: severity,
+  });
+  if (error) rpcError(error);
+  const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown>;
+  return mapIncident(row);
+}
+
+export async function listGroundHandlingIncidents(
+  token: string,
+  status?: GroundHandlingIncidentStatus | null,
+): Promise<GroundHandlingIncident[]> {
+  const { data, error } = await supabase.rpc("list_ground_handling_incidents", {
+    p_access_token: token,
+    p_status: status ?? null,
+  });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map(mapIncident);
+}
+
+export async function updateGroundHandlingIncident(
+  token: string,
+  incidentId: string,
+  status: GroundHandlingIncidentStatus,
+  resolutionNotes?: string | null,
+): Promise<void> {
+  const { error } = await supabase.rpc("update_ground_handling_incident", {
+    p_access_token: token,
+    p_incident_id: incidentId,
+    p_status: status,
+    p_resolution_notes: resolutionNotes ?? null,
+  });
+  if (error) rpcError(error);
+}
+
+// ---------------------------------------------------------------------------
 // Admin-side functions (used from admin.ground-handling.tsx)
 // ---------------------------------------------------------------------------
 
@@ -932,6 +1034,37 @@ export async function adminUpdateGroundHandlingStatement(
     p_statement_id: statementId,
     p_status: status,
     p_paid_usd: paidUsd,
+  });
+  if (error) rpcError(error);
+}
+
+export async function adminListGroundHandlingIncidents(
+  token: string,
+  status?: GroundHandlingIncidentStatus | null,
+): Promise<(GroundHandlingIncident & { partnerId: string; partnerName: string })[]> {
+  const { data, error } = await supabase.rpc("admin_list_ground_handling_incidents", {
+    p_access_token: token,
+    p_status: status ?? null,
+  });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+    ...mapIncident(row),
+    partnerId: String(row["partner_id"]),
+    partnerName: String(row["partner_name"] ?? ""),
+  }));
+}
+
+export async function adminUpdateGroundHandlingIncident(
+  token: string,
+  incidentId: string,
+  status: GroundHandlingIncidentStatus,
+  resolutionNotes?: string | null,
+): Promise<void> {
+  const { error } = await supabase.rpc("admin_update_ground_handling_incident", {
+    p_access_token: token,
+    p_incident_id: incidentId,
+    p_status: status,
+    p_resolution_notes: resolutionNotes ?? null,
   });
   if (error) rpcError(error);
 }
