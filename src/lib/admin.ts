@@ -97,6 +97,8 @@ export type AdminDriver = {
   full_name: string;
   phone_number: string;
   operator_name: string | null;
+  license_number: string | null;
+  license_expiry: string | null;
 };
 
 export async function adminListDrivers(token: string): Promise<AdminDriver[]> {
@@ -114,12 +116,65 @@ export type AdminVehicle = {
   capacity: number;
   driver_id: string | null;
   operator_name: string | null;
+  registration_expiry: string | null;
+  insurance_expiry: string | null;
 };
 
 export async function adminListVehicles(token: string): Promise<AdminVehicle[]> {
   const { data, error } = await supabase.rpc("admin_list_vehicles", { p_access_token: token });
   if (error) rpcError(error);
   return (data ?? []) as AdminVehicle[];
+}
+
+/**
+ * Compliance status derived client-side from an expiry date — a missing
+ * date means "never entered", not "expired"; admin_assign_trip only ever
+ * hard-blocks on a confirmed-expired date, never on a missing one.
+ */
+export type ComplianceStatus = "unverified" | "valid" | "expiring_soon" | "expired";
+
+export function getComplianceStatus(expiry: string | null, warnWithinDays = 30): ComplianceStatus {
+  if (!expiry) return "unverified";
+  const daysLeft = (new Date(expiry).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+  if (daysLeft < 0) return "expired";
+  if (daysLeft <= warnWithinDays) return "expiring_soon";
+  return "valid";
+}
+
+export async function adminUpdateDriverCompliance(
+  token: string,
+  driverId: string,
+  input: { licenseNumber?: string | null; licenseExpiry?: string | null; clearLicenseExpiry?: boolean },
+) {
+  const { error } = await supabase.rpc("admin_update_driver", {
+    p_access_token: token,
+    p_driver_id: driverId,
+    p_license_number: input.licenseNumber ?? null,
+    p_license_expiry: input.licenseExpiry ?? null,
+    p_clear_license_expiry: input.clearLicenseExpiry ?? false,
+  });
+  if (error) rpcError(error);
+}
+
+export async function adminUpdateVehicleCompliance(
+  token: string,
+  vehicleId: string,
+  input: {
+    registrationExpiry?: string | null;
+    clearRegistrationExpiry?: boolean;
+    insuranceExpiry?: string | null;
+    clearInsuranceExpiry?: boolean;
+  },
+) {
+  const { error } = await supabase.rpc("admin_update_vehicle", {
+    p_access_token: token,
+    p_vehicle_id: vehicleId,
+    p_registration_expiry: input.registrationExpiry ?? null,
+    p_clear_registration_expiry: input.clearRegistrationExpiry ?? false,
+    p_insurance_expiry: input.insuranceExpiry ?? null,
+    p_clear_insurance_expiry: input.clearInsuranceExpiry ?? false,
+  });
+  if (error) rpcError(error);
 }
 
 export type AdminOperator = { id: string; name: string };

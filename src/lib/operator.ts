@@ -152,8 +152,8 @@ export async function getOperatorStatements(token: string): Promise<OperatorStat
   }));
 }
 
-export type OperatorDriver = { id: string; full_name: string; phone_number: string };
-export type OperatorVehicle = { id: string; plate_number: string; country: string; vehicle_label: string; capacity: number };
+export type OperatorDriver = { id: string; full_name: string; phone_number: string; license_number: string | null; license_expiry: string | null };
+export type OperatorVehicle = { id: string; plate_number: string; country: string; vehicle_label: string; capacity: number; registration_expiry: string | null; insurance_expiry: string | null };
 
 export async function getOperatorFleet(token: string): Promise<{ drivers: OperatorDriver[]; vehicles: OperatorVehicle[] }> {
   const { data, error } = await supabase.rpc("get_operator_fleet", { p_access_token: token });
@@ -163,6 +163,42 @@ export async function getOperatorFleet(token: string): Promise<{ drivers: Operat
     drivers: (row?.["drivers"] as OperatorDriver[]) ?? [],
     vehicles: (row?.["vehicles"] as OperatorVehicle[]) ?? [],
   };
+}
+
+export async function operatorUpdateDriverCompliance(
+  token: string,
+  driverId: string,
+  input: { licenseNumber?: string | null; licenseExpiry?: string | null; clearLicenseExpiry?: boolean },
+) {
+  const { error } = await supabase.rpc("operator_update_driver_compliance", {
+    p_access_token: token,
+    p_driver_id: driverId,
+    p_license_number: input.licenseNumber ?? null,
+    p_license_expiry: input.licenseExpiry ?? null,
+    p_clear_license_expiry: input.clearLicenseExpiry ?? false,
+  });
+  if (error) rpcError(error);
+}
+
+export async function operatorUpdateVehicleCompliance(
+  token: string,
+  vehicleId: string,
+  input: {
+    registrationExpiry?: string | null;
+    clearRegistrationExpiry?: boolean;
+    insuranceExpiry?: string | null;
+    clearInsuranceExpiry?: boolean;
+  },
+) {
+  const { error } = await supabase.rpc("operator_update_vehicle_compliance", {
+    p_access_token: token,
+    p_vehicle_id: vehicleId,
+    p_registration_expiry: input.registrationExpiry ?? null,
+    p_clear_registration_expiry: input.clearRegistrationExpiry ?? false,
+    p_insurance_expiry: input.insuranceExpiry ?? null,
+    p_clear_insurance_expiry: input.clearInsuranceExpiry ?? false,
+  });
+  if (error) rpcError(error);
 }
 
 export async function operatorAddDriver(token: string, fullName: string, phone: string) {

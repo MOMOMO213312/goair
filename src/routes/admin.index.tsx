@@ -19,10 +19,13 @@ import {
   adminRejectPayment,
   bookingStatusLabel,
   formatAdminMoney,
+  getComplianceStatus,
   isAdminAuthError,
   paymentMethodLabel,
   reviewStatusLabel,
   type AdminBookingRow,
+  type AdminDriver,
+  type AdminVehicle,
 } from "@/lib/admin";
 import { cn } from "@/lib/utils";
 
@@ -273,8 +276,8 @@ function AssignCard({
 }: {
   booking: AdminBookingRow;
   token: string;
-  drivers: { id: string; full_name: string }[];
-  vehicles: { id: string; plate_number: string; vehicle_label: string; capacity: number }[];
+  drivers: AdminDriver[];
+  vehicles: AdminVehicle[];
   onDone: () => void;
 }) {
   const [driverId, setDriverId] = useState("");
@@ -316,19 +319,27 @@ function AssignCard({
         <Select value={vehicleId} onValueChange={setVehicleId}>
           <SelectTrigger className="w-40"><SelectValue placeholder="العربية" /></SelectTrigger>
           <SelectContent>
-            {vehicles.map((v) => (
-              <SelectItem key={v.id} value={v.id}>
-                {v.plate_number} — {v.vehicle_label}
-              </SelectItem>
-            ))}
+            {vehicles.map((v) => {
+              const worst = [getComplianceStatus(v.registration_expiry), getComplianceStatus(v.insurance_expiry)];
+              const flag = worst.includes("expired") ? "⚠️ " : worst.includes("expiring_soon") ? "⏳ " : "";
+              return (
+                <SelectItem key={v.id} value={v.id}>
+                  {flag}{v.plate_number} — {v.vehicle_label}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
         <Select value={driverId} onValueChange={setDriverId}>
           <SelectTrigger className="w-40"><SelectValue placeholder="السائق" /></SelectTrigger>
           <SelectContent>
-            {drivers.map((d) => (
-              <SelectItem key={d.id} value={d.id}>{d.full_name}</SelectItem>
-            ))}
+            {drivers.map((d) => {
+              const status = getComplianceStatus(d.license_expiry);
+              const flag = status === "expired" ? "⚠️ " : status === "expiring_soon" ? "⏳ " : "";
+              return (
+                <SelectItem key={d.id} value={d.id}>{flag}{d.full_name}</SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
         <Button size="sm" disabled={busy} onClick={assign} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">
