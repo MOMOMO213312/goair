@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { usePartnerToken } from "@/lib/partner-session";
 import { useMemo, useRef, useState } from "react";
@@ -15,7 +15,14 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { getPartnerDashboard, isPartnerAuthError } from "@/lib/partner";
+import {
+  createTravelGroup,
+  getPartnerDashboard,
+  getPartnerGroups,
+  isPartnerAuthError,
+  TRAVEL_GROUP_TYPE_LABELS,
+  type TravelGroupType,
+} from "@/lib/partner";
 import {
   createBookingSafe,
   createPrivateBookingSafe,
@@ -99,13 +106,17 @@ function PartnerQuickBookingPage() {
     return isPartnerAuthError(partnerQuery.error) ? <PartnerAuthError /> : <PartnerTempError />;
   }
 
-  return <QuickBookingForm referralCode={partnerQuery.data.referralCode} />;
+  return <QuickBookingForm token={token} referralCode={partnerQuery.data.referralCode} />;
 }
 
 type BookingMode = "single" | "group";
 type GroupType = "shared" | "private";
 
-function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
+/** Whether this booking is tied to a managed travel_groups record. */
+type GroupLinkMode = "none" | "existing" | "new";
+
+function QuickBookingForm({ token, referralCode }: { token: string; referralCode: string | null }) {
+  const queryClient = useQueryClient();
   const tripsQuery = useQuery({ queryKey: ["goair", "trips"], queryFn: fetchTrips });
   const countriesQuery = useQuery({
     queryKey: ["goair", "countries", tripsQuery.data?.length ?? 0],
@@ -140,6 +151,27 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
 
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+
+  // ── Travel group linking (Umrah groups, corporate delegations, etc.) ──
+  const groupsQuery = useQuery({
+    queryKey: ["partner-groups", token],
+    queryFn: () => getPartnerGroups(token),
+  });
+  const [groupLinkMode, setGroupLinkMode] = useState<GroupLinkMode>("none");
+  const [selectedGroupId, setSelectedGroupId] = useState("");
+  const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupType, setNewGroupType] = useState<TravelGroupType>("religious");
+  const [newGroupOrganizerName, setNewGroupOrganizerName] = useState("");
+  const [newGroupOrganizerPhone, setNewGroupOrganizerPhone] = useState("");
+  const [newGroupExpectedPax, setNewGroupExpectedPax] = useState(10);
+
+  const existingGroups = groupsQuery.data ?? [];
+  const selectedGroup = existingGroups.find((g) => g.id === selectedGroupId);
+
+  function switchGroupLinkMode(next: GroupLinkMode) {
+    setGroupLinkMode(next);
+    setSelectedGroupId("");
+  }
 
   const trips = tripsQuery.data ?? [];
   const tripsInCountry = useMemo(() => trips.filter((t) => t.country === country), [trips, country]);
@@ -250,11 +282,42 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
       toast.error(`عدد الأسماء (${parsedNames.length}) لازم يطابق عدد الركاب (${seats}) بالظبط.`);
       return;
     }
+    if (groupLinkMode === "existing" && !selectedGroupId) {
+      toast.error("اختار المجموعة اللي عايز تضيف الحجز ده ليها.");
+      return;
+    }
+    if (groupLinkMode === "new") {
+      if (!newGroupName.trim() || !newGroupOrganizerName.trim() || !newGroupOrganizerPhone.trim()) {
+        toast.error("اكتب اسم المجموعة واسم المنظّم ورقم تليفونه.");
+        return;
+      }
+      if (newGroupExpectedPax < 1) {
+        toast.error("عدد المسافرين المتوقع للمجموعة لازم يكون 1 على الأقل.");
+        return;
+      }
+    }
 
     const passengerNames = listNames && namesMatchSeats ? parsedNames : null;
 
     setBusy(true);
     try {
+      let groupId: string | null = null;
+      if (groupLinkMode === "existing") {
+        groupId = selectedGroupId;
+      } else if (groupLinkMode === "new") {
+        const newGroup = await createTravelGroup(token, {
+          groupName: newGroupName.trim(),
+          groupType: newGroupType,
+          organizerFullName: newGroupOrganizerName.trim(),
+          organizerPhone: newGroupOrganizerPhone.trim(),
+          country: country || "Egypt",
+          travelDateStart: date || new Date().toISOString().slice(0, 10),
+          expectedPax: newGroupExpectedPax,
+        });
+        groupId = newGroup.id;
+        queryClient.invalidateQueries({ queryKey: ["partner-groups", token] });
+      }
+
       const { ticketCode } = isPrivate
         ? await createPrivateBookingSafe({
             tripId: selectedTrip!.id,
@@ -270,6 +333,7 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
             packageId: packageId || null,
             ...(addonIds.length > 0 ? { addonIds } : {}),
             passengerNames,
+            groupId,
           })
         : await createBookingSafe({
             tripId: selectedTrip!.id,
@@ -287,6 +351,7 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
             packageId: packageId || null,
             ...(addonIds.length > 0 ? { addonIds } : {}),
             passengerNames,
+            groupId,
           });
       setResult(ticketCode);
       toast.success("تم إنشاء الحجز — الخطوة الجاية الدفع.");
@@ -299,6 +364,12 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
 
   function resetForm() {
     setResult(null);
+    setGroupLinkMode("none");
+    setSelectedGroupId("");
+    setNewGroupName("");
+    setNewGroupOrganizerName("");
+    setNewGroupOrganizerPhone("");
+    setNewGroupExpectedPax(10);
   }
 
   if (result) {
@@ -374,6 +445,116 @@ function QuickBookingForm({ referralCode }: { referralCode: string | null }) {
           </RadioGroup>
         </div>
       ) : null}
+
+      <div className="mb-6 rounded-lg border border-border/80 bg-secondary/20 p-4">
+        <p className="mb-3 text-sm font-bold text-primary">ربط الحجز بمجموعة سفر (اختياري)</p>
+        <p className="mb-3 text-xs text-muted-foreground">
+          لو الحجز ده جزء من مجموعة أكبر (زي رحلة عمرة أو وفد شركة) هتتوزع على أكتر من حجز/رحلة، اربطه بمجموعة عشان
+          تقدر تتابع العدد الإجمالي والتسوية المالية للمجموعة كلها مع بعض.
+        </p>
+        <RadioGroup
+          value={groupLinkMode}
+          onValueChange={(v) => switchGroupLinkMode(v as GroupLinkMode)}
+          className="grid gap-2 sm:grid-cols-3"
+        >
+          <label
+            className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm transition-colors ${
+              groupLinkMode === "none" ? "border-accent bg-accent/5" : "border-border"
+            }`}
+          >
+            <RadioGroupItem value="none" id="gl-none" />
+            <span>حجز عادي — من غير مجموعة</span>
+          </label>
+          <label
+            className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm transition-colors ${
+              groupLinkMode === "existing" ? "border-accent bg-accent/5" : "border-border"
+            }`}
+          >
+            <RadioGroupItem value="existing" id="gl-existing" />
+            <span>أضف لمجموعة موجودة</span>
+          </label>
+          <label
+            className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm transition-colors ${
+              groupLinkMode === "new" ? "border-accent bg-accent/5" : "border-border"
+            }`}
+          >
+            <RadioGroupItem value="new" id="gl-new" />
+            <span>ابدأ مجموعة جديدة</span>
+          </label>
+        </RadioGroup>
+
+        {groupLinkMode === "existing" ? (
+          <div className="mt-3">
+            <Field label="المجموعة">
+              <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
+                <SelectTrigger>
+                  <SelectValue
+                    placeholder={groupsQuery.isFetching ? "جاري التحميل..." : "اختار المجموعة"}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {existingGroups.length === 0 ? (
+                    <div className="p-2 text-xs text-muted-foreground">مفيش مجموعات مسجلة لسه.</div>
+                  ) : (
+                    existingGroups.map((g) => (
+                      <SelectItem key={g.id} value={g.id}>
+                        {g.groupName} — {g.confirmedPax}/{g.expectedPax} راكب مؤكد
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </Field>
+            {selectedGroup ? (
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                المنظّم: {selectedGroup.organizerFullName} — {selectedGroup.organizerPhone}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
+        {groupLinkMode === "new" ? (
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <Field label="اسم المجموعة">
+              <Input
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                placeholder="مثال: مجموعة عمرة رمضان"
+              />
+            </Field>
+            <Field label="نوع المجموعة">
+              <Select value={newGroupType} onValueChange={(v) => setNewGroupType(v as TravelGroupType)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {(Object.entries(TRAVEL_GROUP_TYPE_LABELS) as [TravelGroupType, string][]).map(
+                    ([value, label]) => (
+                      <SelectItem key={value} value={value}>{label}</SelectItem>
+                    ),
+                  )}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="اسم المنظّم">
+              <Input value={newGroupOrganizerName} onChange={(e) => setNewGroupOrganizerName(e.target.value)} />
+            </Field>
+            <Field label="تليفون المنظّم">
+              <Input value={newGroupOrganizerPhone} onChange={(e) => setNewGroupOrganizerPhone(e.target.value)} />
+            </Field>
+            <Field label="عدد المسافرين المتوقع للمجموعة كلها">
+              <Input
+                type="number"
+                min={1}
+                value={newGroupExpectedPax}
+                onChange={(e) => setNewGroupExpectedPax(Math.max(1, Number(e.target.value) || 1))}
+              />
+            </Field>
+            <p className="self-end text-xs text-muted-foreground sm:col-span-2">
+              الدولة وتاريخ أول رحلة هياخدوا نفس الدولة والتاريخ المختارين تحت. تقدر تضيف حجوزات تانية للمجموعة دي
+              لاحقًا باختيار "أضف لمجموعة موجودة".
+            </p>
+          </div>
+        ) : null}
+      </div>
 
       <form onSubmit={submit} className="grid gap-4 sm:grid-cols-2">
         <Field label="الدولة">
