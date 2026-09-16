@@ -1,3 +1,4 @@
+import { clearStoredEcosystemLink, getStoredEcosystemLink } from "./ecosystem-link";
 import { clearStoredReferralCode, getStoredReferralCode } from "./referral";
 import {
   generateDepartureTimes,
@@ -308,7 +309,9 @@ export async function createPrivateBookingSafe(input: CreatePrivateBookingInput)
   const pendingReferralCode =
     input.referralCodeOverride !== undefined ? input.referralCodeOverride : getStoredReferralCode();
 
-  const { data, error } = await supabase.rpc("create_private_booking_safe", {
+  const linkArgs = ecosystemLinkArgs();
+
+  const privateBaseArgs: Record<string, unknown> = {
     p_trip_id: input.tripId,
     p_vehicle_type_id: input.vehicleTypeId,
     p_travel_date: input.travelDate,
@@ -332,7 +335,20 @@ export async function createPrivateBookingSafe(input: CreatePrivateBookingInput)
       : {}),
     ...(input.paymentCollection ? { p_payment_collection: input.paymentCollection } : {}),
     ...(input.groupId ? { p_group_id: input.groupId } : {}),
+  };
+
+  let { data, error } = await supabase.rpc("create_private_booking_safe", {
+    ...privateBaseArgs,
+    ...linkArgs,
   });
+
+  // Same defensive fallback as create_booking_safe — see comment there.
+  if (error && Object.keys(linkArgs).length > 0 && isMissingEcosystemLinkParams(error)) {
+    console.warn(
+      "create_private_booking_safe rejected ecosystem-link params — retrying without them.",
+    );
+    ({ data, error } = await supabase.rpc("create_private_booking_safe", privateBaseArgs));
+  }
 
   if (error) throw new Error(error.message);
   const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
@@ -340,6 +356,7 @@ export async function createPrivateBookingSafe(input: CreatePrivateBookingInput)
   if (!ticketCode)
     throw new Error("تم إنشاء الحجز لكن لم يرجع كود التذكرة — كلمنا فورًا على الدعم.");
   clearStoredReferralCode();
+  clearStoredEcosystemLink();
   sendBookingConfirmationEmail(input.customerEmail, ticketCode);
   return { ticketCode, raw: row };
 }
@@ -607,6 +624,36 @@ function isMissingDepartureParam(error: { message?: string; code?: string }) {
 }
 
 /**
+ * Same "DB not upgraded to this signature yet" symptom as
+ * `isMissingDepartureParam`, but scoped to the ecosystem-link params
+ * specifically, so we can drop *only* those and keep every other param
+ * (including `p_departure_time`) intact on retry.
+ */
+function isMissingEcosystemLinkParams(error: { message?: string; code?: string }) {
+  const message = error.message?.toLowerCase() ?? "";
+  return (
+    error.code === "PGRST202" ||
+    message.includes("p_external_platform") ||
+    message.includes("p_external_booking_reference") ||
+    message.includes("could not find the function")
+  );
+}
+
+/**
+ * Shared by both booking RPCs — never throws, never blocks a booking.
+ * `p_external_booking_reference` is the verified real param name (see
+ * ecosystem-link.ts header comment) — do not rename this back to `p_pnr`.
+ */
+function ecosystemLinkArgs(): Record<string, unknown> {
+  const link = getStoredEcosystemLink();
+  if (!link) return {};
+  return {
+    p_external_platform: link.platform,
+    ...(link.pnr ? { p_external_booking_reference: link.pnr } : {}),
+  };
+}
+
+/**
  * Never insert into booking directly — the DB computes the total and locks
  * capacity. Tries the schedule-materializing signature first (DB resolves or
  * creates the schedule row for an hourly departure); if the DB hasn't been
@@ -645,8 +692,11 @@ export async function createBookingSafe(input: CreateBookingInput) {
     ...(input.groupId ? { p_group_id: input.groupId } : {}),
   };
 
+  const linkArgs = ecosystemLinkArgs();
+
   let { data, error } = await supabase.rpc("create_booking_safe", {
     ...baseArgs,
+    ...linkArgs,
     p_schedule_id: generated ? null : input.scheduleId,
     p_departure_time: input.departureTime,
   });
@@ -659,7 +709,25 @@ export async function createBookingSafe(input: CreateBookingInput) {
     }
     ({ data, error } = await supabase.rpc("create_booking_safe", {
       ...baseArgs,
+      ...linkArgs,
       p_schedule_id: input.scheduleId,
+    }));
+  }
+
+  // DB not upgraded to accept the ecosystem-link params yet: retry once
+  // without them rather than losing the booking entirely. The booking still
+  // succeeds — it just won't be tagged with its TripRing origin until the
+  // DB side of migration `create_booking_safe_add_external_link_params` is
+  // confirmed live. Never silently swallow any other kind of error.
+  if (error && Object.keys(linkArgs).length > 0 && isMissingEcosystemLinkParams(error)) {
+    console.warn(
+      "create_booking_safe rejected ecosystem-link params (p_external_platform/p_external_booking_reference) — " +
+        "retrying without them. Booking will proceed but won't be tagged with its TripRing origin.",
+    );
+    ({ data, error } = await supabase.rpc("create_booking_safe", {
+      ...baseArgs,
+      p_schedule_id: generated ? null : input.scheduleId,
+      p_departure_time: input.departureTime,
     }));
   }
 
@@ -669,6 +737,7 @@ export async function createBookingSafe(input: CreateBookingInput) {
   if (!ticketCode)
     throw new Error("تم إنشاء الحجز لكن لم يرجع كود التذكرة — كلمنا فورًا على الدعم.");
   clearStoredReferralCode();
+  clearStoredEcosystemLink();
   sendBookingConfirmationEmail(input.customerEmail, ticketCode);
   return { ticketCode, raw: row };
 }
