@@ -294,6 +294,13 @@ export type CreatePrivateBookingInput = {
    * settlement the operator owes back to GoAir.
    */
   paymentCollection?: "goair_gateway" | "collected_by_operator";
+  /**
+   * Links this booking to a `travel_groups` row (e.g. an Umrah group, a
+   * corporate delegation) so it rolls up into that group's confirmed
+   * passenger count and settlement, even though it's still one normal
+   * `booking` row under the hood. Omit for a regular booking.
+   */
+  groupId?: string | null;
 };
 
 /** Reserve a whole vehicle for one group — flat price, no shared-capacity contention. */
@@ -324,6 +331,7 @@ export async function createPrivateBookingSafe(input: CreatePrivateBookingInput)
       ? { p_customer_email: input.customerEmail.trim() }
       : {}),
     ...(input.paymentCollection ? { p_payment_collection: input.paymentCollection } : {}),
+    ...(input.groupId ? { p_group_id: input.groupId } : {}),
   });
 
   if (error) throw new Error(error.message);
@@ -575,6 +583,13 @@ export type CreateBookingInput = {
    * GoAir-gateway flow.
    */
   paymentCollection?: "goair_gateway" | "collected_by_operator";
+  /**
+   * Links this booking to a `travel_groups` row (e.g. an Umrah group, a
+   * corporate delegation) so it rolls up into that group's confirmed
+   * passenger count and settlement, even though it's still one normal
+   * `booking` row under the hood. Omit for a regular booking.
+   */
+  groupId?: string | null;
 };
 
 /** A configured hourly departure (or legacy fallback slot) that has no stored `schedules` row yet. */
@@ -627,6 +642,7 @@ export async function createBookingSafe(input: CreateBookingInput) {
       ? { p_customer_email: input.customerEmail.trim() }
       : {}),
     ...(input.paymentCollection ? { p_payment_collection: input.paymentCollection } : {}),
+    ...(input.groupId ? { p_group_id: input.groupId } : {}),
   };
 
   let { data, error } = await supabase.rpc("create_booking_safe", {

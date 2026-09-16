@@ -218,6 +218,106 @@ export async function cancelBusinessBooking(
   return Boolean(data);
 }
 
+export type TravelGroupType =
+  | "religious"
+  | "corporate"
+  | "sports"
+  | "event"
+  | "educational"
+  | "tourist"
+  | "other";
+
+export const TRAVEL_GROUP_TYPE_LABELS: Record<TravelGroupType, string> = {
+  religious: "رحلة دينية (عمرة/حج/زيارة)",
+  corporate: "وفد شركة",
+  sports: "مجموعة رياضية",
+  event: "فعالية/مؤتمر",
+  educational: "رحلة طلابية",
+  tourist: "مجموعة سياحية",
+  other: "أخرى",
+};
+
+export type TravelGroup = {
+  id: string;
+  groupName: string;
+  groupType: TravelGroupType;
+  organizerFullName: string;
+  organizerPhone: string;
+  organizerEmail: string | null;
+  country: string;
+  routeDescription: string | null;
+  travelDateStart: string;
+  travelDateEnd: string | null;
+  expectedPax: number;
+  confirmedPax: number;
+  negotiatedRateUsd: number | null;
+  specialRequirements: string | null;
+  status: string;
+};
+
+function toTravelGroup(row: Record<string, unknown>): TravelGroup {
+  return {
+    id: String(row["id"]),
+    groupName: String(row["group_name"] ?? ""),
+    groupType: (row["group_type"] as TravelGroupType) ?? "other",
+    organizerFullName: String(row["organizer_full_name"] ?? ""),
+    organizerPhone: String(row["organizer_phone"] ?? ""),
+    organizerEmail: (row["organizer_email"] as string | null) ?? null,
+    country: String(row["country"] ?? ""),
+    routeDescription: (row["route_description"] as string | null) ?? null,
+    travelDateStart: String(row["travel_date_start"] ?? ""),
+    travelDateEnd: (row["travel_date_end"] as string | null) ?? null,
+    expectedPax: num(row["expected_pax"]),
+    confirmedPax: num(row["confirmed_pax"]),
+    negotiatedRateUsd: row["negotiated_rate_usd"] == null ? null : num(row["negotiated_rate_usd"]),
+    specialRequirements: (row["special_requirements"] as string | null) ?? null,
+    status: String(row["status"] ?? "inquiry"),
+  };
+}
+
+/** This partner's own travel groups (Umrah groups, corporate delegations, etc.), most recent trip first. */
+export async function getPartnerGroups(token: string): Promise<TravelGroup[]> {
+  const { data, error } = await supabase.rpc("get_partner_groups", { p_access_token: token });
+  if (error) throwPartnerRpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map(toTravelGroup);
+}
+
+export type CreateTravelGroupInput = {
+  groupName: string;
+  groupType: TravelGroupType;
+  organizerFullName: string;
+  organizerPhone: string;
+  organizerEmail?: string | null;
+  country: string;
+  travelDateStart: string;
+  expectedPax: number;
+  routeDescription?: string | null;
+  travelDateEnd?: string | null;
+  specialRequirements?: string | null;
+};
+
+/** Starts a new travel group under this partner — use the returned group's `id` as `groupId` on subsequent bookings. */
+export async function createTravelGroup(token: string, input: CreateTravelGroupInput): Promise<TravelGroup> {
+  const { data, error } = await supabase.rpc("create_travel_group", {
+    p_access_token: token,
+    p_group_name: input.groupName,
+    p_group_type: input.groupType,
+    p_organizer_full_name: input.organizerFullName,
+    p_organizer_phone: input.organizerPhone,
+    p_country: input.country,
+    p_travel_date_start: input.travelDateStart,
+    p_expected_pax: input.expectedPax,
+    ...(input.organizerEmail ? { p_organizer_email: input.organizerEmail } : {}),
+    ...(input.routeDescription ? { p_route_description: input.routeDescription } : {}),
+    ...(input.travelDateEnd ? { p_travel_date_end: input.travelDateEnd } : {}),
+    ...(input.specialRequirements ? { p_special_requirements: input.specialRequirements } : {}),
+  });
+  if (error) throwPartnerRpcError(error);
+  const row = unwrap<Record<string, unknown>>(data);
+  if (!row) throw new Error(PARTNER_TEMP_ERROR);
+  return toTravelGroup(row);
+}
+
 export function partnerDirectionLabel(direction: string | null): string {
   if (direction === "to_airport") return "إلى المطار";
   if (direction === "from_airport") return "من المطار";
