@@ -141,6 +141,8 @@ const en = {
     flightNumberPlaceholder: "e.g. MS777",
     addFlightNumber: "+ Add flight number (optional)",
     tryLabel: "Try:",
+    zonesLabel: "Or pick your area:",
+    zoneComingSoon: "Coverage in {zone} is coming soon — pick from the available destinations for now.",
     errorToAirport: "Choose your city and airport first.",
     errorFromAirport: "Choose your airport and destination first.",
   },

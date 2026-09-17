@@ -139,6 +139,8 @@ const ar = {
     flightNumberPlaceholder: "مثال: MS777",
     addFlightNumber: "+ إضافة رقم الرحلة (اختياري)",
     tryLabel: "جرّب:",
+    zonesLabel: "أو اختار منطقتك:",
+    zoneComingSoon: "التغطية في منطقة {zone} قريبًا — اختار من قائمة الوجهات المتاحة دلوقتي.",
     errorToAirport: "اختار مدينتك والمطار الأول.",
     errorFromAirport: "اختار المطار ووجهتك الأول.",
   },
