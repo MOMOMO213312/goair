@@ -29,6 +29,7 @@ import {
   fetchActivePackages,
   fetchAddonServices,
   fetchPrivateTripOptions,
+  fetchPublicGroundHandlingServices,
   fetchScheduleOptions,
   fetchTrips,
   fetchVisibleCountries,
@@ -36,6 +37,7 @@ import {
   formatUsd,
   friendlyErrorMessage,
   type AddonService,
+  type GroundHandlingPublicService,
   type PackageTier,
   type PrivateOption,
 } from "@/lib/goair";
@@ -143,6 +145,7 @@ function QuickBookingForm({ token, referralCode }: { token: string; referralCode
 
   const [packageId, setPackageId] = useState("");
   const [addonIds, setAddonIds] = useState<string[]>([]);
+  const [ghIds, setGhIds] = useState<string[]>([]);
 
   const [listNames, setListNames] = useState(false);
   const [passengerNamesText, setPassengerNamesText] = useState("");
@@ -177,6 +180,13 @@ function QuickBookingForm({ token, referralCode }: { token: string; referralCode
   const tripsInCountry = useMemo(() => trips.filter((t) => t.country === country), [trips, country]);
   const selectedTrip = trips.find((t) => t.id === tripId);
 
+  const ghServicesQuery = useQuery({
+    queryKey: ["partner-book-ground-handling", selectedTrip?.airport_code, date],
+    queryFn: () => fetchPublicGroundHandlingServices(selectedTrip!.airport_code, date || null),
+    enabled: Boolean(selectedTrip?.airport_code),
+  });
+  const ghServices = ghServicesQuery.data ?? [];
+
   const isPrivate = mode === "group" && groupType === "private";
 
   const scheduleQuery = useQuery({
@@ -200,6 +210,7 @@ function QuickBookingForm({ token, referralCode }: { token: string; referralCode
   function resetTripDependentFields() {
     setScheduleKey("");
     setVehicleTypeId("");
+    setGhIds([]);
   }
 
   function switchMode(next: BookingMode) {
@@ -242,11 +253,18 @@ function QuickBookingForm({ token, referralCode }: { token: string; referralCode
     setAddonIds((prev) => (prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]));
   }
 
+  function toggleGh(id: string) {
+    setGhIds((prev) => (prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id]));
+  }
+
   const packages = packagesQuery.data ?? [];
   const addons = addonsQuery.data ?? [];
   const selectedPackage = packages.find((p) => p.id === packageId);
   const selectedAddons = addons.filter((a) => addonIds.includes(a.id));
-  const addonsTotal = selectedAddons.reduce((sum, a) => sum + a.priceUsd, 0);
+  const selectedGhServices = ghServices.filter((s) => ghIds.includes(s.id));
+  const addonsTotal =
+    selectedAddons.reduce((sum, a) => sum + a.priceUsd, 0) +
+    selectedGhServices.reduce((sum, s) => sum + s.priceUsd, 0);
 
   /** Rough estimate only — the DB (create_booking_safe / create_private_booking_safe) computes and stores the real total. */
   const estimatedTotal = useMemo(() => {
@@ -332,6 +350,7 @@ function QuickBookingForm({ token, referralCode }: { token: string; referralCode
             referralCodeOverride: referralCode,
             packageId: packageId || null,
             ...(addonIds.length > 0 ? { addonIds } : {}),
+            ...(ghIds.length > 0 ? { groundHandlingServiceIds: ghIds } : {}),
             passengerNames,
             groupId,
           })
@@ -350,6 +369,7 @@ function QuickBookingForm({ token, referralCode }: { token: string; referralCode
             referralCodeOverride: referralCode,
             packageId: packageId || null,
             ...(addonIds.length > 0 ? { addonIds } : {}),
+            ...(ghIds.length > 0 ? { groundHandlingServiceIds: ghIds } : {}),
             passengerNames,
             groupId,
           });
@@ -699,6 +719,49 @@ function QuickBookingForm({ token, referralCode }: { token: string; referralCode
               ))}
             </div>
           )}
+        </div>
+
+        <div className="space-y-2 sm:col-span-2">
+          <Label>خدمات مطار (Fast Track / Lounge / Meet &amp; Assist — اختياري)</Label>
+          {!selectedTrip ? (
+            <p className="text-xs text-muted-foreground">اختار الرحلة الأول عشان نوريك خدمات المطار المتاحة.</p>
+          ) : ghServicesQuery.isFetching ? (
+            <p className="text-xs text-muted-foreground">جاري التحميل...</p>
+          ) : ghServices.length === 0 ? (
+            <p className="text-xs text-muted-foreground">مفيش خدمات مطار معتمدة على المطار ده حاليًا.</p>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {ghServices.map((s: GroundHandlingPublicService) => (
+                <label
+                  key={s.id}
+                  className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-sm transition-colors ${
+                    ghIds.includes(s.id) ? "border-accent bg-accent/5" : "border-border"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={ghIds.includes(s.id)}
+                    onChange={() => toggleGh(s.id)}
+                    className="mt-0.5 size-4 rounded border-border accent-accent"
+                  />
+                  <span className="flex-1">
+                    <span className="block font-bold text-primary">
+                      {s.name} <span className="font-normal text-muted-foreground">— {s.partnerName}</span>
+                    </span>
+                    <span className="block text-xs text-muted-foreground">
+                      {formatUsd(s.priceUsd)}
+                      {s.terminal ? ` · ${s.terminal}` : ""}
+                      {s.direction ? ` · ${s.direction === "arrival" ? "وصول" : "مغادرة"}` : ""}
+                      {s.remainingCapacity != null ? ` · متبقي ${s.remainingCapacity}` : ""}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">
+            هتتضاف على نفس الحجز — من غير ما تحتاج تفتح طلب منفصل بعد كده.
+          </p>
         </div>
 
         {estimatedTotal != null ? (
