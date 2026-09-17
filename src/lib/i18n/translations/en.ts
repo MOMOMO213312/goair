@@ -13,7 +13,7 @@ const en = {
     explore: "Explore",
     packages: "Packages",
     subscriptions: "Subscriptions",
-    rentACar: "Rent a Car",
+    rentACar: "VIP GO",
     trackBooking: "Track my booking",
     menu: "Menu",
   },
@@ -967,13 +967,13 @@ const en = {
   },
   rentACarPage: {
     meta: {
-      title: "Rent a Car with a Driver — GoAir",
+      title: "VIP GO — Premium Chauffeured Car Rental | GoAir",
       description:
         "Choose an approved car with a driver, pick your dates and pickup spot, and the GoAir team will reach out to confirm.",
     },
-    title: "Rent a Car with a Driver",
-    subtitle: "Cars approved by the GoAir team — book hourly, daily, or for multiple days.",
-    heroBadge: "Chauffeured Car Rental",
+    title: "VIP GO",
+    subtitle: "Premium travel, on your terms — verified cars with a private driver, to a global standard.",
+    heroBadge: "GoAir · VIP GO",
     heroStatVehicles: "cars available",
     heroStatCategories: "categories",
     heroStatCountries: "countries",
@@ -1042,6 +1042,15 @@ const en = {
     filterAllTransmissions: "All types",
     filterAllFuelTypes: "All types",
     filtersTitle: "Filters",
+    addonsTitle: "VIP Extra Services",
+    addonsSubtitle: "Elevate your ride — add any service without complicating your booking",
+    addonsFeaturedBadge: "Most requested",
+    addonsNone: "No extra services",
+    addonsSummaryLabel: "Extra services",
+    addonsCountLabel: "{count} selected",
+    rentalPriceLabel: "Rental price",
+    addonsTotalLabel: "Extras total",
+    grandTotalLabel: "Grand total",
   },
 } as const;
 

@@ -1030,6 +1030,44 @@ export async function fetchRentalCitiesWithPresetAreas(country: string): Promise
   return Array.from(cities);
 }
 
+export type RentalAddonService = {
+  id: string;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  descriptionAr: string | null;
+  descriptionEn: string | null;
+  priceUsd: number;
+  iconName: string | null;
+  isHighlighted: boolean;
+};
+
+/** Optional VIP add-ons a customer can attach to a car-with-driver rental
+ * booking (meet & greet, zero-excess insurance, child seat, etc). Mirrors
+ * the read pattern of fetchRentalVehicleCategories: public, active-only,
+ * ordered for display. */
+export async function fetchRentalAddonServices(): Promise<RentalAddonService[]> {
+  const { data, error } = await supabase
+    .from("rental_addon_services")
+    .select(
+      "id, code, name_ar, name_en, description_ar, description_en, price_usd, icon_name, is_highlighted",
+    )
+    .eq("is_active", true)
+    .order("sort_order", { ascending: true });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+    id: String(row["id"]),
+    code: String(row["code"]),
+    nameAr: String(row["name_ar"]),
+    nameEn: String(row["name_en"]),
+    descriptionAr: (row["description_ar"] as string | null) ?? null,
+    descriptionEn: (row["description_en"] as string | null) ?? null,
+    priceUsd: Number(row["price_usd"]),
+    iconName: (row["icon_name"] as string | null) ?? null,
+    isHighlighted: Boolean(row["is_highlighted"]),
+  }));
+}
+
 export type RentalDurationType = "hourly" | "daily" | "multi_day";
 
 export type RentalPriceQuote = {
@@ -1070,6 +1108,7 @@ export type CreateRentalBookingInput = {
   endDatetime: string;
   pickupLocation: string;
   referralCodeOverride?: string | null;
+  addonServiceIds?: string[];
 };
 
 export type RentalBookingResult = {
@@ -1077,6 +1116,7 @@ export type RentalBookingResult = {
   durationType: RentalDurationType;
   totalUsd: number;
   status: string;
+  addonsTotalUsd: number;
 };
 
 /**
@@ -1099,6 +1139,7 @@ export async function createRentalBookingSafe(
     p_end_datetime: input.endDatetime,
     p_pickup_location: input.pickupLocation,
     ...(pendingReferralCode ? { p_referral_code: pendingReferralCode } : {}),
+    ...(input.addonServiceIds?.length ? { p_addon_service_ids: input.addonServiceIds } : {}),
   });
   if (error) throw new Error(error.message);
   const row = (data ?? [])[0] as Record<string, unknown> | undefined;
@@ -1108,6 +1149,7 @@ export async function createRentalBookingSafe(
     durationType: row["out_duration_type"] as RentalDurationType,
     totalUsd: Number(row["out_total_usd"]),
     status: String(row["out_status"]),
+    addonsTotalUsd: Number(row["out_addons_total_usd"] ?? 0),
   };
 }
 

@@ -14,7 +14,7 @@ const ar = {
     explore: "استكشف",
     packages: "الباقات",
     subscriptions: "الاشتراكات",
-    rentACar: "استأجر عربية",
+    rentACar: "VIP GO",
     trackBooking: "تتبع حجزي",
     menu: "القائمة",
   },
@@ -929,13 +929,13 @@ const ar = {
   },
   rentACarPage: {
     meta: {
-      title: "استأجر عربية مع سايق — GoAir",
+      title: "VIP GO — تأجير عربيات فاخرة مع سايق | GoAir",
       description:
         "اختار عربية معتمدة مع سايق، وحدد المدة والمكان، وفريق GoAir هيتواصل معاك لتأكيد الحجز.",
     },
-    title: "استأجر عربية مع سايق",
-    subtitle: "عربيات معتمدة من فريق GoAir — احجز بالساعة أو باليوم أو لعدة أيام.",
-    heroBadge: "تأجير عربيات مع سايق",
+    title: "VIP GO",
+    subtitle: "تجربة تنقل فاخرة براحتك — عربيات معتمدة مع سايق خاص، بمعايير عالمية.",
+    heroBadge: "GoAir · VIP GO",
     heroStatVehicles: "عربية متاحة",
     heroStatCategories: "فئة عربيات",
     heroStatCountries: "دولة",
@@ -1003,6 +1003,15 @@ const ar = {
     filterAllTransmissions: "كل الأنواع",
     filterAllFuelTypes: "كل الأنواع",
     filtersTitle: "الفلاتر",
+    addonsTitle: "خدمات VIP إضافية",
+    addonsSubtitle: "ارتقِ برحلتك — أضف أي خدمة من غير ما تعقّد حجزك",
+    addonsFeaturedBadge: "الأكثر طلبًا",
+    addonsNone: "من غير خدمات إضافية",
+    addonsSummaryLabel: "الخدمات الإضافية",
+    addonsCountLabel: "{count} خدمة مختارة",
+    rentalPriceLabel: "سعر التأجير",
+    addonsTotalLabel: "إجمالي الإضافات",
+    grandTotalLabel: "الإجمالي الكلي",
   },
 } as const;
 

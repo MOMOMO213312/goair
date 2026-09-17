@@ -4,15 +4,21 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   AlertTriangle,
   Armchair,
+  Baby,
+  BadgeCheck,
   CalendarClock,
   Car,
+  Check,
   CheckCircle2,
+  Clock,
   Cog,
+  CupSoda,
   Fuel,
   Gauge,
   Gem,
   Loader2,
   MapPin,
+  MapPinned,
   Receipt,
   RotateCcw,
   ShieldCheck,
@@ -20,7 +26,9 @@ import {
   Truck,
   Users,
   Wallet,
+  Wifi,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { RoadRoute } from "@/components/road-route";
@@ -39,10 +47,12 @@ import {
   createRentalBookingSafe,
   fetchAvailableRentalVehicles,
   fetchPublicLaunchMarketCountries,
+  fetchRentalAddonServices,
   fetchRentalVehicleCategories,
   formatUsd,
   friendlyErrorMessage,
   quoteRentalPrice,
+  type RentalAddonService,
   type RentalDurationType,
   type RentalVehicle,
 } from "@/lib/goair";
@@ -237,11 +247,11 @@ function RentACarPage() {
             <RoadRoute className="pointer-events-none absolute inset-x-0 top-6 h-16 w-full text-accent/25 sm:top-10 sm:h-24 [stroke-dasharray:1200] [stroke-dashoffset:1200] motion-safe:animate-[draw-route_1.8s_ease-out_forwards]" />
 
             <div className="goair-container relative">
-              <p className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-3 py-1 text-xs font-bold text-primary-foreground">
-                <Sparkles className="size-3.5 text-accent" aria-hidden />
+              <p className="inline-flex items-center gap-2 rounded-full border border-[#c9a24b]/40 bg-[#c9a24b]/10 px-3 py-1 text-xs font-bold tracking-wide text-[#e8cd8a]">
+                <Gem className="size-3.5 text-[#e8cd8a]" aria-hidden />
                 {t("rentACarPage.heroBadge")}
               </p>
-              <h1 className="mt-5 max-w-xl font-display text-3xl font-extrabold leading-[1.15] text-primary-foreground sm:text-5xl">
+              <h1 className="mt-5 max-w-xl font-display text-4xl font-extrabold leading-[1.1] tracking-tight text-primary-foreground sm:text-6xl">
                 {t("rentACarPage.title")}
               </h1>
               <p className="mt-4 max-w-lg text-sm leading-relaxed text-primary-foreground/85 sm:text-base">
@@ -659,6 +669,96 @@ const DURATION_PRESETS: { type: RentalDurationType; hours: number }[] = [
   { type: "multi_day", hours: 0 }, // uses vehicle.multiDayThresholdDays instead
 ];
 
+const RENTAL_ADDON_ICONS: Record<string, LucideIcon> = {
+  BadgeCheck,
+  Clock,
+  Baby,
+  ShieldCheck,
+  Wifi,
+  CupSoda,
+  MapPinned,
+  Sparkles,
+};
+
+/**
+ * Luxury VIP add-on card — gold-accented treatment for `is_highlighted`
+ * services (VIP meet & greet, zero-excess insurance) so the two premium
+ * options read as the "signature" picks against the plainer ones, without
+ * needing separate photos like the shared-ride addon step.
+ */
+function RentalAddonCard({
+  addon,
+  isSelected,
+  onToggle,
+  language,
+}: {
+  addon: RentalAddonService;
+  isSelected: boolean;
+  onToggle: () => void;
+  language: "ar" | "en";
+}) {
+  const { t } = useTranslation();
+  const name = localize(addon.nameAr, addon.nameEn, language);
+  const description = addon.descriptionAr
+    ? localize(addon.descriptionAr, addon.descriptionEn, language)
+    : null;
+  const Icon = RENTAL_ADDON_ICONS[addon.iconName ?? ""] ?? Sparkles;
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-pressed={isSelected}
+      className={cn(
+        "group relative flex items-start gap-3 rounded-xl border p-3.5 text-start transition-all",
+        isSelected
+          ? addon.isHighlighted
+            ? "border-[#c9a24b] bg-gradient-to-br from-[#c9a24b]/10 to-[#c9a24b]/[0.03] shadow-[0_0_0_1px_rgba(201,162,75,0.35)]"
+            : "border-accent bg-accent/5"
+          : "border-border/80 hover:border-accent/40",
+      )}
+    >
+      {addon.isHighlighted ? (
+        <span className="absolute -top-2 end-3 rounded-full bg-[#c9a24b] px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#1a1408] shadow-sm">
+          {t("rentACarPage.addonsFeaturedBadge")}
+        </span>
+      ) : null}
+
+      <span
+        className={cn(
+          "flex size-10 shrink-0 items-center justify-center rounded-lg",
+          addon.isHighlighted
+            ? "bg-[#c9a24b]/15 text-[#a9822f]"
+            : "bg-primary/10 text-primary",
+        )}
+      >
+        <Icon className="size-5" aria-hidden />
+      </span>
+
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center justify-between gap-2">
+          <span className="text-sm font-bold text-primary">{name}</span>
+          <span className="shrink-0 text-sm font-extrabold text-accent">
+            +{formatUsd(addon.priceUsd)}
+          </span>
+        </span>
+        {description ? (
+          <span className="mt-0.5 block text-xs text-muted-foreground">{description}</span>
+        ) : null}
+      </span>
+
+      <span
+        className={cn(
+          "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border transition-colors",
+          isSelected ? "border-accent bg-accent text-accent-foreground" : "border-border/80",
+        )}
+      >
+        {isSelected ? <Check className="size-3.5" aria-hidden /> : null}
+      </span>
+    </button>
+  );
+}
+
 function BookingForm({
   vehicle,
   language,
@@ -688,6 +788,28 @@ function BookingForm({
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
+  const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
+
+  const addonServicesQuery = useQuery({
+    queryKey: ["goair", "rental-addon-services"],
+    queryFn: fetchRentalAddonServices,
+    staleTime: 5 * 60 * 1000,
+  });
+  const addonServices = addonServicesQuery.data ?? [];
+
+  function toggleAddon(id: string) {
+    setSelectedAddonIds((current) =>
+      current.includes(id) ? current.filter((x) => x !== id) : [...current, id],
+    );
+  }
+
+  const addonsTotalUsd = useMemo(
+    () =>
+      addonServices
+        .filter((addon) => selectedAddonIds.includes(addon.id))
+        .reduce((sum, addon) => sum + addon.priceUsd, 0),
+    [addonServices, selectedAddonIds],
+  );
 
   function applyPreset(preset: RentalDurationType) {
     setDurationPreset(preset);
@@ -730,6 +852,7 @@ function BookingForm({
         startDatetime: startIso,
         endDatetime: endIso,
         pickupLocation: pickupLocation.trim(),
+        addonServiceIds: selectedAddonIds,
       });
       onDone();
     } catch (error) {
@@ -836,6 +959,33 @@ function BookingForm({
               />
             </div>
 
+            {addonServices.length > 0 ? (
+              <div className="space-y-3 rounded-xl border border-[#c9a24b]/30 bg-gradient-to-b from-[#c9a24b]/[0.06] to-transparent p-4">
+                <div className="flex items-center gap-2">
+                  <Gem className="size-4 text-[#a9822f]" aria-hidden />
+                  <div>
+                    <p className="font-display text-sm font-extrabold text-primary">
+                      {t("rentACarPage.addonsTitle")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {t("rentACarPage.addonsSubtitle")}
+                    </p>
+                  </div>
+                </div>
+                <div className="grid gap-2.5 sm:grid-cols-2">
+                  {addonServices.map((addon) => (
+                    <RentalAddonCard
+                      key={addon.id}
+                      addon={addon}
+                      isSelected={selectedAddonIds.includes(addon.id)}
+                      onToggle={() => toggleAddon(addon.id)}
+                      language={language}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="rc-name">{t("rentACarPage.nameLabel")}</Label>
@@ -881,9 +1031,40 @@ function BookingForm({
               ) : quoteQuery.isError ? (
                 <p className="text-sm text-destructive">{t("rentACarPage.quoteError")}</p>
               ) : (
-                <p className="font-display text-3xl font-extrabold text-accent">
-                  {formatUsd(quoteQuery.data?.totalUsd ?? 0)}
-                </p>
+                <>
+                  {selectedAddonIds.length > 0 ? (
+                    <div className="mb-3 space-y-1.5 border-b border-border/60 pb-3">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          {t("rentACarPage.rentalPriceLabel")}
+                        </span>
+                        <span className="font-semibold text-primary">
+                          {formatUsd(quoteQuery.data?.totalUsd ?? 0)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          {t("rentACarPage.addonsTotalLabel")}
+                        </span>
+                        <span className="font-semibold text-[#a9822f]">
+                          +{formatUsd(addonsTotalUsd)}
+                        </span>
+                      </div>
+                    </div>
+                  ) : null}
+                  <p className="font-display text-3xl font-extrabold text-accent">
+                    {formatUsd((quoteQuery.data?.totalUsd ?? 0) + addonsTotalUsd)}
+                  </p>
+                  {selectedAddonIds.length > 0 ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {t("rentACarPage.grandTotalLabel")} ·{" "}
+                      {t("rentACarPage.addonsCountLabel").replace(
+                        "{count}",
+                        String(selectedAddonIds.length),
+                      )}
+                    </p>
+                  ) : null}
+                </>
               )}
             </div>
           </Card>
