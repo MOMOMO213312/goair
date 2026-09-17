@@ -25,7 +25,7 @@ import {
 import { getCountryLabel } from "@/lib/i18n/country-labels";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { localize } from "@/lib/i18n/localize";
-import type { Trip } from "@/lib/goair";
+import { fetchServiceZones, type ServiceZone, type Trip } from "@/lib/goair";
 import {
   getAirportsForCountry,
   getAirportsForDestination,
@@ -73,6 +73,12 @@ export function SearchWidget({
   const [seats, setSeats] = useState(initial?.seats ?? 1);
   const [flight, setFlight] = useState("");
   const [showFlightField, setShowFlightField] = useState(false);
+
+  // Zone-Based Search (2026-09 decision): curated covered areas per airport,
+  // shown as quick picks alongside the existing destination combobox. Empty
+  // until an airport has curated zones seeded — the section just doesn't
+  // render, so this is purely additive and never blocks the old flow.
+  const [zones, setZones] = useState<ServiceZone[]>([]);
 
   const isDeparting = direction === "to_airport";
 
@@ -132,6 +138,48 @@ export function SearchWidget({
       if (only) setAirport(only.code);
     }
   }, [isDeparting, destination, airport, airportsForDestination]);
+
+  useEffect(() => {
+    if (!airport) {
+      setZones([]);
+      return;
+    }
+    let cancelled = false;
+    fetchServiceZones(airport)
+      .then((result) => {
+        if (!cancelled) setZones(result);
+      })
+      .catch(() => {
+        // Non-critical enhancement — fail silently and keep the existing
+        // destination combobox as the only way to pick a route.
+        if (!cancelled) setZones([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [airport]);
+
+  // A zone only matters right now if it maps to a real, bookable route —
+  // trip.zone_id backfill is still pending, so the interim heuristic is a
+  // name match against the destinations actually available for this airport.
+  const zoneChips = useMemo(
+    () =>
+      zones
+        .map((zone) => ({
+          zone,
+          matchedDestination: destinations.find((d) => d === zone.nameAr) ?? null,
+        }))
+        .sort((a, b) => a.zone.displayOrder - b.zone.displayOrder),
+    [zones, destinations],
+  );
+
+  function selectZone(zone: ServiceZone, matchedDestination: string | null) {
+    if (matchedDestination) {
+      setDestination(matchedDestination);
+      return;
+    }
+    toast.info(t("searchWidget.zoneComingSoon").replace("{zone}", localize(zone.nameAr, zone.nameEn, language)));
+  }
 
   const airportOptions = useMemo(
     () => airportChoices.map((item) => ({ value: item.code, label: localize(item.name, item.nameEn ?? null, language), hint: item.code })),
@@ -374,6 +422,33 @@ export function SearchWidget({
           </Button>
         </div>
       </form>
+
+      {/* Zone-Based Search quick picks — only rendered once curated zones
+          exist for the chosen airport, so this never crowds the widget for
+          airports that haven't been seeded yet. */}
+      {zoneChips.length > 0 ? (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold text-muted-foreground">
+            {t("searchWidget.zonesLabel")}
+          </span>
+          {zoneChips.map(({ zone, matchedDestination }) => (
+            <button
+              key={zone.id}
+              type="button"
+              onClick={() => selectZone(zone, matchedDestination)}
+              aria-pressed={destination === matchedDestination && !!matchedDestination}
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-xs font-bold shadow-sm transition-colors",
+                destination === matchedDestination && matchedDestination
+                  ? "border-accent bg-accent/10 text-accent"
+                  : "border-border bg-card text-primary hover:border-accent hover:text-accent",
+              )}
+            >
+              {localize(zone.nameAr, zone.nameEn, language)}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {/* Flight number — optional, so it stays a one-line link instead of a
           permanent grid cell that pushes the whole bar taller. */}
