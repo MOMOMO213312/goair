@@ -786,6 +786,53 @@ export async function cancelBookingByTicket(ticketCode: string, reason: string) 
   return true;
 }
 
+/**
+ * Posts a live GPS reading from the public /driver-track page. The
+ * tracking_token is the capability — same trust model as a booking's
+ * ticket_code — so this never requires the driver to log in or install
+ * anything beyond opening the link on his own phone.
+ */
+export async function updateDriverLocation(
+  trackingToken: string,
+  latitude: number,
+  longitude: number,
+  heading?: number | null,
+  speedKmh?: number | null,
+): Promise<void> {
+  const { error } = await supabase.rpc("update_driver_location_safe", {
+    p_tracking_token: trackingToken,
+    p_latitude: latitude,
+    p_longitude: longitude,
+    p_heading: heading ?? null,
+    p_speed_kmh: speedKmh ?? null,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export type DriverLocation = {
+  latitude: number;
+  longitude: number;
+  updatedAt: string;
+};
+
+/** Only returns a pin while it's fresh (see get_driver_location_by_ticket —
+ * 15-minute window) so /my-bookings never shows a stale/frozen position. */
+export async function getDriverLocationByTicket(
+  ticketCode: string,
+): Promise<DriverLocation | null> {
+  const { data, error } = await supabase.rpc("get_driver_location_by_ticket", {
+    p_ticket_code: ticketCode.trim().toUpperCase(),
+  });
+  if (error) throw new Error(error.message);
+  const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | undefined;
+  if (!row || row["latitude"] == null) return null;
+  return {
+    latitude: Number(row["latitude"]),
+    longitude: Number(row["longitude"]),
+    updatedAt: String(row["updated_at"]),
+  };
+}
+
 export type BookingRatingEligibility = {
   bookingId: string;
   canRate: boolean;

@@ -655,6 +655,7 @@ const en = {
       waiting: "Waiting for driver & vehicle assignment",
       vehiclePlate: "Vehicle plate: {{plate}}",
       meetingPoint: "Meeting point: {{point}}",
+      liveLocationLink: "📍 View driver's live location on the map",
       unassignedHint:
         "The driver's name and vehicle number will appear here as soon as the GoAir team assigns them — this page refreshes automatically.",
     },

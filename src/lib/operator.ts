@@ -74,6 +74,9 @@ export type OperatorTrip = {
   statusNote: string | null; statusUpdatedAt: string | null;
   /** Needed to look up the right ground-handling catalog for an addon-service request. */
   airportCode: string | null;
+  /** Capability token for the public /driver-track page — share it with the
+   * driver (any messaging app) so his phone can stream live GPS position. */
+  trackingToken: string;
 };
 
 export async function getOperatorTrips(token: string): Promise<OperatorTrip[]> {
@@ -93,6 +96,7 @@ export async function getOperatorTrips(token: string): Promise<OperatorTrip[]> {
     statusNote: (r["status_note"] as string | null) ?? null,
     statusUpdatedAt: (r["status_updated_at"] as string | null) ?? null,
     airportCode: (r["airport_code"] as string | null) ?? null,
+    trackingToken: String(r["tracking_token"]),
   }));
 }
 

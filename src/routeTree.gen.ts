@@ -15,6 +15,7 @@ import { Route as AgencyRouteImport } from './routes/agency'
 import { Route as BookRouteImport } from './routes/book'
 import { Route as ConfirmationRouteImport } from './routes/confirmation'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as DriverTrackRouteImport } from './routes/driver-track'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as GroundHandlingRouteImport } from './routes/ground-handling'
@@ -103,6 +104,11 @@ const ConfirmationRoute = ConfirmationRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DriverTrackRoute = DriverTrackRouteImport.update({
+  id: '/driver-track',
+  path: '/driver-track',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExploreRoute = ExploreRouteImport.update({
@@ -409,6 +415,7 @@ export interface FileRoutesByFullPath {
   '/book': typeof BookRoute
   '/confirmation': typeof ConfirmationRoute
   '/contact': typeof ContactRoute
+  '/driver-track': typeof DriverTrackRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/ground-handling': typeof GroundHandlingRouteWithChildren
@@ -475,6 +482,7 @@ export interface FileRoutesByTo {
   '/book': typeof BookRoute
   '/confirmation': typeof ConfirmationRoute
   '/contact': typeof ContactRoute
+  '/driver-track': typeof DriverTrackRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/my-bookings': typeof MyBookingsRoute
@@ -539,6 +547,7 @@ export interface FileRoutesById {
   '/book': typeof BookRoute
   '/confirmation': typeof ConfirmationRoute
   '/contact': typeof ContactRoute
+  '/driver-track': typeof DriverTrackRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/ground-handling': typeof GroundHandlingRouteWithChildren
@@ -608,6 +617,7 @@ export interface FileRouteTypes {
     | '/book'
     | '/confirmation'
     | '/contact'
+    | '/driver-track'
     | '/explore'
     | '/faq'
     | '/ground-handling'
@@ -674,6 +684,7 @@ export interface FileRouteTypes {
     | '/book'
     | '/confirmation'
     | '/contact'
+    | '/driver-track'
     | '/explore'
     | '/faq'
     | '/my-bookings'
@@ -737,6 +748,7 @@ export interface FileRouteTypes {
     | '/book'
     | '/confirmation'
     | '/contact'
+    | '/driver-track'
     | '/explore'
     | '/faq'
     | '/ground-handling'
@@ -805,6 +817,7 @@ export interface RootRouteChildren {
   BookRoute: typeof BookRoute
   ConfirmationRoute: typeof ConfirmationRoute
   ContactRoute: typeof ContactRoute
+  DriverTrackRoute: typeof DriverTrackRoute
   ExploreRoute: typeof ExploreRoute
   FaqRoute: typeof FaqRoute
   GroundHandlingRoute: typeof GroundHandlingRouteWithChildren
@@ -864,6 +877,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/driver-track': {
+      id: '/driver-track'
+      path: '/driver-track'
+      fullPath: '/driver-track'
+      preLoaderRoute: typeof DriverTrackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/explore': {
@@ -1424,6 +1444,7 @@ const rootRouteChildren: RootRouteChildren = {
   BookRoute: BookRoute,
   ConfirmationRoute: ConfirmationRoute,
   ContactRoute: ContactRoute,
+  DriverTrackRoute: DriverTrackRoute,
   ExploreRoute: ExploreRoute,
   FaqRoute: FaqRoute,
   GroundHandlingRoute: GroundHandlingRouteWithChildren,

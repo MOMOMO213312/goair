@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Ban, Check, Clock, PlusCircle, Repeat, Users, X } from "lucide-react";
+import { Ban, Check, Clock, Copy, PlusCircle, Repeat, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { useOperatorToken } from "@/lib/operator-session";
 import { OperatorAuthError, OperatorLoading, OperatorSection } from "@/components/operator/operator-shell";
@@ -167,6 +167,14 @@ function TripsPage() {
     }
   }
 
+  function copyTrackingLink(trip: OperatorTrip) {
+    const link = `${window.location.origin}/driver-track?token=${trip.trackingToken}`;
+    navigator.clipboard
+      .writeText(link)
+      .then(() => toast.success("تم نسخ رابط التتبع — ابعته للسائق على أي تطبيق مراسلة."))
+      .catch(() => toast.error("لم نتمكن من نسخ الرابط."));
+  }
+
   return (
     <OperatorSection title="الرحلات المخصصة لأسطولك">
       {trips.length === 0 ? (
@@ -266,10 +274,23 @@ function TripsPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setActiveTrip(t)}>
-                      <Users className="h-3.5 w-3.5" />
-                      بيانات الركاب
-                    </Button>
+                    <div className="flex items-center gap-1.5">
+                      <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setActiveTrip(t)}>
+                        <Users className="h-3.5 w-3.5" />
+                        بيانات الركاب
+                      </Button>
+                      {!OPERATOR_TERMINAL_STATUSES.has(t.operatorStatus) ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1.5"
+                          onClick={() => copyTrackingLink(t)}
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                          رابط تتبع السائق
+                        </Button>
+                      ) : null}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Car, Gift, Loader2, MapPin, Phone, Search, Star, UserRound, XCircle } from "lucide-react";
+import { Car, Gift, Loader2, MapPin, Navigation, Phone, Search, Star, UserRound, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -15,11 +15,13 @@ import {
   friendlyErrorMessage,
   getBookingByTicket,
   getBookingRatingEligibility,
+  getDriverLocationByTicket,
   getRentalBookingByTicket,
   getSubscriptionByCode,
   submitCustomerRating,
   type BookingRatingEligibility,
   type BookingRecord,
+  type DriverLocation,
   type RentalBookingRecord,
   type SubscriptionRecord,
 } from "@/lib/goair";
@@ -59,6 +61,7 @@ function MyBookingsPage() {
   const [ratingEligibility, setRatingEligibility] = useState<BookingRatingEligibility | null>(
     null,
   );
+  const [driverLocation, setDriverLocation] = useState<DriverLocation | null>(null);
 
   const [rentalCode, setRentalCode] = useState("");
   const [rentalBooking, setRentalBooking] = useState<RentalBookingRecord | null>(null);
@@ -184,12 +187,15 @@ function MyBookingsPage() {
 
   // "Live" trip status: quietly refresh while an active booking is open, so
   // a driver/vehicle assignment made from /admin shows up without the
-  // customer needing to re-search manually.
+  // customer needing to re-search manually. Also polls the driver's live
+  // GPS position (see /driver-track) at the same cadence.
   useEffect(() => {
     if (!isActive) return;
     const interval = setInterval(() => {
       getBookingByTicket(code).then(setBooking).catch(() => {});
+      getDriverLocationByTicket(code).then(setDriverLocation).catch(() => {});
     }, 30_000);
+    getDriverLocationByTicket(code).then(setDriverLocation).catch(() => {});
     return () => clearInterval(interval);
   }, [isActive, code]);
 
@@ -267,7 +273,7 @@ function MyBookingsPage() {
             <Row label={t("myBookingsPage.booking.fields.status")} value={String(booking["status"] ?? "—")} />
           </dl>
 
-          {isActive ? <TripStatusPanel booking={booking} /> : null}
+          {isActive ? <TripStatusPanel booking={booking} driverLocation={driverLocation} /> : null}
 
           {status.includes("cancel") ? (
             <p className="mt-5 text-sm font-bold text-destructive">
@@ -481,7 +487,13 @@ function MyBookingsPage() {
 }
 
 /** Live driver/vehicle assignment — appears automatically once staff assign it from /admin. */
-function TripStatusPanel({ booking }: { booking: BookingRecord }) {
+function TripStatusPanel({
+  booking,
+  driverLocation,
+}: {
+  booking: BookingRecord;
+  driverLocation: DriverLocation | null;
+}) {
   const { t } = useTranslation();
   const driverName = booking["driver_name"] as string | null;
   const driverPhone = booking["driver_phone"] as string | null;
@@ -529,6 +541,17 @@ function TripStatusPanel({ booking }: { booking: BookingRecord }) {
               <MapPin className="size-4 shrink-0 text-accent" aria-hidden />
               <span>{t("myBookingsPage.tripStatus.meetingPoint", { point: meetingPoint })}</span>
             </div>
+          ) : null}
+          {driverLocation ? (
+            <a
+              href={`https://www.google.com/maps?q=${driverLocation.latitude},${driverLocation.longitude}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2 font-bold text-accent hover:underline"
+            >
+              <Navigation className="size-4 shrink-0" aria-hidden />
+              {t("myBookingsPage.tripStatus.liveLocationLink")}
+            </a>
           ) : null}
         </div>
       ) : (
