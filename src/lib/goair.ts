@@ -786,6 +786,60 @@ export async function cancelBookingByTicket(ticketCode: string, reason: string) 
   return true;
 }
 
+export type BookingRatingEligibility = {
+  bookingId: string;
+  canRate: boolean;
+  alreadyRated: boolean;
+  existingStars: number | null;
+  existingComment: string | null;
+};
+
+/** Whether the customer's my-bookings screen should show the "rate your
+ * trip" card for this ticket, and the existing rating if one was already
+ * submitted. Read-only — safe to call every time a booking is looked up. */
+export async function getBookingRatingEligibility(
+  ticketCode: string,
+): Promise<BookingRatingEligibility | null> {
+  const { data, error } = await supabase.rpc("get_booking_rating_eligibility", {
+    p_ticket_code: ticketCode.trim().toUpperCase(),
+  });
+  if (error) throw new Error(error.message);
+  const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | undefined;
+  if (!row || !row["booking_id"]) return null;
+  return {
+    bookingId: String(row["booking_id"]),
+    canRate: Boolean(row["can_rate"]),
+    alreadyRated: Boolean(row["already_rated"]),
+    existingStars: row["existing_stars"] != null ? Number(row["existing_stars"]) : null,
+    existingComment: (row["existing_comment"] as string | null) ?? null,
+  };
+}
+
+/**
+ * One rating per booking, enforced by a unique constraint in the DB — the
+ * RPC also checks the trip is confirmed, not cancelled, and already in the
+ * past before allowing the insert. Never insert into `ratings` directly.
+ */
+export async function submitCustomerRating(
+  ticketCode: string,
+  stars: number,
+  comment?: string,
+): Promise<{ id: string; stars: number; comment: string | null }> {
+  const { data, error } = await supabase.rpc("submit_customer_rating_safe", {
+    p_ticket_code: ticketCode.trim().toUpperCase(),
+    p_stars: stars,
+    p_comment: comment?.trim() || null,
+  });
+  if (error) throw new Error(error.message);
+  const row = (data ?? [])[0] as Record<string, unknown> | undefined;
+  if (!row) throw new Error("لم يتم إرسال التقييم.");
+  return {
+    id: String(row["out_id"]),
+    stars: Number(row["out_stars"]),
+    comment: (row["out_comment"] as string | null) ?? null,
+  };
+}
+
 /** Amount is validated by the validate_payment_amount trigger in the database. */
 /**
  * Uploads a payment-proof screenshot/PDF to the `payment-proofs` storage

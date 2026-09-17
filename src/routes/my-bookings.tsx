@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Car, Gift, Loader2, MapPin, Phone, Search, UserRound, XCircle } from "lucide-react";
+import { Car, Gift, Loader2, MapPin, Phone, Search, Star, UserRound, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -14,8 +14,11 @@ import {
   formatUsd,
   friendlyErrorMessage,
   getBookingByTicket,
+  getBookingRatingEligibility,
   getRentalBookingByTicket,
   getSubscriptionByCode,
+  submitCustomerRating,
+  type BookingRatingEligibility,
   type BookingRecord,
   type RentalBookingRecord,
   type SubscriptionRecord,
@@ -53,6 +56,9 @@ function MyBookingsPage() {
   const [booking, setBooking] = useState<BookingRecord | null>(null);
   const [busy, setBusy] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [ratingEligibility, setRatingEligibility] = useState<BookingRatingEligibility | null>(
+    null,
+  );
 
   const [rentalCode, setRentalCode] = useState("");
   const [rentalBooking, setRentalBooking] = useState<RentalBookingRecord | null>(null);
@@ -146,8 +152,12 @@ function MyBookingsPage() {
       if (!result) {
         toast.error(t("myBookingsPage.booking.notFoundError"));
         setBooking(null);
+        setRatingEligibility(null);
       } else {
         setBooking(result);
+        getBookingRatingEligibility(code)
+          .then(setRatingEligibility)
+          .catch(() => setRatingEligibility(null));
       }
     } catch (error) {
       toast.error(friendlyErrorMessage(error, t("myBookingsPage.booking.searchError")));
@@ -274,6 +284,29 @@ function MyBookingsPage() {
               {t("myBookingsPage.booking.cancelButton")}
             </Button>
           )}
+
+          {ratingEligibility?.canRate ? (
+            <TripRatingForm
+              ticketCode={code}
+              onSubmitted={(result) =>
+                setRatingEligibility((current) =>
+                  current
+                    ? {
+                        ...current,
+                        alreadyRated: true,
+                        existingStars: result.stars,
+                        existingComment: result.comment,
+                      }
+                    : current,
+                )
+              }
+            />
+          ) : ratingEligibility?.alreadyRated ? (
+            <TripRatingSummary
+              stars={ratingEligibility.existingStars ?? 0}
+              comment={ratingEligibility.existingComment}
+            />
+          ) : null}
         </Card>
       ) : null}
       </>
@@ -503,6 +536,118 @@ function TripStatusPanel({ booking }: { booking: BookingRecord }) {
           {t("myBookingsPage.tripStatus.unassignedHint")}
         </p>
       )}
+    </div>
+  );
+}
+
+function TripRatingForm({
+  ticketCode,
+  onSubmitted,
+}: {
+  ticketCode: string;
+  onSubmitted: (result: { stars: number; comment: string | null }) => void;
+}) {
+  const { t } = useTranslation();
+  const [stars, setStars] = useState(0);
+  const [hoverStars, setHoverStars] = useState(0);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submit() {
+    if (stars < 1) {
+      toast.error(t("myBookingsPage.booking.rating.missingStars"));
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const result = await submitCustomerRating(ticketCode, stars, comment);
+      toast.success(t("myBookingsPage.booking.rating.submitSuccess"));
+      onSubmitted({ stars: result.stars, comment: result.comment });
+    } catch (error) {
+      toast.error(friendlyErrorMessage(error, t("myBookingsPage.booking.rating.submitError")));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const displayedStars = hoverStars || stars;
+
+  return (
+    <div className="mt-6 rounded-lg border border-accent/30 bg-accent/5 p-4">
+      <p className="font-display text-sm font-extrabold text-primary">
+        {t("myBookingsPage.booking.rating.title")}
+      </p>
+      <p className="mt-0.5 text-xs text-muted-foreground">
+        {t("myBookingsPage.booking.rating.subtitle")}
+      </p>
+
+      <div className="mt-3 flex items-center gap-1" onMouseLeave={() => setHoverStars(0)}>
+        {[1, 2, 3, 4, 5].map((value) => (
+          <button
+            key={value}
+            type="button"
+            aria-label={String(value)}
+            onMouseEnter={() => setHoverStars(value)}
+            onClick={() => setStars(value)}
+            className="p-0.5"
+          >
+            <Star
+              className={cn(
+                "size-7 transition-colors",
+                value <= displayedStars
+                  ? "fill-accent text-accent"
+                  : "fill-transparent text-muted-foreground/40",
+              )}
+            />
+          </button>
+        ))}
+      </div>
+
+      <textarea
+        value={comment}
+        onChange={(event) => setComment(event.target.value)}
+        placeholder={t("myBookingsPage.booking.rating.commentPlaceholder")}
+        rows={3}
+        className="mt-3 w-full resize-none rounded-lg border border-border bg-card p-3 text-sm outline-none focus:border-accent"
+      />
+
+      <Button
+        type="button"
+        disabled={submitting}
+        onClick={submit}
+        className="mt-3 w-full bg-accent font-bold text-accent-foreground hover:bg-accent/90"
+      >
+        {submitting ? <Loader2 className="size-4 animate-spin" /> : null}
+        {submitting
+          ? t("myBookingsPage.booking.rating.submitting")
+          : t("myBookingsPage.booking.rating.submitButton")}
+      </Button>
+    </div>
+  );
+}
+
+function TripRatingSummary({ stars, comment }: { stars: number; comment: string | null }) {
+  const { t } = useTranslation();
+  return (
+    <div className="mt-6 rounded-lg border border-border/80 bg-secondary/30 p-4">
+      <p className="text-xs font-bold text-muted-foreground">
+        {t("myBookingsPage.booking.rating.alreadyRatedTitle")}
+      </p>
+      <div className="mt-1.5 flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map((value) => (
+          <Star
+            key={value}
+            className={cn(
+              "size-5",
+              value <= stars ? "fill-accent text-accent" : "fill-transparent text-muted-foreground/30",
+            )}
+          />
+        ))}
+      </div>
+      {comment ? <p className="mt-2 text-sm text-foreground">{comment}</p> : null}
+      <p className="mt-2 text-xs text-muted-foreground">
+        {t("myBookingsPage.booking.rating.thankYouNote")}
+      </p>
     </div>
   );
 }

@@ -577,6 +577,18 @@ const ar = {
       },
       cancelledNote: "هذا الحجز ملغي.",
       cancelButton: "إلغاء الحجز",
+      rating: {
+        title: "قيّم رحلتك",
+        subtitle: "رأيك بيساعدنا نحسّن الخدمة",
+        commentPlaceholder: "أي ملاحظات على الرحلة؟ (اختياري)",
+        submitButton: "إرسال التقييم",
+        submitting: "بنرسل تقييمك...",
+        missingStars: "اختار عدد النجوم الأول.",
+        submitSuccess: "شكرًا لتقييمك!",
+        submitError: "لم نتمكن من إرسال التقييم.",
+        alreadyRatedTitle: "تقييمك للرحلة",
+        thankYouNote: "شكرًا لمشاركتنا رأيك.",
+      },
     },
     rental: {
       ticketLabel: "كود حجز التأجير",

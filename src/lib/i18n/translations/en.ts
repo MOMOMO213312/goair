@@ -592,6 +592,18 @@ const en = {
       },
       cancelledNote: "This booking is cancelled.",
       cancelButton: "Cancel booking",
+      rating: {
+        title: "Rate your trip",
+        subtitle: "Your feedback helps us improve",
+        commentPlaceholder: "Any notes on the trip? (optional)",
+        submitButton: "Submit rating",
+        submitting: "Submitting your rating...",
+        missingStars: "Pick a star rating first.",
+        submitSuccess: "Thanks for your feedback!",
+        submitError: "We couldn't submit your rating.",
+        alreadyRatedTitle: "Your trip rating",
+        thankYouNote: "Thanks for sharing your feedback.",
+      },
     },
     rental: {
       ticketLabel: "Rental booking code",
