@@ -1131,6 +1131,38 @@ export async function fetchRentalCitiesWithPresetAreas(country: string): Promise
   return Array.from(cities);
 }
 
+export type ServiceZone = {
+  id: string;
+  country: string;
+  city: string;
+  airportCode: string;
+  nameAr: string;
+  nameEn: string | null;
+  displayOrder: number;
+};
+
+/** Zone-Based Search covered areas (2026-09 decision): a curated list of
+ * neighborhoods/areas per airport the customer can pick from, instead of
+ * either a single fixed catalog route or a fully free address. Returns an
+ * empty list for an airport with no curated zones yet — callers should treat
+ * that as "not available for this airport yet", exactly like
+ * fetchRentalPickupAreas' empty-list convention above, not as an error. */
+export async function fetchServiceZones(airportCode?: string): Promise<ServiceZone[]> {
+  const { data, error } = await supabase.rpc("get_service_zones", {
+    p_airport_code: airportCode ?? null,
+  });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+    id: String(row["id"]),
+    country: String(row["country"]),
+    city: String(row["city"]),
+    airportCode: String(row["airport_code"]),
+    nameAr: String(row["name_ar"]),
+    nameEn: row["name_en"] ? String(row["name_en"]) : null,
+    displayOrder: Number(row["display_order"] ?? 0),
+  }));
+}
+
 export type RentalAddonService = {
   id: string;
   code: string;
