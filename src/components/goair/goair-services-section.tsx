@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ArrowLeft, ChevronDown, PlaneTakeoff, Sparkles } from "lucide-react";
 
+import heroAirportImage from "@/assets/hero-airport.jpg";
 import { ADDON_ICONS } from "@/components/goair/booking/booking-addons-step";
 import { SectionHeader } from "@/components/goair/section-header";
 import type { AddonService, AddonServiceCategory } from "@/lib/goair";
@@ -11,12 +12,9 @@ import { useTranslation } from "@/lib/i18n/language-context";
 import { localize } from "@/lib/i18n/localize";
 import { cn } from "@/lib/utils";
 
-// ⚠️ غيّر الصورة دي بصورة تخص GoAir (عربية/مطار القاهرة أو بيروت).
-// لو هترفع ملف محلي: حطه في src/assets واستورده هنا بدل الرابط، مثلًا:
-//   import airportTransferImage from "@/assets/airport-transfer.jpg";
-// وبعدين خلي AIRPORT_TRANSFER_IMAGE = airportTransferImage.
-const AIRPORT_TRANSFER_IMAGE =
-  "https://images.unsplash.com/photo-1605407079290-c31423ab611a?q=80&w=1200&auto=format&fit=crop";
+// صورة محلية بدون أي شعار شركة طيران. لتغييرها: استبدل الملف src/assets/hero-airport.jpg
+// أو استورد صورة تانية هنا.
+const AIRPORT_TRANSFER_IMAGE = heroAirportImage;
 
 const CATEGORY_ORDER: AddonServiceCategory[] = ["airport", "before_trip", "luggage", "destination"];
 const INITIAL_VISIBLE = 6;
