@@ -19,6 +19,7 @@ import { Route as DriverTrackRouteImport } from './routes/driver-track'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as GroundHandlingRouteImport } from './routes/ground-handling'
+import { Route as JoinSharedTransportRouteImport } from './routes/join-shared-transport'
 import { Route as MyBookingsRouteImport } from './routes/my-bookings'
 import { Route as OperatorRouteImport } from './routes/operator'
 import { Route as PackageRouteImport } from './routes/package'
@@ -46,6 +47,7 @@ import { Route as AdminRentalVehiclesRouteImport } from './routes/admin.rental-v
 import { Route as AdminRequestsRouteImport } from './routes/admin.requests'
 import { Route as AdminSubscriptionPlansRouteImport } from './routes/admin.subscription-plans'
 import { Route as AdminTeamRouteImport } from './routes/admin.team'
+import { Route as AdminTransportApplicationsRouteImport } from './routes/admin.transport-applications'
 import { Route as GroundHandlingIndexRouteImport } from './routes/ground-handling.index'
 import { Route as GroundHandlingFlightsRouteImport } from './routes/ground-handling.flights'
 import { Route as GroundHandlingIncidentsRouteImport } from './routes/ground-handling.incidents'
@@ -124,6 +126,11 @@ const FaqRoute = FaqRouteImport.update({
 const GroundHandlingRoute = GroundHandlingRouteImport.update({
   id: '/ground-handling',
   path: '/ground-handling',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JoinSharedTransportRoute = JoinSharedTransportRouteImport.update({
+  id: '/join-shared-transport',
+  path: '/join-shared-transport',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MyBookingsRoute = MyBookingsRouteImport.update({
@@ -261,6 +268,12 @@ const AdminTeamRoute = AdminTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminTransportApplicationsRoute =
+  AdminTransportApplicationsRouteImport.update({
+    id: '/transport-applications',
+    path: '/transport-applications',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const GroundHandlingIndexRoute = GroundHandlingIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -419,6 +432,7 @@ export interface FileRoutesByFullPath {
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/ground-handling': typeof GroundHandlingRouteWithChildren
+  '/join-shared-transport': typeof JoinSharedTransportRoute
   '/my-bookings': typeof MyBookingsRoute
   '/operator': typeof OperatorRouteWithChildren
   '/package': typeof PackageRoute
@@ -445,6 +459,7 @@ export interface FileRoutesByFullPath {
   '/admin/requests': typeof AdminRequestsRoute
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
   '/admin/team': typeof AdminTeamRoute
+  '/admin/transport-applications': typeof AdminTransportApplicationsRoute
   '/ground-handling/flights': typeof GroundHandlingFlightsRoute
   '/ground-handling/incidents': typeof GroundHandlingIncidentsRoute
   '/ground-handling/reports': typeof GroundHandlingReportsRoute
@@ -485,6 +500,7 @@ export interface FileRoutesByTo {
   '/driver-track': typeof DriverTrackRoute
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
+  '/join-shared-transport': typeof JoinSharedTransportRoute
   '/my-bookings': typeof MyBookingsRoute
   '/package': typeof PackageRoute
   '/payment': typeof PaymentRoute
@@ -508,6 +524,7 @@ export interface FileRoutesByTo {
   '/admin/requests': typeof AdminRequestsRoute
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
   '/admin/team': typeof AdminTeamRoute
+  '/admin/transport-applications': typeof AdminTransportApplicationsRoute
   '/ground-handling/flights': typeof GroundHandlingFlightsRoute
   '/ground-handling/incidents': typeof GroundHandlingIncidentsRoute
   '/ground-handling/reports': typeof GroundHandlingReportsRoute
@@ -551,6 +568,7 @@ export interface FileRoutesById {
   '/explore': typeof ExploreRoute
   '/faq': typeof FaqRoute
   '/ground-handling': typeof GroundHandlingRouteWithChildren
+  '/join-shared-transport': typeof JoinSharedTransportRoute
   '/my-bookings': typeof MyBookingsRoute
   '/operator': typeof OperatorRouteWithChildren
   '/package': typeof PackageRoute
@@ -577,6 +595,7 @@ export interface FileRoutesById {
   '/admin/requests': typeof AdminRequestsRoute
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
   '/admin/team': typeof AdminTeamRoute
+  '/admin/transport-applications': typeof AdminTransportApplicationsRoute
   '/ground-handling/flights': typeof GroundHandlingFlightsRoute
   '/ground-handling/incidents': typeof GroundHandlingIncidentsRoute
   '/ground-handling/reports': typeof GroundHandlingReportsRoute
@@ -621,6 +640,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/faq'
     | '/ground-handling'
+    | '/join-shared-transport'
     | '/my-bookings'
     | '/operator'
     | '/package'
@@ -647,6 +667,7 @@ export interface FileRouteTypes {
     | '/admin/requests'
     | '/admin/subscription-plans'
     | '/admin/team'
+    | '/admin/transport-applications'
     | '/ground-handling/flights'
     | '/ground-handling/incidents'
     | '/ground-handling/reports'
@@ -687,6 +708,7 @@ export interface FileRouteTypes {
     | '/driver-track'
     | '/explore'
     | '/faq'
+    | '/join-shared-transport'
     | '/my-bookings'
     | '/package'
     | '/payment'
@@ -710,6 +732,7 @@ export interface FileRouteTypes {
     | '/admin/requests'
     | '/admin/subscription-plans'
     | '/admin/team'
+    | '/admin/transport-applications'
     | '/ground-handling/flights'
     | '/ground-handling/incidents'
     | '/ground-handling/reports'
@@ -752,6 +775,7 @@ export interface FileRouteTypes {
     | '/explore'
     | '/faq'
     | '/ground-handling'
+    | '/join-shared-transport'
     | '/my-bookings'
     | '/operator'
     | '/package'
@@ -778,6 +802,7 @@ export interface FileRouteTypes {
     | '/admin/requests'
     | '/admin/subscription-plans'
     | '/admin/team'
+    | '/admin/transport-applications'
     | '/ground-handling/flights'
     | '/ground-handling/incidents'
     | '/ground-handling/reports'
@@ -821,6 +846,7 @@ export interface RootRouteChildren {
   ExploreRoute: typeof ExploreRoute
   FaqRoute: typeof FaqRoute
   GroundHandlingRoute: typeof GroundHandlingRouteWithChildren
+  JoinSharedTransportRoute: typeof JoinSharedTransportRoute
   MyBookingsRoute: typeof MyBookingsRoute
   OperatorRoute: typeof OperatorRouteWithChildren
   PackageRoute: typeof PackageRoute
@@ -905,6 +931,13 @@ declare module '@tanstack/react-router' {
       path: '/ground-handling'
       fullPath: '/ground-handling'
       preLoaderRoute: typeof GroundHandlingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/join-shared-transport': {
+      id: '/join-shared-transport'
+      path: '/join-shared-transport'
+      fullPath: '/join-shared-transport'
+      preLoaderRoute: typeof JoinSharedTransportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/my-bookings': {
@@ -1094,6 +1127,13 @@ declare module '@tanstack/react-router' {
       path: '/team'
       fullPath: '/admin/team'
       preLoaderRoute: typeof AdminTeamRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/transport-applications': {
+      id: '/admin/transport-applications'
+      path: '/transport-applications'
+      fullPath: '/admin/transport-applications'
+      preLoaderRoute: typeof AdminTransportApplicationsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/ground-handling/': {
@@ -1317,6 +1357,7 @@ interface AdminRouteChildren {
   AdminRequestsRoute: typeof AdminRequestsRoute
   AdminSubscriptionPlansRoute: typeof AdminSubscriptionPlansRoute
   AdminTeamRoute: typeof AdminTeamRoute
+  AdminTransportApplicationsRoute: typeof AdminTransportApplicationsRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
@@ -1335,6 +1376,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminRequestsRoute: AdminRequestsRoute,
   AdminSubscriptionPlansRoute: AdminSubscriptionPlansRoute,
   AdminTeamRoute: AdminTeamRoute,
+  AdminTransportApplicationsRoute: AdminTransportApplicationsRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
 
@@ -1448,6 +1490,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExploreRoute: ExploreRoute,
   FaqRoute: FaqRoute,
   GroundHandlingRoute: GroundHandlingRouteWithChildren,
+  JoinSharedTransportRoute: JoinSharedTransportRoute,
   MyBookingsRoute: MyBookingsRoute,
   OperatorRoute: OperatorRouteWithChildren,
   PackageRoute: PackageRoute,

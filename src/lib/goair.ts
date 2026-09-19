@@ -1320,6 +1320,53 @@ export async function sendRentalPartnerApplication(params: {
   return true;
 }
 
+/**
+ * Public "join shared transport with your own van/bus" request for INDIVIDUAL
+ * car owners (the shared-transfer counterpart of sendRentalPartnerApplication).
+ * Goes through the `apply_transport_operator` RPC (not a direct insert) so the
+ * database validates everything and applicants can never set their own status.
+ * Returns the new application id. Errors are already user-facing Arabic.
+ */
+export async function sendTransportOperatorApplication(params: {
+  fullName: string;
+  phone: string;
+  email: string;
+  country: string;
+  city: string;
+  vehicleTypeId: string;
+  plateNumber: string;
+  carMakeModel: string;
+  carYear: string;
+  hasDriverLicense: boolean;
+  licenseNumber: string;
+  licenseExpiry: string;
+  registrationExpiry: string;
+  insuranceExpiry: string;
+  nationalIdNumber: string;
+  notes: string;
+}): Promise<string> {
+  const { data, error } = await supabase.rpc("apply_transport_operator", {
+    p_full_name: params.fullName,
+    p_phone_number: params.phone,
+    p_country: params.country,
+    p_vehicle_type_id: params.vehicleTypeId,
+    p_plate_number: params.plateNumber,
+    p_car_make_model: params.carMakeModel || null,
+    p_car_year: params.carYear ? Number(params.carYear) : null,
+    p_has_driver_license: params.hasDriverLicense,
+    p_license_number: params.hasDriverLicense ? params.licenseNumber || null : null,
+    p_license_expiry: params.hasDriverLicense ? params.licenseExpiry || null : null,
+    p_registration_expiry: params.registrationExpiry || null,
+    p_insurance_expiry: params.insuranceExpiry || null,
+    p_national_id_number: params.nationalIdNumber || null,
+    p_city: params.city || null,
+    p_email: params.email || null,
+    p_notes: params.notes || null,
+  });
+  if (error) throw new Error(error.message);
+  return String(data);
+}
+
 export async function sendContactMessage(params: {
   name: string;
   email: string;

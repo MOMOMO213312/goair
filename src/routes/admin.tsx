@@ -105,6 +105,12 @@ function AdminLayout() {
                 طلبات تأجير السيارات
               </Link>
               <Link
+                to="/admin/transport-applications"
+                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
+              >
+                طلبات النقل التشاركي
+              </Link>
+              <Link
                 to="/admin/rental-vehicles"
                 className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
               >

@@ -73,6 +73,7 @@ export function SiteFooter() {
             <li><Link to="/my-bookings" search={{ ticket: "" }}>{t("footer.myBookings")}</Link></li>
             <li><Link to="/partner">{t("footer.partnerPrograms")}</Link></li>
             <li><Link to="/rent-your-car">{t("footer.rentYourCar")}</Link></li>
+            <li><Link to="/join-shared-transport">{t("footer.joinTransport")}</Link></li>
             <li><Link to="/contact" search={{ package: undefined }}>{t("footer.contactUs")}</Link></li>
           </ul>
         </div>

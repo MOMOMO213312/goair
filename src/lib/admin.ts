@@ -998,6 +998,117 @@ export function rentalApplicationStatusLabel(status: string) {
   return map[status] ?? status;
 }
 
+// --- Shared-transport operator applications (individual van/bus owners) ---
+
+export type TransportOperatorApplicationRow = {
+  id: string;
+  fullName: string;
+  phoneNumber: string;
+  email: string | null;
+  country: string;
+  city: string | null;
+  vehicleTypeId: string | null;
+  plateNumber: string | null;
+  carMakeModel: string | null;
+  carYear: number | null;
+  hasDriverLicense: boolean;
+  licenseNumber: string | null;
+  licenseExpiry: string | null;
+  registrationExpiry: string | null;
+  insuranceExpiry: string | null;
+  nationalIdNumber: string | null;
+  notes: string | null;
+  status: string;
+  adminNotes: string | null;
+  reviewedAt: string | null;
+  createdAt: string;
+};
+
+function mapTransportOperatorApplication(row: Record<string, unknown>): TransportOperatorApplicationRow {
+  const str = (key: string) => (row[key] as string | null) ?? null;
+  return {
+    id: String(row["id"]),
+    fullName: String(row["full_name"] ?? ""),
+    phoneNumber: String(row["phone_number"] ?? ""),
+    email: str("email"),
+    country: String(row["country"] ?? ""),
+    city: str("city"),
+    vehicleTypeId: str("vehicle_type_id"),
+    plateNumber: str("plate_number"),
+    carMakeModel: str("car_make_model"),
+    carYear: row["car_year"] == null ? null : Number(row["car_year"]),
+    hasDriverLicense: Boolean(row["has_driver_license"]),
+    licenseNumber: str("license_number"),
+    licenseExpiry: str("license_expiry"),
+    registrationExpiry: str("registration_expiry"),
+    insuranceExpiry: str("insurance_expiry"),
+    nationalIdNumber: str("national_id_number"),
+    notes: str("notes"),
+    status: String(row["status"] ?? "pending_review"),
+    adminNotes: str("admin_notes"),
+    reviewedAt: str("reviewed_at"),
+    createdAt: String(row["created_at"] ?? ""),
+  };
+}
+
+export async function adminListTransportOperatorApplications(
+  token: string,
+): Promise<TransportOperatorApplicationRow[]> {
+  const { data, error } = await supabase.rpc("admin_list_transport_operator_applications", {
+    p_access_token: token,
+  });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map(mapTransportOperatorApplication);
+}
+
+/** contacted / rejected / pending_review only — approval has its own RPC. */
+export async function adminUpdateTransportOperatorApplicationStatus(
+  token: string,
+  applicationId: string,
+  status: "pending_review" | "contacted" | "rejected",
+  adminNotes?: string,
+) {
+  const { error } = await supabase.rpc("admin_update_transport_operator_application_status", {
+    p_access_token: token,
+    p_application_id: applicationId,
+    p_status: status,
+    p_admin_notes: adminNotes ?? null,
+  });
+  if (error) rpcError(error);
+}
+
+export type TransportPayoutTerms =
+  | { model: "fixed_per_trip"; fixedAmountUsd: number }
+  | { model: "percentage_of_ticket"; percentageRate: number } // 0..1
+  | { model: "per_seat"; perSeatAmountUsd: number };
+
+/**
+ * Creates the operator + driver + vehicle from the application. The driver and
+ * vehicle start INACTIVE and only go live when ops approves them via
+ * admin_review_driver / admin_review_vehicle. finance/super_admin only.
+ */
+export async function adminApproveTransportOperatorApplication(
+  token: string,
+  applicationId: string,
+  payout: TransportPayoutTerms,
+): Promise<{ operatorId: string; driverId: string | null; vehicleId: string }> {
+  const { data, error } = await supabase.rpc("admin_approve_transport_operator_application", {
+    p_access_token: token,
+    p_application_id: applicationId,
+    p_payout_model: payout.model,
+    p_fixed_amount_usd: payout.model === "fixed_per_trip" ? payout.fixedAmountUsd : null,
+    p_percentage_rate: payout.model === "percentage_of_ticket" ? payout.percentageRate : null,
+    p_per_seat_amount_usd: payout.model === "per_seat" ? payout.perSeatAmountUsd : null,
+  });
+  if (error) rpcError(error);
+  const row = (data ?? {}) as Record<string, string | null>;
+  return {
+    operatorId: String(row["operator_id"]),
+    driverId: row["driver_id"] ?? null,
+    vehicleId: String(row["vehicle_id"]),
+  };
+}
+
 // --- Rental vehicles (car rental listings) ---
 
 export type AdminRentalVehicle = {
