@@ -84,9 +84,10 @@ function TransportApplicationsPage() {
           طلبات النقل التشاركي — أصحاب العربيات ({openCount} مفتوح)
         </h2>
         <p className="mb-3 text-xs text-muted-foreground">
-          الموافقة بتنشئ حساب شريك النقل + السواق + العربية، لكن السواق والعربية بيفضلوا غير مفعّلين
-          لحد ما تراجع مستنداتهم من صفحة «السائقين والعربيات». الموافقة (وتحديد شروط الدفع) للـ
-          finance/super_admin بس.
+          الموافقة بتنشئ حساب الشريك وبتربطه بحساب المتقدم تلقائيًا (بيدخل بنفس الإيميل وكلمة السر).
+          الفرد بيتعمل له سواق وعربية، والشركة بتضيف أسطولها من بوابتها. أي سواق أو عربية بيفضلوا
+          غير مفعّلين لحد ما تراجع مستنداتهم من صفحة «السائقين والعربيات». الموافقة (وتحديد شروط
+          الدفع) للـ finance/super_admin بس.
         </p>
         {applications.length === 0 ? (
           <Card className="rounded-xl border-dashed border-border p-6 text-center text-sm text-muted-foreground">
@@ -166,7 +167,9 @@ function ApplicationCard({
     try {
       await adminApproveTransportOperatorApplication(token, app.id, payout);
       toast.success(
-        "تم إنشاء حساب الشريك. راجع مستندات السواق والعربية من «السائقين والعربيات» لتفعيلهم.",
+        app.providerType === "company"
+          ? "تم إنشاء حساب الشركة وربط دخولها. أي عربية تضيفها هتستنى مراجعتك قبل التفعيل."
+          : "تم إنشاء حساب الشريك. راجع مستندات السواق والعربية من «السائقين والعربيات» لتفعيلهم.",
       );
       setApproveOpen(false);
       onDone();
@@ -189,49 +192,89 @@ function ApplicationCard({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="font-display text-base font-bold text-primary">
+            {app.providerType === "company" && app.companyName ? `${app.companyName} — ` : ""}
             {app.fullName} — <span dir="ltr">{app.phoneNumber}</span>
           </p>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {app.country}
-            {app.city ? ` · ${app.city}` : ""}
-            {vehicleTypeLabel ? ` · ${vehicleTypeLabel}` : ""}
-            {app.carMakeModel ? ` · ${app.carMakeModel}` : ""}
-            {app.carYear ? ` (${app.carYear})` : ""}
+          <p className="mt-1 flex flex-wrap gap-1.5 text-[11px] font-bold">
+            <span className="rounded-full bg-muted px-2 py-0.5 text-primary">
+              {app.providerType === "company" ? "شركة نقل" : "فرد صاحب عربية"}
+            </span>
+            <span
+              className={`rounded-full px-2 py-0.5 ${app.accountLinked ? "bg-accent/15 text-accent" : "bg-destructive/10 text-destructive"}`}
+            >
+              {app.accountLinked ? "له حساب دخول (هيتربط تلقائيًا)" : "من غير حساب دخول"}
+            </span>
           </p>
-          <p className="mt-0.5 text-sm text-primary">
-            لوحة: <span dir="ltr">{app.plateNumber ?? "—"}</span>
-          </p>
-          <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
-            <p>
-              رخصة العربية تنتهي:{" "}
-              <span className={dateClass(app.registrationExpiry)}>
-                {app.registrationExpiry ?? "—"}
-              </span>
-              {" · "}التأمين ينتهي:{" "}
-              <span className={dateClass(app.insuranceExpiry)}>{app.insuranceExpiry ?? "—"}</span>
-            </p>
-            <p>
-              {app.hasDriverLicense ? (
-                <>
-                  صاحب العربية هو السواق — رخصة <span dir="ltr">{app.licenseNumber ?? "—"}</span>{" "}
-                  تنتهي:{" "}
-                  <span className={dateClass(app.licenseExpiry)}>{app.licenseExpiry ?? "—"}</span>
-                </>
-              ) : (
-                "مش هيسوق بنفسه — لازم يتحدد سواق بعد الموافقة"
-              )}
-            </p>
-            {app.nationalIdNumber ? (
+          {app.providerType === "company" ? (
+            <div className="mt-1 space-y-0.5 text-sm text-muted-foreground">
               <p>
-                هوية: <span dir="ltr">{app.nationalIdNumber}</span>
+                {app.country}
+                {app.city ? ` · ${app.city}` : ""}
+                {app.fleetSize ? ` · أسطول تقريبي: ${app.fleetSize} عربية` : ""}
               </p>
-            ) : null}
-            {app.email ? (
-              <p dir="ltr" className="text-start">
-                {app.email}
+              <p>
+                سجل تجاري: <span dir="ltr">{app.commercialRegistrationNumber ?? "—"}</span>
+                {app.taxNumber ? (
+                  <>
+                    {" · "}ضريبي: <span dir="ltr">{app.taxNumber}</span>
+                  </>
+                ) : null}
               </p>
-            ) : null}
-          </div>
+              {app.email ? (
+                <p dir="ltr" className="text-start text-xs">
+                  {app.email}
+                </p>
+              ) : null}
+            </div>
+          ) : (
+            <>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {app.country}
+                {app.city ? ` · ${app.city}` : ""}
+                {vehicleTypeLabel ? ` · ${vehicleTypeLabel}` : ""}
+                {app.carMakeModel ? ` · ${app.carMakeModel}` : ""}
+                {app.carYear ? ` (${app.carYear})` : ""}
+              </p>
+              <p className="mt-0.5 text-sm text-primary">
+                لوحة: <span dir="ltr">{app.plateNumber ?? "—"}</span>
+              </p>
+              <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                <p>
+                  رخصة العربية تنتهي:{" "}
+                  <span className={dateClass(app.registrationExpiry)}>
+                    {app.registrationExpiry ?? "—"}
+                  </span>
+                  {" · "}التأمين ينتهي:{" "}
+                  <span className={dateClass(app.insuranceExpiry)}>
+                    {app.insuranceExpiry ?? "—"}
+                  </span>
+                </p>
+                <p>
+                  {app.hasDriverLicense ? (
+                    <>
+                      صاحب العربية هو السواق — رخصة{" "}
+                      <span dir="ltr">{app.licenseNumber ?? "—"}</span> تنتهي:{" "}
+                      <span className={dateClass(app.licenseExpiry)}>
+                        {app.licenseExpiry ?? "—"}
+                      </span>
+                    </>
+                  ) : (
+                    "مش هيسوق بنفسه — لازم يتحدد سواق بعد الموافقة"
+                  )}
+                </p>
+                {app.nationalIdNumber ? (
+                  <p>
+                    هوية: <span dir="ltr">{app.nationalIdNumber}</span>
+                  </p>
+                ) : null}
+                {app.email ? (
+                  <p dir="ltr" className="text-start">
+                    {app.email}
+                  </p>
+                ) : null}
+              </div>
+            </>
+          )}
           {app.notes ? <p className="mt-1 text-sm text-primary">{app.notes}</p> : null}
           {app.adminNotes ? (
             <p className="mt-1 text-xs text-muted-foreground">ملاحظة داخلية: {app.adminNotes}</p>

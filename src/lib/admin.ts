@@ -1002,6 +1002,12 @@ export function rentalApplicationStatusLabel(status: string) {
 
 export type TransportOperatorApplicationRow = {
   id: string;
+  providerType: "individual" | "company";
+  companyName: string | null;
+  commercialRegistrationNumber: string | null;
+  taxNumber: string | null;
+  fleetSize: number | null;
+  accountLinked: boolean;
   fullName: string;
   phoneNumber: string;
   email: string | null;
@@ -1024,10 +1030,18 @@ export type TransportOperatorApplicationRow = {
   createdAt: string;
 };
 
-function mapTransportOperatorApplication(row: Record<string, unknown>): TransportOperatorApplicationRow {
+function mapTransportOperatorApplication(
+  row: Record<string, unknown>,
+): TransportOperatorApplicationRow {
   const str = (key: string) => (row[key] as string | null) ?? null;
   return {
     id: String(row["id"]),
+    providerType: row["provider_type"] === "company" ? "company" : "individual",
+    companyName: str("company_name"),
+    commercialRegistrationNumber: str("commercial_registration_number"),
+    taxNumber: str("tax_number"),
+    fleetSize: row["fleet_size"] == null ? null : Number(row["fleet_size"]),
+    accountLinked: row["auth_user_id"] != null,
     fullName: String(row["full_name"] ?? ""),
     phoneNumber: String(row["phone_number"] ?? ""),
     email: str("email"),
@@ -1083,15 +1097,22 @@ export type TransportPayoutTerms =
   | { model: "per_seat"; perSeatAmountUsd: number };
 
 /**
- * Creates the operator + driver + vehicle from the application. The driver and
- * vehicle start INACTIVE and only go live when ops approves them via
- * admin_review_driver / admin_review_vehicle. finance/super_admin only.
+ * Creates the operator from the application and links the applicant's own login
+ * to it automatically (portal owner). Individuals also get a driver + vehicle;
+ * both start INACTIVE and only go live when ops approves them via
+ * admin_review_driver / admin_review_vehicle. For self-registered operators every
+ * later driver/vehicle they add is gated the same way. finance/super_admin only.
  */
 export async function adminApproveTransportOperatorApplication(
   token: string,
   applicationId: string,
   payout: TransportPayoutTerms,
-): Promise<{ operatorId: string; driverId: string | null; vehicleId: string }> {
+): Promise<{
+  operatorId: string;
+  driverId: string | null;
+  vehicleId: string | null;
+  accountLinked: boolean;
+}> {
   const { data, error } = await supabase.rpc("admin_approve_transport_operator_application", {
     p_access_token: token,
     p_application_id: applicationId,
@@ -1105,7 +1126,8 @@ export async function adminApproveTransportOperatorApplication(
   return {
     operatorId: String(row["operator_id"]),
     driverId: row["driver_id"] ?? null,
-    vehicleId: String(row["vehicle_id"]),
+    vehicleId: row["vehicle_id"] ?? null,
+    accountLinked: Boolean((data as Record<string, unknown> | null)?.["account_linked"]),
   };
 }
 

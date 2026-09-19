@@ -1320,19 +1320,19 @@ export async function sendRentalPartnerApplication(params: {
   return true;
 }
 
-/**
- * Public "join shared transport with your own van/bus" request for INDIVIDUAL
- * car owners (the shared-transfer counterpart of sendRentalPartnerApplication).
- * Goes through the `apply_transport_operator` RPC (not a direct insert) so the
- * database validates everything and applicants can never set their own status.
- * Returns the new application id. Errors are already user-facing Arabic.
- */
-export async function sendTransportOperatorApplication(params: {
+export type TransportApplicationInput = {
+  providerType: "individual" | "company";
   fullName: string;
   phone: string;
-  email: string;
   country: string;
   city: string;
+  notes: string;
+  // company
+  companyName: string;
+  commercialRegistrationNumber: string;
+  taxNumber: string;
+  fleetSize: string;
+  // individual
   vehicleTypeId: string;
   plateNumber: string;
   carMakeModel: string;
@@ -1343,28 +1343,71 @@ export async function sendTransportOperatorApplication(params: {
   registrationExpiry: string;
   insuranceExpiry: string;
   nationalIdNumber: string;
-  notes: string;
-}): Promise<string> {
+};
+
+/**
+ * "Join shared transport" request from a SIGNED-IN applicant (individual van/bus
+ * owner or a transport company). The applicant creates their own Supabase Auth
+ * account first; this RPC ties the application to auth.uid() and the database
+ * validates everything (an applicant can never set their own status). Approval
+ * by GoAir links the account to the new operator automatically.
+ * Returns the new application id. Errors are already user-facing Arabic.
+ */
+export async function sendTransportOperatorApplication(
+  params: TransportApplicationInput,
+): Promise<string> {
+  const isCompany = params.providerType === "company";
   const { data, error } = await supabase.rpc("apply_transport_operator", {
+    p_provider_type: params.providerType,
     p_full_name: params.fullName,
     p_phone_number: params.phone,
     p_country: params.country,
-    p_vehicle_type_id: params.vehicleTypeId,
-    p_plate_number: params.plateNumber,
-    p_car_make_model: params.carMakeModel || null,
-    p_car_year: params.carYear ? Number(params.carYear) : null,
-    p_has_driver_license: params.hasDriverLicense,
-    p_license_number: params.hasDriverLicense ? params.licenseNumber || null : null,
-    p_license_expiry: params.hasDriverLicense ? params.licenseExpiry || null : null,
-    p_registration_expiry: params.registrationExpiry || null,
-    p_insurance_expiry: params.insuranceExpiry || null,
-    p_national_id_number: params.nationalIdNumber || null,
     p_city: params.city || null,
-    p_email: params.email || null,
+    p_company_name: isCompany ? params.companyName || null : null,
+    p_commercial_registration_number: isCompany
+      ? params.commercialRegistrationNumber || null
+      : null,
+    p_tax_number: isCompany ? params.taxNumber || null : null,
+    p_fleet_size: isCompany && params.fleetSize ? Number(params.fleetSize) : null,
+    p_vehicle_type_id: isCompany ? null : params.vehicleTypeId || null,
+    p_plate_number: isCompany ? null : params.plateNumber || null,
+    p_car_make_model: isCompany ? null : params.carMakeModel || null,
+    p_car_year: !isCompany && params.carYear ? Number(params.carYear) : null,
+    p_has_driver_license: isCompany ? false : params.hasDriverLicense,
+    p_license_number: !isCompany && params.hasDriverLicense ? params.licenseNumber || null : null,
+    p_license_expiry: !isCompany && params.hasDriverLicense ? params.licenseExpiry || null : null,
+    p_registration_expiry: isCompany ? null : params.registrationExpiry || null,
+    p_insurance_expiry: isCompany ? null : params.insuranceExpiry || null,
+    p_national_id_number: isCompany ? null : params.nationalIdNumber || null,
     p_notes: params.notes || null,
   });
   if (error) throw new Error(error.message);
   return String(data);
+}
+
+export type MyTransportApplication = {
+  id: string;
+  status: string;
+  providerType: "individual" | "company";
+  companyName: string | null;
+  createdAt: string;
+  isLinked: boolean;
+};
+
+/** The signed-in applicant's latest application (null if none). */
+export async function fetchMyTransportApplication(): Promise<MyTransportApplication | null> {
+  const { data, error } = await supabase.rpc("get_my_transport_application");
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const row = data as Record<string, unknown>;
+  return {
+    id: String(row["id"]),
+    status: String(row["status"]),
+    providerType: row["provider_type"] === "company" ? "company" : "individual",
+    companyName: (row["company_name"] as string | null) ?? null,
+    createdAt: String(row["created_at"]),
+    isLinked: Boolean(row["is_linked"]),
+  };
 }
 
 export async function sendContactMessage(params: {
