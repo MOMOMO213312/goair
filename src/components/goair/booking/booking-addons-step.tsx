@@ -34,7 +34,7 @@ import type { AddonService, AddonServiceCategory, GroundHandlingPublicService } 
 import { formatUsd } from "@/lib/goair";
 import { cn } from "@/lib/utils";
 
-const ADDON_ICONS: Record<string, LucideIcon> = {
+export const ADDON_ICONS: Record<string, LucideIcon> = {
   Zap,
   ShieldCheck,
   CalendarClock,
