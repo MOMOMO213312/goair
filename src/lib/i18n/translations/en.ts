@@ -746,6 +746,11 @@ const en = {
     transferTitle: "Airport Transfer",
     transferDescription: "Shared or private, to and from any airport GoAir covers, at a fixed per-seat price.",
     transferCta: "Book your ride",
+    all: "All",
+    from: "From",
+    addAtBooking: "Add it while you book",
+    showMore: "See all services",
+    showLess: "Show less",
   },
   chooseYourJourney: {
     sectionTitle: "Choose Your Journey",

@@ -721,6 +721,11 @@ const ar = {
     transferTitle: "نقل المطار",
     transferDescription: "مشترك أو خاص، من وإلى أي مطار بتغطيه GoAir، بسعر ثابت لكل مقعد.",
     transferCta: "احجز رحلتك",
+    all: "الكل",
+    from: "من",
+    addAtBooking: "تضيفها وإنت بتحجز",
+    showMore: "شوف كل الخدمات",
+    showLess: "عرض أقل",
   },
   chooseYourJourney: {
     sectionTitle: "اختار رحلتك",
