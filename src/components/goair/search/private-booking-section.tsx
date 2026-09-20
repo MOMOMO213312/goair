@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useStockPhoto } from "@/hooks/use-stock-photo";
 import type { PrivateOption, Trip } from "@/lib/goair";
-import { fetchPrivateTripOptions, formatUsd, submitCustomRequest } from "@/lib/goair";
+import { useCurrency } from "@/lib/currency";
+import { fetchPrivateTripOptions, submitCustomRequest } from "@/lib/goair";
 import { getVehicleImageByCode } from "@/lib/trip-media";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-context";
@@ -61,6 +62,7 @@ function PrivateOptionCard({
   seats: number;
 }) {
   const { t, language } = useTranslation();
+  const { formatPrice } = useCurrency();
   const [highlightsOpen, setHighlightsOpen] = useState(false);
   const isPremium = option.vehicleClass === "premium";
   const dotCount = Math.min(option.capacity, 6);
@@ -178,7 +180,7 @@ function PrivateOptionCard({
         ) : (
           <>
             <span className="text-xs font-bold text-muted-foreground">{t("search.privateBooking.fullVehiclePrice")}</span>
-            <span className="font-display text-2xl font-extrabold text-accent">{formatUsd(option.priceUsd)}</span>
+            <span className="font-display text-2xl font-extrabold text-accent">{formatPrice(option.priceUsd)}</span>
             <Link
               to="/book"
               search={{

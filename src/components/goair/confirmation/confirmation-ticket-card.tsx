@@ -13,7 +13,8 @@ import { FlightPath } from "@/components/flight-path";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { BookingRecord, Trip } from "@/lib/goair";
-import { formatTime, formatUsd } from "@/lib/goair";
+import { useCurrency } from "@/lib/currency";
+import { formatTime } from "@/lib/goair";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { localize } from "@/lib/i18n/localize";
 import { useDestinationPhoto } from "@/hooks/use-destination-photo";
@@ -38,10 +39,11 @@ export function ConfirmationTicketCard({
   className,
 }: ConfirmationTicketCardProps) {
   const { t, language } = useTranslation();
+  const { formatDual } = useCurrency();
   const travelDate = bookingField(booking, ["travel_date"]);
   const departureRaw = extractDepartureTime(booking);
   const seats = Number(booking.seats_count ?? 1);
-  const total = booking.expected_total_usd ? formatUsd(Number(booking.expected_total_usd)) : "—";
+  const total = booking.expected_total_usd ? formatDual(Number(booking.expected_total_usd)) : "—";
   const passengerName = bookingField(booking, ["full_name"]);
 
   const rawOrigin = trip?.airport_name ?? trip?.origin ?? bookingField(booking, ["origin", "airport_name"]);

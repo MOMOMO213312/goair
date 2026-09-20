@@ -49,13 +49,13 @@ import {
   fetchPublicLaunchMarketCountries,
   fetchRentalAddonServices,
   fetchRentalVehicleCategories,
-  formatUsd,
   friendlyErrorMessage,
   quoteRentalPrice,
   type RentalAddonService,
   type RentalDurationType,
   type RentalVehicle,
 } from "@/lib/goair";
+import { useCurrency } from "@/lib/currency";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { localize } from "@/lib/i18n/localize";
 import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
@@ -544,6 +544,7 @@ function RentalVehicleCard({
   onSelect: () => void;
 }) {
   const { t } = useTranslation();
+  const { formatPrice } = useCurrency();
   const categoryLabel = vehicle.categoryLabelAr
     ? localize(vehicle.categoryLabelAr, vehicle.categoryLabelEn, language)
     : null;
@@ -628,7 +629,7 @@ function RentalVehicleCard({
         <div className="mt-4 flex flex-1 items-end justify-between gap-3 border-t border-border/70 pt-4">
           <div>
             <p className="font-display text-2xl font-extrabold text-primary">
-              {formatUsd(vehicle.dailyRateUsd)}
+              {formatPrice(vehicle.dailyRateUsd)}
               <span className="ms-1 text-xs font-medium text-muted-foreground">
                 {t("rentACarPage.perDay")}
               </span>
@@ -637,13 +638,13 @@ function RentalVehicleCard({
               <p className="mt-0.5 flex flex-wrap gap-x-2 text-xs font-semibold text-muted-foreground">
                 {vehicle.hourlyRateUsd != null ? (
                   <span>
-                    {formatUsd(vehicle.hourlyRateUsd)}
+                    {formatPrice(vehicle.hourlyRateUsd)}
                     {t("rentACarPage.perHour")}
                   </span>
                 ) : null}
                 {vehicle.multiDayRateUsd != null ? (
                   <span>
-                    {formatUsd(vehicle.multiDayRateUsd)}
+                    {formatPrice(vehicle.multiDayRateUsd)}
                     {t("rentACarPage.perMultiDay")}
                   </span>
                 ) : null}
@@ -698,6 +699,7 @@ function RentalAddonCard({
   language: "ar" | "en";
 }) {
   const { t } = useTranslation();
+  const { formatPrice } = useCurrency();
   const name = localize(addon.nameAr, addon.nameEn, language);
   const description = addon.descriptionAr
     ? localize(addon.descriptionAr, addon.descriptionEn, language)
@@ -739,7 +741,7 @@ function RentalAddonCard({
         <span className="flex items-center justify-between gap-2">
           <span className="text-sm font-bold text-primary">{name}</span>
           <span className="shrink-0 text-sm font-extrabold text-accent">
-            +{formatUsd(addon.priceUsd)}
+            +{formatPrice(addon.priceUsd)}
           </span>
         </span>
         {description ? (
@@ -771,6 +773,7 @@ function BookingForm({
   onDone: () => void;
 }) {
   const { t } = useTranslation();
+  const { formatDual } = useCurrency();
   const categoryLabel = vehicle.categoryLabelAr
     ? localize(vehicle.categoryLabelAr, vehicle.categoryLabelEn, language)
     : null;
@@ -1039,7 +1042,7 @@ function BookingForm({
                           {t("rentACarPage.rentalPriceLabel")}
                         </span>
                         <span className="font-semibold text-primary">
-                          {formatUsd(quoteQuery.data?.totalUsd ?? 0)}
+                          {formatDual(quoteQuery.data?.totalUsd ?? 0)}
                         </span>
                       </div>
                       <div className="flex items-center justify-between text-sm">
@@ -1047,13 +1050,13 @@ function BookingForm({
                           {t("rentACarPage.addonsTotalLabel")}
                         </span>
                         <span className="font-semibold text-[#a9822f]">
-                          +{formatUsd(addonsTotalUsd)}
+                          +{formatDual(addonsTotalUsd)}
                         </span>
                       </div>
                     </div>
                   ) : null}
                   <p className="font-display text-3xl font-extrabold text-accent">
-                    {formatUsd((quoteQuery.data?.totalUsd ?? 0) + addonsTotalUsd)}
+                    {formatDual((quoteQuery.data?.totalUsd ?? 0) + addonsTotalUsd)}
                   </p>
                   {selectedAddonIds.length > 0 ? (
                     <p className="mt-1 text-xs text-muted-foreground">

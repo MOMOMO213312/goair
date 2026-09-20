@@ -2,6 +2,7 @@ import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { formatUsd } from "@/lib/goair";
+import { PriceApprox } from "@/components/goair/price-approx";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +33,7 @@ export function PaymentMobileCta({
         <div className="min-w-0 flex-1">
           <p className="text-xs text-muted-foreground">{t("payment.mobileCta.total")}</p>
           <p className="font-display text-xl font-extrabold text-accent">{formatUsd(total)}</p>
+          <PriceApprox usd={total} />
         </div>
         <Button
           type="submit"

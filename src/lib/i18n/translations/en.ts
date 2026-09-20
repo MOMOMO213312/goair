@@ -22,6 +22,10 @@ const en = {
     ar: "عربي",
     en: "English",
   },
+  currencySwitcher: {
+    label: "Currency",
+    referenceNote: "The amount due is in US dollars; other currencies are for reference only.",
+  },
   notFound: {
     title: "Page not found",
     body: "The page you're looking for doesn't exist or has moved.",

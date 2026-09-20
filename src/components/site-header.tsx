@@ -3,6 +3,7 @@ import { ChevronDown, Menu, Plane, Ticket } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { CurrencySwitcher } from "@/components/currency-switcher";
 import { LanguageToggle } from "@/components/language-toggle";
 import { useTranslation } from "@/lib/i18n/language-context";
 import {
@@ -87,6 +88,7 @@ export function SiteHeader() {
             </Link>
           </Button>
           <LanguageToggle className="hidden sm:inline-flex" />
+          <CurrencySwitcher className="hidden sm:inline-flex" />
           <Button
             variant="ghost"
             size="icon"
@@ -162,8 +164,9 @@ export function SiteHeader() {
             <Ticket className="size-4" aria-hidden />
             {t("header.trackBooking")}
           </Link>
-          <div className="mt-1 px-3 py-2 sm:hidden">
+          <div className="mt-1 flex items-center gap-2 px-3 py-2 sm:hidden">
             <LanguageToggle />
+            <CurrencySwitcher />
           </div>
         </nav>
       ) : null}

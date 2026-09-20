@@ -11,7 +11,6 @@ import {
   cancelBookingByTicket,
   cancelRentalBookingByTicket,
   cancelSubscriptionByCode,
-  formatUsd,
   friendlyErrorMessage,
   getBookingByTicket,
   getBookingRatingEligibility,
@@ -25,6 +24,7 @@ import {
   type RentalBookingRecord,
   type SubscriptionRecord,
 } from "@/lib/goair";
+import { useCurrency } from "@/lib/currency";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
@@ -51,6 +51,7 @@ export const Route = createFileRoute("/my-bookings")({
 
 function MyBookingsPage() {
   const { t } = useTranslation();
+  const { formatDual } = useCurrency();
   const initial = Route.useSearch();
   const [mode, setMode] = useState<"booking" | "rental" | "subscription">("booking");
 
@@ -268,7 +269,7 @@ function MyBookingsPage() {
             />
             <Row
               label={t("myBookingsPage.booking.fields.total")}
-              value={booking.expected_total_usd ? formatUsd(Number(booking.expected_total_usd)) : "—"}
+              value={booking.expected_total_usd ? formatDual(Number(booking.expected_total_usd)) : "—"}
             />
             <Row label={t("myBookingsPage.booking.fields.status")} value={String(booking["status"] ?? "—")} />
           </dl>
@@ -356,7 +357,7 @@ function MyBookingsPage() {
             />
             <Row
               label={t("myBookingsPage.rental.fields.total")}
-              value={formatUsd(Number(rentalBooking.total_usd))}
+              value={formatDual(Number(rentalBooking.total_usd))}
             />
             <Row label={t("myBookingsPage.rental.fields.status")} value={rentalBooking.status} />
           </dl>

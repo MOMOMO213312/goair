@@ -16,6 +16,7 @@ import { captureEcosystemLinkFromUrl } from "@/lib/ecosystem-link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { Toaster } from "@/components/ui/sonner";
+import { CurrencyProvider } from "@/lib/currency";
 import { LanguageProvider } from "@/lib/i18n/language-context";
 import { useTranslation } from "@/lib/i18n/language-context";
 
@@ -162,15 +163,17 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <LanguageProvider>
-        <div className="flex min-h-screen flex-col">
-          <SiteHeader />
-          <main className="flex-1">
-            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-            <Outlet />
-          </main>
-          <SiteFooter />
-        </div>
-        <Toaster position="top-center" richColors />
+        <CurrencyProvider>
+          <div className="flex min-h-screen flex-col">
+            <SiteHeader />
+            <main className="flex-1">
+              {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+              <Outlet />
+            </main>
+            <SiteFooter />
+          </div>
+          <Toaster position="top-center" richColors />
+        </CurrencyProvider>
       </LanguageProvider>
     </QueryClientProvider>
   );

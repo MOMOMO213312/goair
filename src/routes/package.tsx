@@ -30,9 +30,9 @@ import {
   fetchTrips,
   fetchVisibleCountries,
   formatTime,
-  formatUsd,
   friendlyErrorMessage,
 } from "@/lib/goair";
+import { useCurrency } from "@/lib/currency";
 import { filterPublicTrips, getAirportsForCountry, getDestinationsForAirport } from "@/lib/trip-stats";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-context";
@@ -82,6 +82,7 @@ export const Route = createFileRoute("/package")({
 
 function PackagePage() {
   const { t, language } = useTranslation();
+  const { formatPrice } = useCurrency();
   const search = Route.useSearch();
   const navigate = useNavigate();
 
@@ -319,7 +320,7 @@ function PackagePage() {
                 </ul>
               ) : null}
               <p className="mt-3 font-display text-xl font-extrabold text-accent">
-                {formatUsd(pkg.priceUsd)} {t("packagePage.perPassenger")}
+                {formatPrice(pkg.priceUsd)} {t("packagePage.perPassenger")}
               </p>
             </>
           ) : (

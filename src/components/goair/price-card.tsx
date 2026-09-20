@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
+import { useCurrency } from "@/lib/currency";
 import { useTranslation } from "@/lib/i18n/language-context";
-import { formatUsd } from "@/lib/goair";
 
 type PriceCardProps = {
   amount: number | null;
@@ -11,6 +11,7 @@ type PriceCardProps = {
 
 export function PriceCard({ amount, label, size = "md", className }: PriceCardProps) {
   const { t } = useTranslation();
+  const { formatPrice } = useCurrency();
   if (amount == null) return null;
   const displayLabel = label ?? t("priceCard.startingFrom");
 
@@ -25,7 +26,7 @@ export function PriceCard({ amount, label, size = "md", className }: PriceCardPr
     <div className={cn("leading-none", className)}>
       <p className="text-xs font-medium text-muted-foreground">{displayLabel}</p>
       <p className={cn("mt-1 font-display font-extrabold text-accent", sizeClass)}>
-        {formatUsd(amount)}
+        {formatPrice(amount)}
       </p>
     </div>
   );

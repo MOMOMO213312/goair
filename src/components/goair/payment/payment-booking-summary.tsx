@@ -7,6 +7,7 @@ import { FlightPath } from "@/components/flight-path";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { BookingRecord, Trip } from "@/lib/goair";
+import { PriceApprox } from "@/components/goair/price-approx";
 import { formatTime, formatUsd } from "@/lib/goair";
 import { useDestinationPhoto } from "@/hooks/use-destination-photo";
 import { useTranslation } from "@/lib/i18n/language-context";
@@ -144,6 +145,7 @@ export function PaymentBookingSummary({
         <div className="mt-5 rounded-lg bg-secondary/50 px-4 py-3">
           <p className="text-xs font-bold text-muted-foreground">{t("payment.bookingSummary.amountDue")}</p>
           <p className="mt-1 font-display text-2xl font-extrabold text-accent">{formatUsd(total)}</p>
+          <PriceApprox usd={total} showNote />
         </div>
 
         <div className="mt-4 border-t border-border pt-4">

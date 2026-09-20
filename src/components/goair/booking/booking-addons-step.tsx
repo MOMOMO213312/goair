@@ -31,7 +31,7 @@ import { useStockPhoto } from "@/hooks/use-stock-photo";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { localize } from "@/lib/i18n/localize";
 import type { AddonService, AddonServiceCategory, GroundHandlingPublicService } from "@/lib/goair";
-import { formatUsd } from "@/lib/goair";
+import { useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
 export const ADDON_ICONS: Record<string, LucideIcon> = {
@@ -96,6 +96,7 @@ function AddonButton({
   onToggle: () => void;
 }) {
   const { t, language } = useTranslation();
+  const { formatPrice } = useCurrency();
   const addonName = localize(addon.name, addon.nameEn, language);
   const addonDescription = addon.description
     ? localize(addon.description, addon.descriptionEn, language)
@@ -159,7 +160,7 @@ function AddonButton({
         ) : null}
 
         <span className="mt-auto flex items-center justify-between pt-2">
-          <span className="text-sm font-extrabold text-primary">+{formatUsd(addon.priceUsd)}</span>
+          <span className="text-sm font-extrabold text-primary">+{formatPrice(addon.priceUsd)}</span>
           <span
             className={cn(
               "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold transition-colors",
@@ -199,6 +200,7 @@ function PartnerServiceButton({
   onToggle: () => void;
 }) {
   const { t } = useTranslation();
+  const { formatPrice } = useCurrency();
   const soldOut = service.remainingCapacity !== null && service.remainingCapacity <= 0 && !isSelected;
 
   return (
@@ -244,7 +246,7 @@ function PartnerServiceButton({
         ) : null}
 
         <span className="mt-auto flex items-center justify-between pt-2">
-          <span className="text-sm font-extrabold text-primary">+{formatUsd(service.priceUsd)}</span>
+          <span className="text-sm font-extrabold text-primary">+{formatPrice(service.priceUsd)}</span>
           {soldOut ? (
             <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-bold text-muted-foreground">
               {t("booking.addonsStep.soldOut")}

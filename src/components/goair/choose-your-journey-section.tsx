@@ -5,13 +5,15 @@ import { ArrowLeft, Sparkles } from "lucide-react";
 import { SectionHeader } from "@/components/goair/section-header";
 import { useStockPhoto } from "@/hooks/use-stock-photo";
 import type { PackageTier } from "@/lib/goair";
-import { fetchActivePackages, formatUsd } from "@/lib/goair";
+import { useCurrency } from "@/lib/currency";
+import { fetchActivePackages } from "@/lib/goair";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { localize } from "@/lib/i18n/localize";
 import { cn } from "@/lib/utils";
 
 function JourneyCard({ pkg }: { pkg: PackageTier }) {
   const { t, language } = useTranslation();
+  const { formatPrice } = useCurrency();
   const name = localize(pkg.name, pkg.nameEn, language);
   const tagline = pkg.tagline ? localize(pkg.tagline, pkg.taglineEn, language) : null;
   const photo = useStockPhoto("packages", pkg.id, pkg.imageUrl);
@@ -48,7 +50,7 @@ function JourneyCard({ pkg }: { pkg: PackageTier }) {
         <h3 className="font-display text-lg font-extrabold text-white sm:text-xl">{name}</h3>
         {tagline ? <p className="mt-1 text-sm leading-relaxed text-white/80">{tagline}</p> : null}
         <div className="mt-4 flex items-center justify-between">
-          <span className="font-display text-2xl font-extrabold text-white">{formatUsd(pkg.priceUsd)}</span>
+          <span className="font-display text-2xl font-extrabold text-white">{formatPrice(pkg.priceUsd)}</span>
           <span className="inline-flex items-center gap-1.5 text-sm font-bold text-accent">
             {t("chooseYourJourney.explore")}
             <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1" aria-hidden />

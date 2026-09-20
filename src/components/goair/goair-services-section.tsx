@@ -7,7 +7,8 @@ import heroAirportImage from "@/assets/hero-airport.jpg";
 import { ADDON_ICONS } from "@/components/goair/booking/booking-addons-step";
 import { SectionHeader } from "@/components/goair/section-header";
 import type { AddonService, AddonServiceCategory } from "@/lib/goair";
-import { fetchAddonServices, formatUsd } from "@/lib/goair";
+import { useCurrency } from "@/lib/currency";
+import { fetchAddonServices } from "@/lib/goair";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { localize } from "@/lib/i18n/localize";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ type Filter = "all" | AddonServiceCategory;
 
 function ServiceCard({ service }: { service: AddonService }) {
   const { t, language } = useTranslation();
+  const { formatPrice } = useCurrency();
   const name = localize(service.name, service.nameEn, language);
   const description = service.description
     ? localize(service.description, service.descriptionEn, language)
@@ -40,7 +42,7 @@ function ServiceCard({ service }: { service: AddonService }) {
           <Icon className="size-5" aria-hidden />
         </span>
         <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-bold text-primary">
-          {t("goairServices.from")} {formatUsd(service.priceUsd)}
+          {t("goairServices.from")} {formatPrice(service.priceUsd)}
         </span>
       </div>
       <div className="min-w-0 flex-1">

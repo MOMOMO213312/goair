@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import type { Trip } from "@/lib/goair";
-import { formatUsd } from "@/lib/goair";
+import { useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 import { getCountryLabel } from "@/lib/i18n/country-labels";
 import { useTranslation } from "@/lib/i18n/language-context";
@@ -47,6 +47,7 @@ export function SearchFiltersPanel({
   hideHeader = false,
 }: SearchFiltersPanelProps) {
   const { t, language } = useTranslation();
+  const { formatPrice } = useCurrency();
   const hasActiveFilters = filters.maxPrice !== null && priceCeiling > priceFloor;
   const showResetButton = showReset && hasActiveFilters;
 
@@ -111,8 +112,8 @@ export function SearchFiltersPanel({
         <div className="space-y-3">
           <Label className="font-display text-sm font-bold text-primary">{t("search.filters.pricePerSeat")}</Label>
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{t("search.filters.priceFrom", { price: formatUsd(priceFloor) })}</span>
-            <span className="font-bold text-primary">{t("search.filters.priceTo", { price: formatUsd(activeMaxPrice) })}</span>
+            <span>{t("search.filters.priceFrom", { price: formatPrice(priceFloor) })}</span>
+            <span className="font-bold text-primary">{t("search.filters.priceTo", { price: formatPrice(activeMaxPrice) })}</span>
           </div>
           {priceCeiling > priceFloor ? (
             <Slider

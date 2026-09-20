@@ -13,10 +13,10 @@ import {
   createSubscriptionSafe,
   fetchPaymentMethods,
   fetchSubscriptionPlanById,
-  formatUsd,
   friendlyErrorMessage,
   submitSubscriptionPayment,
 } from "@/lib/goair";
+import { useCurrency } from "@/lib/currency";
 import { getCountryLabel } from "@/lib/i18n/country-labels";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { localize } from "@/lib/i18n/localize";
@@ -43,6 +43,7 @@ type Step = "form" | "payment" | "done";
 
 function SubscribePage() {
   const { t, language } = useTranslation();
+  const { formatPrice } = useCurrency();
   const { planId } = Route.useSearch();
   const [step, setStep] = useState<Step>("form");
   const [fullName, setFullName] = useState("");
@@ -172,7 +173,7 @@ function SubscribePage() {
               </div>
               <div className="flex items-center justify-between rounded-lg bg-secondary/50 px-4 py-3">
                 <span className="text-sm font-bold text-muted-foreground">{t("subscribePage.priceLabel")}</span>
-                <span className="font-display text-xl font-extrabold text-accent">{formatUsd(plan.priceUsd)}</span>
+                <span className="font-display text-xl font-extrabold text-accent">{formatPrice(plan.priceUsd)}</span>
               </div>
               <Button type="submit" disabled={busy} className="h-11 w-full font-bold">
                 {busy ? <Loader2 className="size-4 animate-spin" /> : null}

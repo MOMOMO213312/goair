@@ -5,7 +5,8 @@ import { ArrowLeft, Sparkles } from "lucide-react";
 import { SectionHeader } from "@/components/goair/section-header";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { localize } from "@/lib/i18n/localize";
-import { fetchActivePackages, formatUsd } from "@/lib/goair";
+import { fetchActivePackages } from "@/lib/goair";
+import { useCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
 const CARD_THEMES = [
@@ -18,6 +19,7 @@ const CARD_THEMES = [
 /** Homepage teaser for the real packages/add-ons page — not a separate promise. */
 export function DealsTeaser() {
   const { t, language } = useTranslation();
+  const { formatPrice } = useCurrency();
   const { data: packages } = useQuery({
     queryKey: ["goair", "packages"],
     queryFn: fetchActivePackages,
@@ -72,7 +74,7 @@ export function DealsTeaser() {
                   </p>
                 ) : null}
                 <p className="mt-4 font-display text-lg font-extrabold">
-                  +{formatUsd(pkg.priceUsd)}
+                  +{formatPrice(pkg.priceUsd)}
                 </p>
               </Link>
             );

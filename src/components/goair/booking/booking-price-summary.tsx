@@ -1,5 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { formatUsd } from "@/lib/goair";
+import { useCurrency } from "@/lib/currency";
+import { PriceApprox } from "@/components/goair/price-approx";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +29,7 @@ export function BookingPriceSummary({
   addonsTotal = 0,
 }: BookingPriceSummaryProps) {
   const { t } = useTranslation();
+  const { formatPrice } = useCurrency();
   return (
     <Card
       className={cn(
@@ -60,12 +63,12 @@ export function BookingPriceSummary({
                 ? t("booking.priceSummary.seatPriceWithPackage")
                 : t("booking.priceSummary.seatPrice")}
           </dt>
-          <dd className="font-bold text-primary">{formatUsd(pricePerSeat)}</dd>
+          <dd className="font-bold text-primary">{formatPrice(pricePerSeat)}</dd>
         </div>
         {addonsTotal > 0 ? (
           <div className="flex items-center justify-between gap-3">
             <dt className="text-muted-foreground">{t("booking.priceSummary.extraServices")}</dt>
-            <dd className="font-bold text-primary">{formatUsd(addonsTotal)}</dd>
+            <dd className="font-bold text-primary">{formatPrice(addonsTotal)}</dd>
           </div>
         ) : null}
       </dl>
@@ -77,7 +80,10 @@ export function BookingPriceSummary({
         )}
       >
         <span className="font-display font-bold text-primary">{t("booking.priceSummary.total")}</span>
-        <span className="font-display text-2xl font-extrabold text-accent">{formatUsd(total)}</span>
+        <div className="text-end">
+          <span className="font-display text-2xl font-extrabold text-accent">{formatUsd(total)}</span>
+          <PriceApprox usd={total} showNote />
+        </div>
       </div>
     </Card>
   );

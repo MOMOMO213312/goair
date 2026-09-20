@@ -24,6 +24,7 @@ import {
   getBookingByTicket,
   submitPayment,
 } from "@/lib/goair";
+import { PriceApprox } from "@/components/goair/price-approx";
 
 const FORM_ID = "goair-payment-form";
 const pageMeta = translations[DEFAULT_LANGUAGE].paymentPage.meta;
@@ -195,6 +196,7 @@ function PaymentPage() {
                 <p className="mt-1 font-display text-3xl font-extrabold text-accent">
                   {formatUsd(total)}
                 </p>
+                <PriceApprox usd={total} />
               </Card>
 
               <BookingTrustPanel />

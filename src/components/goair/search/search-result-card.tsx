@@ -14,7 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { ScheduleOption, Trip, VehicleType } from "@/lib/goair";
-import { formatTime, formatUsd, isGeneratedScheduleId } from "@/lib/goair";
+import { useCurrency } from "@/lib/currency";
+import { formatTime, isGeneratedScheduleId } from "@/lib/goair";
 import { useDestinationPhoto } from "@/hooks/use-destination-photo";
 import {
   getDedicatedRouteImage,
@@ -280,13 +281,14 @@ function PriceBlock({
   seats: number;
 }) {
   const { t } = useTranslation();
+  const { formatPrice } = useCurrency();
   return (
     <div className="text-center">
       <span className="text-xs font-bold text-muted-foreground">
-        {formatUsd(pricePerSeat)} {t("search.resultCard.perSeat")}
+        {formatPrice(pricePerSeat)} {t("search.resultCard.perSeat")}
         {seats > 1 ? t("search.resultCard.seatsCount", { count: seats }) : ""}
       </span>
-      <p className="font-display text-2xl font-extrabold text-accent">{formatUsd(total)}</p>
+      <p className="font-display text-2xl font-extrabold text-accent">{formatPrice(total)}</p>
     </div>
   );
 }
