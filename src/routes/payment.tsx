@@ -102,7 +102,7 @@ function PaymentPage() {
     setBusy(true);
     try {
       await submitPayment({
-        bookingId: String(booking["id"]),
+        ticketCode: ticket,
         method,
         amountUsd: total,
         referenceNumber: reference.trim() || null,

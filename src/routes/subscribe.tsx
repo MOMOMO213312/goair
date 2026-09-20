@@ -108,7 +108,7 @@ function SubscribePage() {
     setBusy(true);
     try {
       await submitSubscriptionPayment({
-        subscriptionId,
+        subscriptionCode,
         method,
         amountUsd: expectedTotal,
         referenceNumber: reference.trim() || null,
