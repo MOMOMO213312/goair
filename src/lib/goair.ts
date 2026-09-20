@@ -907,18 +907,20 @@ export async function uploadPaymentProof(ticket: string, file: File): Promise<st
 }
 
 export async function submitPayment(params: {
-  bookingId: string;
+  ticketCode: string;
   method: string;
   amountUsd: number;
   referenceNumber: string | null;
   proofUrl: string | null;
 }) {
-  const { error } = await supabase.from("payments").insert({
-    booking_id: params.bookingId,
-    method: params.method,
-    amount_usd: params.amountUsd,
-    reference_number: params.referenceNumber,
-    proof_url: params.proofUrl,
+  // Sanctioned write path: validates booking state, amount, method and
+  // duplicate payments server-side (see submit_payment_safe).
+  const { error } = await supabase.rpc("submit_payment_safe", {
+    p_ticket_code: params.ticketCode.trim(),
+    p_method: params.method,
+    p_amount_usd: params.amountUsd,
+    p_reference_number: params.referenceNumber,
+    p_proof_url: params.proofUrl,
   });
   if (error) throw new Error(error.message);
   return true;
@@ -1560,20 +1562,20 @@ export async function cancelRentalBookingByTicket(ticketCode: string, reason: st
   return true;
 }
 
-/** subscription_id here plays the same role `booking_id` plays for `submitPayment`. */
+/** Identity is the subscription code (same capability model as a booking's ticket code). */
 export async function submitSubscriptionPayment(params: {
-  subscriptionId: string;
+  subscriptionCode: string;
   method: string;
   amountUsd: number;
   referenceNumber: string | null;
   proofUrl: string | null;
 }) {
-  const { error } = await supabase.from("subscription_payments").insert({
-    subscription_id: params.subscriptionId,
-    method: params.method,
-    amount_usd: params.amountUsd,
-    reference_number: params.referenceNumber,
-    proof_url: params.proofUrl,
+  const { error } = await supabase.rpc("submit_subscription_payment_safe", {
+    p_subscription_code: params.subscriptionCode.trim(),
+    p_method: params.method,
+    p_amount_usd: params.amountUsd,
+    p_reference_number: params.referenceNumber,
+    p_proof_url: params.proofUrl,
   });
   if (error) throw new Error(error.message);
   return true;
