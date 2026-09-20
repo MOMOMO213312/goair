@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { CalendarDays, Star, TrendingUp, Wallet } from "lucide-react";
 
 import { AdminAuthError, AdminLoading } from "@/components/admin/admin-shell";
+import { DonutChart, PortalCard, StatCard } from "@/components/portal/portal-ui";
 import { Card } from "@/components/ui/card";
 import { useAdminToken } from "@/lib/admin-session";
 import { adminGetDashboardStats, isAdminAuthError } from "@/lib/admin";
@@ -21,44 +23,11 @@ function money(n: number) {
   return `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
 }
 
-function StatCard({
-  label,
-  value,
-  hint,
-  highlight = false,
-}: {
-  label: string;
-  value: string;
-  hint?: string;
-  highlight?: boolean;
-}) {
-  return (
-    <Card
-      className={
-        highlight
-          ? "rounded-xl border-accent/30 bg-primary p-5 text-primary-foreground shadow-[var(--shadow-card)]"
-          : "rounded-xl border-border/80 bg-card p-5 shadow-[var(--shadow-card)]"
-      }
-    >
-      <p className={highlight ? "text-sm text-primary-foreground/80" : "text-sm text-muted-foreground"}>{label}</p>
-      <p className="mt-2 font-display text-2xl font-extrabold">{value}</p>
-      {hint ? (
-        <p className={highlight ? "mt-1 text-xs text-primary-foreground/70" : "mt-1 text-xs text-muted-foreground"}>
-          {hint}
-        </p>
-      ) : null}
-    </Card>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <Card className="rounded-xl border-border/80 p-5 shadow-[var(--shadow-card)] sm:p-6">
-      <h2 className="font-display text-lg font-extrabold text-primary">{title}</h2>
-      <div className="mt-4">{children}</div>
-    </Card>
-  );
-}
+const STATUS_COLORS: Record<string, string> = {
+  confirmed: "#10b981",
+  pending: "#f59e0b",
+  cancelled: "#ef4444",
+};
 
 function OverviewPage() {
   const token = useAdminToken();
@@ -87,13 +56,14 @@ function OverviewPage() {
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="إيراد اليوم" value={money(s.revenueTodayUsd)} hint={`${s.bookingsToday} حجز اليوم`} highlight />
-        <StatCard label="إيراد آخر 7 أيام" value={money(s.revenueWeekUsd)} hint={`${s.bookingsWeek} حجز`} />
-        <StatCard label="إيراد الشهر الحالي" value={money(s.revenueMonthUsd)} hint={`${s.bookingsMonth} حجز`} />
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <StatCard icon={Wallet} label="إيراد اليوم" value={money(s.revenueTodayUsd)} hint={`${s.bookingsToday} حجز اليوم`} highlight />
+        <StatCard icon={TrendingUp} label="إيراد آخر 7 أيام" value={money(s.revenueWeekUsd)} hint={`${s.bookingsWeek} حجز`} />
+        <StatCard icon={CalendarDays} label="إيراد الشهر الحالي" value={money(s.revenueMonthUsd)} hint={`${s.bookingsMonth} حجز`} />
         <StatCard
+          icon={Star}
           label="تقييم العملاء"
-          value={s.averageRating != null ? `${s.averageRating} / 5` : "—"}
+          value={s.averageRating != null ? `${s.averageRating} من 5` : "—"}
           hint={`${s.ratingsCount} تقييم`}
         />
       </div>
@@ -106,41 +76,47 @@ function OverviewPage() {
         </Card>
       ) : null}
 
-      <Section title="الإيراد المؤكد — آخر 14 يوم">
+      <PortalCard title="الإيراد المؤكد — آخر 14 يوم">
         {s.revenueTrend14d.every((d) => d.revenueUsd === 0) ? (
           <p className="text-sm text-muted-foreground">لا يوجد إيراد مؤكد في الفترة دي لسه.</p>
         ) : (
-          <div className="flex h-32 items-end gap-1.5">
+          <div className="flex h-44 items-stretch gap-1.5">
             {s.revenueTrend14d.map((d) => (
-              <div key={d.day} className="flex flex-1 flex-col items-center gap-1" title={`${d.day}: ${money(d.revenueUsd)}`}>
-                <div
-                  className="w-full rounded-t bg-primary/70"
-                  style={{ height: `${Math.max(4, (d.revenueUsd / maxTrend) * 100)}%` }}
-                />
+              <div
+                key={d.day}
+                className="flex flex-1 flex-col items-center gap-1"
+                title={`${d.day}: ${money(d.revenueUsd)}`}
+              >
+                <div className="flex w-full flex-1 items-end">
+                  <div
+                    className="w-full rounded-t bg-gradient-to-t from-[var(--primary)] to-[var(--portal-accent)]"
+                    style={{ height: `${Math.max(4, (d.revenueUsd / maxTrend) * 100)}%` }}
+                  />
+                </div>
                 <span className="text-[10px] text-muted-foreground">{d.day.slice(5)}</span>
               </div>
             ))}
           </div>
         )}
-      </Section>
+      </PortalCard>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Section title="الحجوزات حسب الحالة">
+        <PortalCard title="الحجوزات حسب الحالة">
           {s.bookingsByStatus.length === 0 ? (
             <p className="text-sm text-muted-foreground">لا توجد بيانات.</p>
           ) : (
-            <div className="space-y-1.5">
-              {s.bookingsByStatus.map((row) => (
-                <div key={row.status} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{BOOKING_STATUS_LABELS[row.status] ?? row.status}</span>
-                  <span className="font-bold text-primary">{row.count}</span>
-                </div>
-              ))}
-            </div>
+            <DonutChart
+              centerLabel="إجمالي الحجوزات"
+              slices={s.bookingsByStatus.map((row) => ({
+                label: BOOKING_STATUS_LABELS[row.status] ?? row.status,
+                value: row.count,
+                color: STATUS_COLORS[row.status] ?? "#94a3b8",
+              }))}
+            />
           )}
-        </Section>
+        </PortalCard>
 
-        <Section title="الأسطول والشركاء النشطين">
+        <PortalCard title="الأسطول والشركاء النشطين">
           <div className="space-y-1.5">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">سائقين نشطين</span>
@@ -159,10 +135,10 @@ function OverviewPage() {
               <span className="font-bold text-primary">{s.activePartnersCount}</span>
             </div>
           </div>
-        </Section>
+        </PortalCard>
       </div>
 
-      <Section title="أكثر الخطوط طلبًا (آخر 30 يوم)">
+      <PortalCard title="أكثر الخطوط طلبًا (آخر 30 يوم)">
         {s.topRoutes.length === 0 ? (
           <p className="text-sm text-muted-foreground">لا توجد حجوزات كافية بعد.</p>
         ) : (
@@ -179,9 +155,9 @@ function OverviewPage() {
             ))}
           </div>
         )}
-      </Section>
+      </PortalCard>
 
-      <Section title="أداء شركاء المبيعات (آخر 30 يوم)">
+      <PortalCard title="أداء شركاء المبيعات (آخر 30 يوم)">
         {s.partnerPerformance.length === 0 ? (
           <p className="text-sm text-muted-foreground">لا توجد حجوزات عبر شركاء مبيعات في الفترة دي بعد.</p>
         ) : (
@@ -198,7 +174,7 @@ function OverviewPage() {
             ))}
           </div>
         )}
-      </Section>
+      </PortalCard>
     </div>
   );
 }

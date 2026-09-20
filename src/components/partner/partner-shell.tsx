@@ -1,19 +1,10 @@
-import { Link } from "@tanstack/react-router";
-import {
-  AlertCircle,
-  BarChart3,
-  CalendarRange,
-  FileText,
-  LayoutDashboard,
-  PackageSearch,
-  ScrollText,
-  Sparkles,
-  Users,
-} from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
+import { PortalCard, StatCard, StatusPill, statusTone } from "@/components/portal/portal-ui";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { PartnerDashboard } from "@/lib/partner";
 import {
   isPartnerLifecycleAlert,
   PARTNER_AUTH_ERROR,
@@ -23,53 +14,6 @@ import {
   partnerLifecycleProgress,
 } from "@/lib/partner";
 import { cn } from "@/lib/utils";
-
-const NAV = [
-  { to: "/partner", label: "نظرة عامة", exact: true, icon: LayoutDashboard },
-  { to: "/partner/book", label: "احجز لعميل", icon: CalendarRange },
-  { to: "/partner/services", label: "خدماتك", icon: PackageSearch },
-  { to: "/partner/bookings", label: "الحجوزات", icon: CalendarRange },
-  { to: "/partner/subscriptions", label: "الاشتراكات", icon: Sparkles },
-  { to: "/partner/statements", label: "كشوف الحساب", icon: ScrollText },
-  { to: "/partner/capacity", label: "التوقعات", icon: BarChart3 },
-  { to: "/partner/terms", label: "شروط الشراكة", icon: FileText },
-  { to: "/partner/team", label: "الأعضاء", icon: Users },
-] as const;
-
-export function PartnerNav({ variant = "tabs" }: { variant?: "tabs" | "sidebar" }) {
-  if (variant === "sidebar") {
-    return (
-      <nav className="flex flex-col gap-1">
-        {NAV.map((item) => (
-          <Link
-            key={item.to}
-            to={item.to}
-            activeOptions={{ exact: "exact" in item ? item.exact : false }}
-            className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-bold text-muted-foreground transition-colors hover:bg-secondary hover:text-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-          >
-            <item.icon className="size-4 shrink-0" aria-hidden />
-            {item.label}
-          </Link>
-        ))}
-      </nav>
-    );
-  }
-
-  return (
-    <nav className="flex gap-2 overflow-x-auto pb-1 lg:hidden">
-      {NAV.map((item) => (
-        <Link
-          key={item.to}
-          to={item.to}
-          activeOptions={{ exact: "exact" in item ? item.exact : false }}
-          className="shrink-0 rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground transition-colors hover:text-primary data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-        >
-          {item.label}
-        </Link>
-      ))}
-    </nav>
-  );
-}
 
 export function PartnerAuthError({ message }: { message?: string }) {
   return (
@@ -133,20 +77,13 @@ export function PartnerSection({
 }: {
   title: string;
   description?: string;
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 }) {
   return (
-    <Card
-      className={cn(
-        "rounded-xl border-border/80 p-5 shadow-[var(--shadow-card)] sm:p-6",
-        className,
-      )}
-    >
-      <h2 className="font-display text-lg font-extrabold text-primary">{title}</h2>
-      {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
-      <div className="mt-5">{children}</div>
-    </Card>
+    <PortalCard title={title} description={description} className={className}>
+      {children}
+    </PortalCard>
   );
 }
 
@@ -155,121 +92,21 @@ export function PartnerStatCard({
   value,
   hint,
   highlight = false,
+  icon,
 }: {
   label: string;
   value: string;
   hint?: string | undefined;
   highlight?: boolean;
+  icon?: LucideIcon;
 }) {
-  return (
-    <Card
-      className={cn(
-        "rounded-xl p-5 shadow-[var(--shadow-card)]",
-        highlight
-          ? "border-accent/30 bg-primary text-primary-foreground"
-          : "border-border/80 bg-card",
-      )}
-    >
-      <p
-        className={cn(
-          "text-sm",
-          highlight ? "text-primary-foreground/80" : "text-muted-foreground",
-        )}
-      >
-        {label}
-      </p>
-      <p className="mt-2 font-display text-2xl font-extrabold">{value}</p>
-      {hint ? (
-        <p
-          className={cn(
-            "mt-1 text-xs",
-            highlight ? "text-primary-foreground/70" : "text-muted-foreground",
-          )}
-        >
-          {hint}
-        </p>
-      ) : null}
-    </Card>
-  );
-}
-
-export function PartnerDashboardShell({
-  data,
-  children,
-}: {
-  data: PartnerDashboard;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="bg-mist/30 pb-12 pt-6 sm:pt-8">
-      <div className="mx-auto max-w-6xl px-4">
-        <PartnerHeader data={data} />
-        <div className="mt-6 lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8">
-          <aside className="hidden lg:block">
-            <div className="sticky top-20 rounded-xl border border-border/80 bg-card p-3 shadow-[var(--shadow-card)]">
-              <PartnerNav variant="sidebar" />
-            </div>
-          </aside>
-          <div className="min-w-0">
-            <PartnerNav variant="tabs" />
-            <div className="mt-6">{children}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function PartnerHeader({ data }: { data: PartnerDashboard }) {
-  return (
-    <header className="rounded-xl border border-border/80 bg-card p-5 shadow-[var(--shadow-card)] sm:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          {data.logoUrl && data.brandApproved ? (
-            <img
-              src={data.logoUrl}
-              alt=""
-              className="h-10 w-auto max-w-40 object-contain"
-              loading="lazy"
-            />
-          ) : null}
-          <div>
-            <h1 className="font-display text-2xl font-extrabold text-primary sm:text-3xl">
-              {data.partnerName}
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {data.partnerType === "agency" ? "لوحة تحكم وكالات السياحة" : "لوحة تحكم شركاء GoAir"}
-            </p>
-          </div>
-        </div>
-        <span
-          className={cn(
-            "inline-flex rounded-full px-3 py-1 text-xs font-bold",
-            data.brandApproved ? "bg-primary text-primary-foreground" : "bg-accent/15 text-primary",
-          )}
-        >
-          {data.brandApproved ? "الهوية معتمدة" : "الهوية قيد المراجعة"}
-        </span>
-      </div>
-    </header>
-  );
+  return <StatCard label={label} value={value} hint={hint} highlight={highlight} icon={icon} />;
 }
 
 export function StatementStatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; className: string }> = {
-    draft: { label: "مسودة", className: "bg-muted text-muted-foreground" },
-    sent: { label: "مرسل", className: "bg-accent/15 text-primary" },
-    paid: { label: "مدفوع", className: "bg-primary text-primary-foreground" },
-  };
-  const entry = map[status.toLowerCase()] ?? {
-    label: status,
-    className: "bg-muted text-muted-foreground",
-  };
-  return (
-    <span className={cn("inline-flex rounded-full px-3 py-1 text-xs font-bold", entry.className)}>
-      {entry.label}
-    </span>
-  );
+  const labels: Record<string, string> = { draft: "مسودة", sent: "مرسل", paid: "مدفوع" };
+  const key = status.toLowerCase();
+  return <StatusPill tone={key === "draft" ? "neutral" : statusTone(key)}>{labels[key] ?? status}</StatusPill>;
 }
 
 /** @deprecated Use StatementStatusBadge */
@@ -278,23 +115,7 @@ export function StatusBadge({ status }: { status: string }) {
 }
 
 export function BookingStatusBadge({ status }: { status: string }) {
-  const key = status.toLowerCase();
-  const map: Record<string, string> = {
-    pending: "bg-accent/15 text-primary",
-    confirmed: "bg-primary/10 text-primary",
-    cancelled: "bg-destructive/10 text-destructive",
-    canceled: "bg-destructive/10 text-destructive",
-  };
-  return (
-    <span
-      className={cn(
-        "inline-flex rounded-full px-3 py-1 text-xs font-bold",
-        map[key] ?? "bg-muted text-muted-foreground",
-      )}
-    >
-      {partnerBookingStatusLabel(status)}
-    </span>
-  );
+  return <StatusPill tone={statusTone(status)}>{partnerBookingStatusLabel(status)}</StatusPill>;
 }
 
 /**
@@ -316,29 +137,15 @@ export function LifecycleBadge({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <span
-        className={cn(
-          "inline-flex w-fit rounded-full px-3 py-1 text-xs font-bold",
-          alert
-            ? "bg-destructive/10 text-destructive"
-            : isComplete
-              ? "bg-primary text-primary-foreground"
-              : status
-                ? "bg-accent/15 text-primary"
-                : "bg-muted text-muted-foreground",
-        )}
-      >
+      <StatusPill tone={alert ? "danger" : isComplete ? "success" : status ? "info" : "neutral"}>
         {partnerLifecycleLabel(status)}
-      </span>
+      </StatusPill>
       {progress !== null && !alert ? (
         <div className="flex gap-1" aria-hidden>
           {Array.from({ length: PARTNER_LIFECYCLE_STAGE_COUNT }).map((_, index) => (
             <span
               key={index}
-              className={cn(
-                "h-1 w-4 rounded-full",
-                index <= progress ? "bg-primary" : "bg-border",
-              )}
+              className={cn("h-1 w-4 rounded-full", index <= progress ? "bg-primary" : "bg-border")}
             />
           ))}
         </div>

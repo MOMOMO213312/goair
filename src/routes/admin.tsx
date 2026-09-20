@@ -1,6 +1,24 @@
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+import {
+  Building2,
+  Car,
+  ClipboardList,
+  FileText,
+  Handshake,
+  Inbox,
+  LayoutDashboard,
+  Megaphone,
+  Package,
+  PackagePlus,
+  PlaneTakeoff,
+  Sparkles,
+  Tag,
+  Truck,
+  Users,
+} from "lucide-react";
 
 import { AdminLoginForm } from "@/components/admin/admin-login-form";
+import { PortalShell, type PortalNavEntry } from "@/components/portal/portal-shell";
 import { AdminSessionProvider, useAdminSession } from "@/lib/admin-session";
 
 export const Route = createFileRoute("/admin")({
@@ -10,6 +28,28 @@ export const Route = createFileRoute("/admin")({
     </AdminSessionProvider>
   ),
 });
+
+const ADMIN_NAV: PortalNavEntry[] = [
+  { to: "/admin/overview", label: "نظرة عامة", icon: LayoutDashboard },
+  { to: "/admin", label: "الحجوزات", icon: ClipboardList, exact: true },
+  { heading: "التشغيل" },
+  { to: "/admin/fleet", label: "السائقين والعربيات", icon: Truck },
+  { to: "/admin/ground-handling", label: "التشغيل الأرضي", icon: PlaneTakeoff },
+  { to: "/admin/requests", label: "الطلبات والتواصل", icon: Inbox },
+  { heading: "التسعير والمنتجات" },
+  { to: "/admin/pricing", label: "الأسعار", icon: Tag },
+  { to: "/admin/packages", label: "الباقات", icon: Package },
+  { to: "/admin/addon-services", label: "الخدمات الإضافية", icon: PackagePlus },
+  { to: "/admin/subscription-plans", label: "خطط الاشتراك", icon: Sparkles },
+  { heading: "الشركاء" },
+  { to: "/admin/partners", label: "الوكالات والشركاء", icon: Handshake },
+  { to: "/admin/rental-partners", label: "مزوّدو التأجير", icon: Building2 },
+  { to: "/admin/rental-applications", label: "طلبات تأجير السيارات", icon: FileText },
+  { to: "/admin/rental-vehicles", label: "عربيات التأجير", icon: Car },
+  { heading: "النظام" },
+  { to: "/admin/announcements", label: "الإشعارات", icon: Megaphone },
+  { to: "/admin/team", label: "فريق العمل", icon: Users },
+];
 
 function AdminLayout() {
   const { state, signOut } = useAdminSession();
@@ -31,114 +71,15 @@ function AdminLayout() {
   }
 
   return (
-    <div className="bg-mist/30 pb-16 pt-6 sm:pt-8">
-      <div className="mx-auto max-w-6xl px-4">
-        <header className="mb-6 flex items-center justify-between">
-          <h1 className="font-display text-2xl font-extrabold text-primary">لوحة تشغيل GoAir</h1>
-          <div className="flex items-center gap-2">
-            <nav className="flex gap-2">
-              <Link
-                to="/admin/overview"
-                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-              >
-                نظرة عامة
-              </Link>
-              <Link
-                to="/admin"
-                activeOptions={{ exact: true }}
-                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-              >
-                الحجوزات
-              </Link>
-              <Link
-                to="/admin/pricing"
-                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-              >
-                الأسعار
-              </Link>
-              <Link
-                to="/admin/fleet"
-                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-              >
-                السائقين والعربيات
-              </Link>
-              <Link
-                to="/admin/requests"
-                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-              >
-                الطلبات والتواصل
-              </Link>
-              <Link
-                to="/admin/announcements"
-                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-              >
-                الإشعارات
-              </Link>
-              <Link
-                to="/admin/packages"
-                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-              >
-                الباقات
-              </Link>
-              <Link
-                to="/admin/addon-services"
-                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-              >
-                الخدمات الإضافية
-              </Link>
-              <Link
-                to="/admin/ground-handling"
-                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-              >
-                التشغيل الأرضي
-              </Link>
-              <Link
-                to="/admin/subscription-plans"
-                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-              >
-                خطط الاشتراك
-              </Link>
-              <Link
-                to="/admin/rental-applications"
-                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-              >
-                طلبات تأجير السيارات
-              </Link>
-              <Link
-                to="/admin/rental-vehicles"
-                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-              >
-                عربيات التأجير
-              </Link>
-              <Link
-                to="/admin/rental-partners"
-                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-              >
-                مزوّدو التأجير
-              </Link>
-              <Link
-                to="/admin/team"
-                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-              >
-                فريق العمل
-              </Link>
-              <Link
-                to="/admin/partners"
-                className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-              >
-                الوكالات والشركاء
-              </Link>
-            </nav>
-            <button
-              onClick={() => signOut()}
-              className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground hover:bg-muted"
-            >
-              خروج
-            </button>
-          </div>
-        </header>
-        <Outlet />
-      </div>
-    </div>
+    <PortalShell
+      theme="admin"
+      portalLabel="لوحة تشغيل GoAir"
+      roleLabel="إدارة المنصة"
+      userName="فريق GoAir"
+      nav={ADMIN_NAV}
+      onSignOut={() => signOut()}
+    >
+      <Outlet />
+    </PortalShell>
   );
 }

@@ -1,18 +1,31 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { usePartnerToken } from "@/lib/partner-session";
 import { useQuery } from "@tanstack/react-query";
-import { Building2, Check, Copy, Loader2, PlaneTakeoff, TrendingUp, Users } from "lucide-react";
+import {
+  Building2,
+  CalendarCheck,
+  Check,
+  Copy,
+  Loader2,
+  PlaneTakeoff,
+  Star,
+  Ticket,
+  TrendingUp,
+  Users,
+  Wallet,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 import { FlightPath } from "@/components/flight-path";
 import {
+  BookingStatusBadge,
   PartnerAuthError,
   PartnerOverviewSkeleton,
   PartnerSection,
-  PartnerStatCard,
   PartnerTempError,
 } from "@/components/partner/partner-shell";
+import { ListRow, PageHeader, PortalCard, StatCard, StatusPill } from "@/components/portal/portal-ui";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,6 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { sendContactMessage } from "@/lib/goair";
 import {
   formatPartnerMoney,
+  getPartnerBookings,
   getPartnerDashboard,
   getPartnerReferralUrl,
   isPartnerAuthError,
@@ -54,6 +68,11 @@ function PartnerOverview({ token }: { token: string }) {
     queryFn: () => getPartnerDashboard(token),
     retry: false,
   });
+  const recentQuery = useQuery({
+    queryKey: ["partner-recent-bookings", token],
+    queryFn: () => getPartnerBookings(token, null, null),
+    retry: false,
+  });
 
   if (query.isPending) return <PartnerOverviewSkeleton />;
   if (query.isError || !query.data) {
@@ -62,58 +81,106 @@ function PartnerOverview({ token }: { token: string }) {
 
   const data = query.data;
   const referralLink = data.referralCode ? getPartnerReferralUrl(data.referralCode) : null;
+  const recent = [...(recentQuery.data ?? [])]
+    .sort((a, b) => (b.bookedAt ?? "").localeCompare(a.bookedAt ?? ""))
+    .slice(0, 5);
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <PartnerStatCard label="الحجوزات هذا الشهر" value={String(data.currentMonthBookings)} />
-        <PartnerStatCard
+      <PageHeader
+        title={`أهلاً، ${data.partnerName}`}
+        subtitle="ملخص نشاطك على GoAir"
+        actions={
+          <div className="flex items-center gap-3">
+            {data.logoUrl && data.brandApproved ? (
+              <img src={data.logoUrl} alt="" className="h-9 w-auto max-w-32 object-contain" loading="lazy" />
+            ) : null}
+            <StatusPill tone={data.brandApproved ? "success" : "warning"}>
+              {data.brandApproved ? "الهوية معتمدة" : "الهوية قيد المراجعة"}
+            </StatusPill>
+          </div>
+        }
+      />
+
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <StatCard icon={CalendarCheck} label="الحجوزات هذا الشهر" value={String(data.currentMonthBookings)} />
+        <StatCard
           highlight
+          icon={Wallet}
           label="العمولة المستحقة"
           value={formatPartnerMoney(data.currentMonthCommissionDueUsd)}
           hint={data.commissionRate ? `نسبة العمولة ${data.commissionRate}%` : undefined}
         />
-        <PartnerStatCard label="إجمالي الحجوزات" value={String(data.lifetimeBookings)} />
-        <PartnerStatCard
+        <StatCard icon={Ticket} label="إجمالي الحجوزات" value={String(data.lifetimeBookings)} />
+        <StatCard
+          icon={Star}
           label="متوسط التقييم"
           value={
             data.ratingsCount === 0
               ? "لسه مفيش تقييمات"
-              : `${(data.averageRating ?? 0).toFixed(1)} / 5`
+              : `${(data.averageRating ?? 0).toFixed(1)} من 5`
           }
           hint={data.ratingsCount === 0 ? undefined : `${data.ratingsCount} تقييم`}
         />
       </div>
 
-      <PartnerSection title="رابط GoAir الخاص بك" description="شارك الرابط مع مسافريك عبر قنواتك.">
-        {referralLink ? (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <code className="flex-1 rounded-lg border border-border bg-secondary/50 px-4 py-3 text-sm font-semibold text-primary break-all">
-              {referralLink}
-            </code>
-            <Button
-              type="button"
-              variant="outline"
-              className="shrink-0 font-bold"
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(referralLink);
-                  setCopied(true);
-                  toast.success("تم نسخ الرابط.");
-                  setTimeout(() => setCopied(false), 2000);
-                } catch {
-                  toast.error("لم نتمكن من النسخ — انسخ الرابط يدويًا.");
-                }
-              }}
-            >
-              {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
-              نسخ الرابط
-            </Button>
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">رابط الإحالة هيظهر هنا بعد تفعيل حسابك.</p>
-        )}
-      </PartnerSection>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <PortalCard
+          title="آخر الحجوزات"
+          action={
+            <Link to="/partner/bookings" className="text-sm font-bold text-[var(--portal-accent)] hover:underline">
+              عرض الكل
+            </Link>
+          }
+        >
+          {recentQuery.isPending ? (
+            <p className="text-sm text-slate-500">جاري التحميل...</p>
+          ) : recent.length === 0 ? (
+            <p className="text-sm text-slate-500">لسه مفيش حجوزات. ابدأ بـ «احجز لعميل».</p>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {recent.map((booking) => (
+                <ListRow
+                  key={booking.id}
+                  title={`${booking.origin} ← ${booking.destination}`}
+                  subtitle={`${booking.fullName} · ${booking.seatsCount} راكب${booking.travelDate ? ` · ${booking.travelDate}` : ""}`}
+                  end={<BookingStatusBadge status={booking.status} />}
+                />
+              ))}
+            </ul>
+          )}
+        </PortalCard>
+
+        <PartnerSection title="رابط GoAir الخاص بك" description="شارك الرابط مع مسافريك عبر قنواتك.">
+          {referralLink ? (
+            <div className="flex flex-col gap-3">
+              <code className="rounded-lg border border-border bg-secondary/50 px-4 py-3 text-sm font-semibold text-primary break-all">
+                {referralLink}
+              </code>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-fit shrink-0 font-bold"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(referralLink);
+                    setCopied(true);
+                    toast.success("تم نسخ الرابط.");
+                    setTimeout(() => setCopied(false), 2000);
+                  } catch {
+                    toast.error("لم نتمكن من النسخ — انسخ الرابط يدويًا.");
+                  }
+                }}
+              >
+                {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
+                نسخ الرابط
+              </Button>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">رابط الإحالة هيظهر هنا بعد تفعيل حسابك.</p>
+          )}
+        </PartnerSection>
+      </div>
     </div>
   );
 }

@@ -1,15 +1,30 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { AlertTriangle, PlaneTakeoff } from "lucide-react";
-
-import { GHLoading, GHStatCard, GHEmpty } from "@/components/ground-handling/ground-handling-shell";
-import { Card } from "@/components/ui/card";
 import {
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  ClipboardList,
+  Clock,
+  Inbox,
+  PlaneTakeoff,
+} from "lucide-react";
+
+import { GHEmpty, GHLoading } from "@/components/ground-handling/ground-handling-shell";
+import {
+  ListRow,
+  PageHeader,
+  PortalCard,
+  StatCard,
+  StatusPill,
+  statusTone,
+} from "@/components/portal/portal-ui";
+import {
+  formatGroundHandlingDate,
   getGroundHandlingDashboard,
   getGroundHandlingRequests,
   groundHandlingStatusLabel,
   isGroundHandlingAuthError,
-  formatGroundHandlingDate,
 } from "@/lib/ground-handling";
 import { useGroundHandlingSession, useGroundHandlingToken } from "@/lib/ground-handling-session";
 
@@ -17,6 +32,8 @@ export const Route = createFileRoute("/ground-handling/")({
   head: () => ({ meta: [{ title: "لوحة التحكم — بوابة GOAIR للخدمات الأرضية" }] }),
   component: GroundHandlingDashboardPage,
 });
+
+const CLOSED_STATUSES = ["completed", "cancelled"];
 
 function GroundHandlingDashboardPage() {
   const token = useGroundHandlingToken();
@@ -29,7 +46,7 @@ function GroundHandlingDashboardPage() {
     enabled: Boolean(token),
   });
 
-  const urgentQuery = useQuery({
+  const requestsQuery = useQuery({
     queryKey: ["ground-handling-urgent", token],
     queryFn: () => getGroundHandlingRequests(token as string, null),
     retry: false,
@@ -46,77 +63,93 @@ function GroundHandlingDashboardPage() {
   }
 
   const d = dashboardQuery.data;
-  const urgentRequests = (urgentQuery.data ?? []).filter(
-    (r) => r.isUrgent && r.status !== "completed" && r.status !== "cancelled",
-  );
+  const allRequests = requestsQuery.data ?? [];
+  const urgentRequests = allRequests.filter((r) => r.isUrgent && !CLOSED_STATUSES.includes(r.status));
+  const latestRequests = [...allRequests]
+    .filter((r) => !CLOSED_STATUSES.includes(r.status))
+    .sort((a, b) => (b.bookedAt ?? "").localeCompare(a.bookedAt ?? ""))
+    .slice(0, 6);
 
   return (
-    <div className="space-y-8">
-      <section>
-        <h2 className="mb-1 font-display text-lg font-extrabold text-primary">{d.name}</h2>
-        <p className="mb-4 text-sm text-muted-foreground">
-          {d.airportCode}
-          {d.country ? ` · ${d.country}` : ""}
-          {!d.isActive ? " · (الحساب موقوف)" : ""}
-        </p>
-        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-7">
-          <GHStatCard label="إجمالي الطلبات" value={d.totalCount} />
-          <GHStatCard label="طلبات جديدة" value={d.newCount} />
-          <GHStatCard label="قيد التجهيز" value={d.preparingCount} />
-          <GHStatCard label="قيد التنفيذ" value={d.inProgressCount} />
-          <GHStatCard label="المكتملة اليوم" value={d.completedTodayCount} />
-          <GHStatCard label="طلبات عاجلة" value={d.urgentCount} tone={d.urgentCount > 0 ? "urgent" : undefined} />
-          <GHStatCard label="رحلات اليوم" value={d.todayFlightsCount} />
-        </div>
-      </section>
+    <div className="space-y-6">
+      <PageHeader
+        title={`عمليات اليوم — ${d.name}`}
+        subtitle={`${d.airportCode}${d.country ? ` · ${d.country}` : ""}${!d.isActive ? " · (الحساب موقوف)" : ""}`}
+      />
 
-      {urgentRequests.length > 0 ? (
-        <section>
-          <h3 className="mb-3 flex items-center gap-2 font-display text-base font-extrabold text-destructive">
-            <AlertTriangle className="size-4" aria-hidden />
-            طلبات عاجلة تحتاج انتباه
-          </h3>
-          <div className="space-y-2">
-            {urgentRequests.slice(0, 5).map((r) => (
-              <Card key={r.requestId} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border-destructive/40 p-3">
-                <div className="min-w-0 text-sm">
-                  <span className="font-bold text-primary">{r.serviceName}</span>
-                  <span className="text-muted-foreground"> — {r.passengerName}</span>
-                  {r.flightNumber ? <span className="text-muted-foreground"> · رحلة {r.flightNumber}</span> : null}
-                </div>
-                <span className="shrink-0 rounded-full bg-mist px-3 py-1 text-xs font-bold text-primary">
-                  {groundHandlingStatusLabel(r.status)}
-                </span>
-              </Card>
-            ))}
-          </div>
-          <Link to="/ground-handling/requests" className="mt-3 inline-block text-sm font-bold text-primary underline">
-            عرض كل الطلبات ←
-          </Link>
-        </section>
-      ) : null}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <StatCard icon={ClipboardList} label="إجمالي الطلبات" value={d.totalCount} />
+        <StatCard icon={Inbox} label="طلبات جديدة" value={d.newCount} />
+        <StatCard icon={Clock} label="قيد التجهيز" value={d.preparingCount} />
+        <StatCard icon={Activity} label="قيد التنفيذ" value={d.inProgressCount} />
+        <StatCard icon={CheckCircle2} label="المكتملة اليوم" value={d.completedTodayCount} />
+        <StatCard
+          icon={AlertTriangle}
+          label="طلبات عاجلة"
+          value={d.urgentCount}
+          className={d.urgentCount > 0 ? "border-red-200 bg-red-50" : undefined}
+          valueClassName={d.urgentCount > 0 ? "text-red-600" : undefined}
+        />
+        <StatCard icon={PlaneTakeoff} label="رحلات اليوم" value={d.todayFlightsCount} />
+      </div>
 
-      <section>
-        <h3 className="mb-3 flex items-center gap-2 font-display text-base font-extrabold text-primary">
-          <PlaneTakeoff className="size-4" aria-hidden />
-          نظرة سريعة
-        </h3>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Link to="/ground-handling/requests">
-            <Card className="rounded-xl border-border/80 p-4 text-sm font-bold text-primary shadow-[var(--shadow-card)] hover:bg-muted">
-              إدارة طلبات الخدمات ←
-            </Card>
-          </Link>
-          <Link to="/ground-handling/flights">
-            <Card className="rounded-xl border-border/80 p-4 text-sm font-bold text-primary shadow-[var(--shadow-card)] hover:bg-muted">
-              رحلات اليوم ←
-            </Card>
-          </Link>
-        </div>
-        <p className="mt-2 text-xs text-muted-foreground">
-          آخر تحديث: {formatGroundHandlingDate(new Date().toISOString())}
-        </p>
-      </section>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <PortalCard
+          title="طلبات عاجلة تحتاج انتباه"
+          action={
+            <Link to="/ground-handling/requests" className="text-sm font-bold text-[var(--portal-accent)] hover:underline">
+              عرض كل الطلبات
+            </Link>
+          }
+        >
+          {urgentRequests.length === 0 ? (
+            <p className="text-sm text-slate-500">مفيش طلبات عاجلة دلوقتي.</p>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {urgentRequests.slice(0, 5).map((r) => (
+                <ListRow
+                  key={r.requestId}
+                  title={r.serviceName}
+                  subtitle={`${r.passengerName}${r.flightNumber ? ` · رحلة ${r.flightNumber}` : ""}`}
+                  end={<StatusPill tone="danger">{groundHandlingStatusLabel(r.status)}</StatusPill>}
+                />
+              ))}
+            </ul>
+          )}
+        </PortalCard>
+
+        <PortalCard
+          title="أحدث الطلبات المفتوحة"
+          action={
+            <Link to="/ground-handling/flights" className="text-sm font-bold text-[var(--portal-accent)] hover:underline">
+              رحلات اليوم
+            </Link>
+          }
+        >
+          {requestsQuery.isPending ? (
+            <p className="text-sm text-slate-500">جاري التحميل...</p>
+          ) : latestRequests.length === 0 ? (
+            <p className="text-sm text-slate-500">مفيش طلبات مفتوحة.</p>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {latestRequests.map((r) => (
+                <ListRow
+                  key={r.requestId}
+                  title={r.serviceName}
+                  subtitle={`${r.passengerName}${r.flightNumber ? ` · رحلة ${r.flightNumber}` : ""}`}
+                  end={
+                    <StatusPill tone={statusTone(r.status)}>{groundHandlingStatusLabel(r.status)}</StatusPill>
+                  }
+                />
+              ))}
+            </ul>
+          )}
+        </PortalCard>
+      </div>
+
+      <p className="text-xs text-slate-500">
+        آخر تحديث: {formatGroundHandlingDate(new Date().toISOString())}
+      </p>
     </div>
   );
 }

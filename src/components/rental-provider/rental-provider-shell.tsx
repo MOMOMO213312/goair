@@ -1,4 +1,5 @@
 import { AlertCircle } from "lucide-react";
+import { PortalCard, StatCard } from "@/components/portal/portal-ui";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RENTAL_PROVIDER_AUTH_ERROR } from "@/lib/rental-provider";
@@ -28,24 +29,11 @@ export function RentalProviderSection({
   action?: React.ReactNode;
 }) {
   return (
-    <Card className="rounded-xl border-border/80 p-5 shadow-[var(--shadow-card)] sm:p-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="font-display text-lg font-extrabold text-primary">{title}</h2>
-          {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
-        </div>
-        {action}
-      </div>
-      <div className="mt-5">{children}</div>
-    </Card>
+    <PortalCard title={title} description={description} action={action}>
+      {children}
+    </PortalCard>
   );
 }
 export function RentalProviderStatCard({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <Card className="rounded-xl border-border/80 p-5 shadow-[var(--shadow-card)]">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-2 font-display text-2xl font-extrabold text-primary">{value}</p>
-      {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
-    </Card>
-  );
+  return <StatCard label={label} value={value} hint={hint} />;
 }

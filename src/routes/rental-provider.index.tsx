@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { CalendarCheck, Car, CarFront, Clock } from "lucide-react";
 
+import { ListRow, PageHeader, PortalCard, StatCard, StatusPill, statusTone } from "@/components/portal/portal-ui";
 import {
   RentalProviderAuthError,
   RentalProviderLoading,
-  RentalProviderStatCard,
 } from "@/components/rental-provider/rental-provider-shell";
 import { useRentalProviderToken } from "@/lib/rental-provider-session";
 import {
@@ -14,6 +15,14 @@ import {
   listRentalProviderVehicles,
   VERIFICATION_STATUS_LABELS,
 } from "@/lib/rental-provider";
+
+const BOOKING_STATUS_LABELS: Record<string, string> = {
+  pending: "معلّق",
+  confirmed: "مؤكّد",
+  in_progress: "جاري",
+  completed: "مكتمل",
+  cancelled: "ملغي",
+};
 
 export const Route = createFileRoute("/rental-provider/")({
   head: () => ({ meta: [{ title: "نظرة عامة — بوابة مزوّد التأجير" }, { name: "robots", content: "noindex" }] }),
@@ -59,31 +68,22 @@ function RentalProviderOverview() {
 
   const verificationStatus = profileQuery.data.verificationStatus;
 
+  const recentBookings = [...bookings]
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 5);
+  const name = profileQuery.data.companyName || profileQuery.data.fullName;
+
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-border/80 bg-card p-5 shadow-[var(--shadow-card)]">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="font-display text-xl font-extrabold text-primary">
-            {profileQuery.data.companyName || profileQuery.data.fullName}
-          </h2>
-          <span
-            className={
-              "rounded-full px-3 py-1 text-xs font-bold " +
-              (verificationStatus === "verified"
-                ? "bg-accent/15 text-accent"
-                : verificationStatus === "rejected"
-                  ? "bg-destructive/10 text-destructive"
-                  : "bg-amber-100 text-amber-700")
-            }
-          >
+      <PageHeader
+        title={`أهلاً، ${name}`}
+        subtitle={`${profileQuery.data.providerType === "company" ? "حساب شركة تأجير" : "حساب مزوّد فردي"} · ${profileQuery.data.country}`}
+        actions={
+          <StatusPill tone={statusTone(verificationStatus === "pending_review" ? "pending" : verificationStatus)}>
             {VERIFICATION_STATUS_LABELS[verificationStatus]}
-          </span>
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {profileQuery.data.providerType === "company" ? "حساب شركة تأجير" : "حساب مزوّد فردي"} ·{" "}
-          {profileQuery.data.country}
-        </p>
-      </div>
+          </StatusPill>
+        }
+      />
       {verificationStatus === "pending_review" && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
           حسابك لسه بانتظار اعتماد فريق GoAir بعد مراجعة الأوراق. هتقدر تستقبل حجوزات لما يتم الاعتماد.
@@ -96,14 +96,14 @@ function RentalProviderOverview() {
           من التفاصيل.
         </div>
       )}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <RentalProviderStatCard label="عرباتك المعتمدة" value={String(approvedCount)} />
-        <RentalProviderStatCard label="قيد المراجعة" value={String(pendingCount)} />
-        <RentalProviderStatCard label="إجمالي عرباتك" value={String(vehicles.length)} />
-        <RentalProviderStatCard label="حجوزات مستمرة" value={String(upcomingBookings)} />
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <StatCard icon={CarFront} label="عرباتك المعتمدة" value={String(approvedCount)} />
+        <StatCard icon={Clock} label="قيد المراجعة" value={String(pendingCount)} />
+        <StatCard icon={Car} label="إجمالي عرباتك" value={String(vehicles.length)} />
+        <StatCard highlight icon={CalendarCheck} label="حجوزات مستمرة" value={String(upcomingBookings)} />
       </div>
       {vehicles.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+        <div className="rounded-xl border border-dashed border-border bg-white p-6 text-center text-sm text-muted-foreground">
           مفيش عندك عربيات لسه.{" "}
           <Link to="/rental-provider/vehicles" className="font-bold text-primary underline">
             ضيف أول عربية
@@ -111,6 +111,33 @@ function RentalProviderOverview() {
           — لازم موافقة GoAir الأول قبل ما تظهر للعملاء.
         </div>
       ) : null}
+      <PortalCard
+        title="أحدث الحجوزات"
+        action={
+          <Link to="/rental-provider/bookings" className="text-sm font-bold text-[var(--portal-accent)] hover:underline">
+            عرض الكل
+          </Link>
+        }
+      >
+        {recentBookings.length === 0 ? (
+          <p className="text-sm text-slate-500">لسه مفيش حجوزات على عرباتك.</p>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {recentBookings.map((booking) => (
+              <ListRow
+                key={booking.id}
+                title={booking.vehicleMakeModel}
+                subtitle={`${booking.customerName} · ${booking.pickupLocation}`}
+                end={
+                  <StatusPill tone={statusTone(booking.status)}>
+                    {BOOKING_STATUS_LABELS[booking.status] ?? booking.status}
+                  </StatusPill>
+                }
+              />
+            ))}
+          </ul>
+        )}
+      </PortalCard>
     </div>
   );
 }

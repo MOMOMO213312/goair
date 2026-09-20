@@ -1,7 +1,22 @@
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+import {
+  CalendarPlus,
+  LayoutDashboard,
+  Route as RouteIcon,
+  Truck,
+  Users,
+  Wallet,
+} from "lucide-react";
 
 import { OperatorLoginForm } from "@/components/operator/operator-login-form";
-import { OperatorSessionProvider, useOperatorSession } from "@/lib/operator-session";
+import { PortalShell, type PortalNavEntry } from "@/components/portal/portal-shell";
+import { getOperatorDashboard } from "@/lib/operator";
+import {
+  OperatorSessionProvider,
+  useOperatorSession,
+  useOperatorToken,
+} from "@/lib/operator-session";
 
 export const Route = createFileRoute("/operator")({
   component: () => (
@@ -11,8 +26,25 @@ export const Route = createFileRoute("/operator")({
   ),
 });
 
+const OPERATOR_NAV: PortalNavEntry[] = [
+  { to: "/operator", label: "نظرة عامة", icon: LayoutDashboard, exact: true },
+  { to: "/operator/trips", label: "الرحلات المخصصة", icon: RouteIcon },
+  { to: "/operator/sell", label: "بيع لعميلي", icon: CalendarPlus },
+  { to: "/operator/fleet", label: "أسطولي", icon: Truck },
+  { to: "/operator/statements", label: "كشوف الحساب", icon: Wallet },
+  { to: "/operator/team", label: "الأعضاء", icon: Users },
+];
+
 function OperatorLayout() {
   const { state, signOut } = useOperatorSession();
+  const token = useOperatorToken();
+  // Same query key as the overview page, so this only costs one request.
+  const dashboardQuery = useQuery({
+    queryKey: ["operator-dashboard", token],
+    queryFn: () => getOperatorDashboard(token),
+    retry: false,
+    enabled: state === "authorized",
+  });
 
   if (state === "loading") {
     return (
@@ -31,40 +63,15 @@ function OperatorLayout() {
   }
 
   return (
-    <div className="bg-mist/30 pb-16 pt-6 sm:pt-8">
-      <div className="mx-auto max-w-5xl px-4">
-        <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="font-display text-2xl font-extrabold text-primary">بوابة شركة النقل</h1>
-          <div className="flex flex-wrap items-center gap-2">
-            <nav className="flex flex-wrap gap-2">
-              {[
-                { to: "/operator", label: "نظرة عامة", exact: true },
-                { to: "/operator/sell", label: "بيع لعميلي" },
-                { to: "/operator/trips", label: "الرحلات المخصصة" },
-                { to: "/operator/fleet", label: "أسطولي" },
-                { to: "/operator/statements", label: "كشوف الحساب" },
-                { to: "/operator/team", label: "الأعضاء" },
-              ].map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  activeOptions={{ exact: item.exact ?? false }}
-                  className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-            <button
-              onClick={() => signOut()}
-              className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground hover:bg-muted"
-            >
-              خروج
-            </button>
-          </div>
-        </header>
-        <Outlet />
-      </div>
-    </div>
+    <PortalShell
+      theme="operator"
+      portalLabel="بوابة شركة النقل"
+      roleLabel="شركة نقل"
+      userName={dashboardQuery.data?.name}
+      nav={OPERATOR_NAV}
+      onSignOut={() => signOut()}
+    >
+      <Outlet />
+    </PortalShell>
   );
 }

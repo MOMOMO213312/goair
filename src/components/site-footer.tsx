@@ -41,7 +41,7 @@ export function SiteFooter() {
   }
 
   return (
-    <footer className="mt-24 bg-primary text-primary-foreground">
+    <footer data-site-chrome className="mt-24 bg-primary text-primary-foreground">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 md:grid-cols-4">
         <div className="md:col-span-2">
           <div className="flex items-center gap-2">

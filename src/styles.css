@@ -198,3 +198,10 @@
     stroke-dashoffset: 0;
   }
 }
+
+
+/* Portals (partner / operator / ground handling / rental provider / admin) take over the whole
+   screen with their own sidebar layout, so the public site header + footer are hidden. */
+html[data-portal] [data-site-chrome] {
+  display: none !important;
+}

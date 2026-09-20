@@ -26,7 +26,10 @@ export function SiteHeader() {
   ] as const;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/70 bg-background/95 backdrop-blur">
+    <header
+      data-site-chrome
+      className="sticky top-0 z-50 border-b border-border/70 bg-background/95 backdrop-blur"
+    >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
         <Link to="/" className="flex items-center gap-2">
           <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">

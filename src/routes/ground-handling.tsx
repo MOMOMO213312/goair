@@ -1,9 +1,23 @@
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+import {
+  AlertTriangle,
+  BarChart3,
+  ClipboardList,
+  Contact,
+  LayoutDashboard,
+  Package,
+  PlaneTakeoff,
+  UserCog,
+  Users,
+  Wallet,
+} from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PortalShell, type PortalNavEntry } from "@/components/portal/portal-shell";
 import { supabase } from "@/lib/supabase";
 import { getGroundHandlingDashboard, isGroundHandlingAuthError } from "@/lib/ground-handling";
 import {
@@ -22,8 +36,28 @@ export const Route = createFileRoute("/ground-handling")({
   ),
 });
 
+const GROUND_HANDLING_NAV: PortalNavEntry[] = [
+  { to: "/ground-handling", label: "لوحة التحكم", icon: LayoutDashboard, exact: true },
+  { to: "/ground-handling/requests", label: "طلبات الخدمات", icon: ClipboardList },
+  { to: "/ground-handling/incidents", label: "المشاكل", icon: AlertTriangle },
+  { to: "/ground-handling/flights", label: "الرحلات", icon: PlaneTakeoff },
+  { to: "/ground-handling/travelers", label: "المسافرون", icon: Contact },
+  { to: "/ground-handling/services", label: "إدارة الخدمات", icon: Package },
+  { to: "/ground-handling/staff", label: "الموظفون", icon: UserCog },
+  { to: "/ground-handling/reports", label: "التقارير", icon: BarChart3 },
+  { to: "/ground-handling/statements", label: "التسويات المالية", icon: Wallet },
+  { to: "/ground-handling/team", label: "الأعضاء", icon: Users },
+];
+
 function GroundHandlingLayout() {
-  const { state, signIn, signOut } = useGroundHandlingSession();
+  const { state, token, signIn, signOut } = useGroundHandlingSession();
+  // Same query key as the dashboard page, so this only costs one request.
+  const dashboardQuery = useQuery({
+    queryKey: ["ground-handling-dashboard", token],
+    queryFn: () => getGroundHandlingDashboard(token as string),
+    retry: false,
+    enabled: state === "authorized" && Boolean(token),
+  });
 
   if (state === "loading") {
     return (
@@ -37,48 +71,17 @@ function GroundHandlingLayout() {
     return <GroundHandlingLoginForm invalid={state === "invalid"} onSignedIn={signIn} />;
   }
 
-  const navItems = [
-    { to: "/ground-handling", label: "لوحة التحكم", exact: true },
-    { to: "/ground-handling/requests", label: "طلبات الخدمات" },
-    { to: "/ground-handling/incidents", label: "المشاكل" },
-    { to: "/ground-handling/flights", label: "الرحلات" },
-    { to: "/ground-handling/travelers", label: "المسافرون" },
-    { to: "/ground-handling/services", label: "إدارة الخدمات" },
-    { to: "/ground-handling/staff", label: "الموظفون" },
-    { to: "/ground-handling/reports", label: "التقارير" },
-    { to: "/ground-handling/statements", label: "التسويات المالية" },
-    { to: "/ground-handling/team", label: "الأعضاء" },
-  ];
-
   return (
-    <div className="bg-mist/30 pb-16 pt-6 sm:pt-8">
-      <div className="mx-auto max-w-6xl px-4">
-        <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="font-display text-2xl font-extrabold text-primary">
-            بوابة GOAIR للخدمات الأرضية
-          </h1>
-          <button
-            onClick={() => signOut()}
-            className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground hover:bg-muted"
-          >
-            خروج
-          </button>
-        </header>
-        <nav className="mb-6 flex flex-wrap gap-2">
-          {navItems.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              activeOptions={{ exact: item.exact ?? false }}
-              className="rounded-lg border border-border px-3 py-2 text-sm font-bold text-muted-foreground data-[status=active]:border-primary data-[status=active]:bg-primary data-[status=active]:text-primary-foreground"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-        <Outlet />
-      </div>
-    </div>
+    <PortalShell
+      theme="ground"
+      portalLabel="بوابة الخدمات الأرضية"
+      roleLabel="خدمات أرضية"
+      userName={dashboardQuery.data?.name}
+      nav={GROUND_HANDLING_NAV}
+      onSignOut={() => signOut()}
+    >
+      <Outlet />
+    </PortalShell>
   );
 }
 
