@@ -214,6 +214,11 @@ function RequestCard({
           <p className="font-display text-base font-bold text-primary">
             {request.serviceName}
             {request.isUrgent ? <span className="mr-2 rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-bold text-destructive">عاجل</span> : null}
+            {request.saleChannel === "qr_retail" ? (
+              <span className="mr-2 rounded-full bg-accent/10 px-2 py-0.5 text-xs font-bold text-accent-foreground">
+                📱 بيع كاونتر (QR)
+              </span>
+            ) : null}
           </p>
           <p className="mt-0.5 text-sm text-muted-foreground">
             {request.passengerName} — {request.phoneNumber}
@@ -224,7 +229,14 @@ function RequestCard({
             {request.terminal ? ` · ${request.terminal}` : ""}
             {request.direction ? ` · ${request.direction === "arrival" ? "وصول" : "مغادرة"}` : ""}
             {request.ticketCode ? ` · تذكرة ${request.ticketCode}` : ""}
+            {request.voucherCode ? ` · فاوتشر ${request.voucherCode}` : ""}
           </p>
+          {request.saleChannel === "qr_retail" ? (
+            <p className="mt-0.5 text-xs font-semibold text-accent-foreground">
+              {request.qrTouchpointLabel ? `من كاونتر: ${request.qrTouchpointLabel}` : "بيع مستقل عبر QR"}
+              {request.paymentStatus ? ` · الدفع: ${request.paymentStatus === "paid" ? "تم" : "معلّق"}` : ""}
+            </p>
+          ) : null}
           <p className="mt-0.5 text-xs font-semibold text-muted-foreground">
             {groundHandlingRequesterLabel(request)}
           </p>

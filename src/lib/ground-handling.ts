@@ -183,8 +183,15 @@ export async function getGroundHandlingDashboard(token: string): Promise<GroundH
 
 export type GroundHandlingRequest = {
   requestId: string;
-  bookingId: string;
+  /** Null for a standalone Airport Retail (QR) sale — no GoAir transfer booking exists. */
+  bookingId: string | null;
   ticketCode: string | null;
+  /** 'linked_booking' (classic, tied to a transfer booking) | 'qr_retail' | 'direct_standalone'. */
+  saleChannel: string;
+  voucherCode: string | null;
+  paymentStatus: string | null;
+  /** Set only for saleChannel = 'qr_retail': which counter/stand the sale came from. */
+  qrTouchpointLabel: string | null;
   serviceName: string;
   priceUsd: number;
   status: GroundHandlingRequestStatus;
@@ -254,8 +261,12 @@ export function groundHandlingSlaStatusLabel(status: GroundHandlingSlaStatus): s
 function mapRequest(row: Record<string, unknown>): GroundHandlingRequest {
   return {
     requestId: String(row["request_id"]),
-    bookingId: String(row["booking_id"]),
+    bookingId: (row["booking_id"] as string | null) ?? null,
     ticketCode: (row["ticket_code"] as string | null) ?? null,
+    saleChannel: (row["sale_channel"] as string | null) ?? "linked_booking",
+    voucherCode: (row["voucher_code"] as string | null) ?? null,
+    paymentStatus: (row["payment_status"] as string | null) ?? null,
+    qrTouchpointLabel: (row["qr_touchpoint_label"] as string | null) ?? null,
     serviceName: String(row["service_name"] ?? ""),
     priceUsd: Number(row["price_usd"] ?? 0),
     status: (row["status"] as GroundHandlingRequestStatus) ?? "requested",

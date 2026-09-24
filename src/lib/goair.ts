@@ -1562,6 +1562,68 @@ export async function cancelRentalBookingByTicket(ticketCode: string, reason: st
   return true;
 }
 
+// ---------------------------------------------------------------------------
+// Airport Retail (QR touchpoints): standalone service sales, no prior
+// GoAir booking required. See create_qr_service_sale / get_qr_touchpoint_catalog.
+// ---------------------------------------------------------------------------
+
+export type QrTouchpointService = {
+  touchpointId: string;
+  airportCode: string;
+  terminal: string | null;
+  labelAr: string | null;
+  labelEn: string | null;
+  serviceId: string;
+  serviceName: string;
+  serviceDescription: string | null;
+  priceUsd: number;
+};
+
+export async function fetchQrTouchpointCatalog(code: string): Promise<QrTouchpointService[]> {
+  const { data, error } = await supabase.rpc("get_qr_touchpoint_catalog", {
+    p_code: code.trim(),
+  });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+    touchpointId: String(row["touchpoint_id"]),
+    airportCode: String(row["airport_code"]),
+    terminal: pick<string>(row, ["terminal"]),
+    labelAr: pick<string>(row, ["label_ar"]),
+    labelEn: pick<string>(row, ["label_en"]),
+    serviceId: String(row["service_id"]),
+    serviceName: String(row["service_name"] ?? ""),
+    serviceDescription: pick<string>(row, ["service_description"]),
+    priceUsd: Number(row["price_usd"] ?? 0),
+  }));
+}
+
+export async function createQrServiceSale(params: {
+  qrCode: string;
+  groundHandlingServiceId: string;
+  passengerName: string;
+  passengerPhone?: string | null;
+  flightNumber?: string | null;
+  serviceDate?: string | null;
+  paymentMethod?: string | null;
+}): Promise<{ saleId: string; voucherCode: string; priceUsd: number }> {
+  const { data, error } = await supabase.rpc("create_qr_service_sale", {
+    p_qr_code: params.qrCode.trim(),
+    p_ground_handling_service_id: params.groundHandlingServiceId,
+    p_passenger_name: params.passengerName.trim(),
+    p_passenger_phone: params.passengerPhone?.trim() || null,
+    p_flight_number: params.flightNumber?.trim() || null,
+    p_service_date: params.serviceDate || null,
+    p_payment_method: params.paymentMethod || null,
+  });
+  if (error) throw new Error(error.message);
+  const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown>;
+  return {
+    saleId: String(row["sale_id"]),
+    voucherCode: String(row["voucher_code"]),
+    priceUsd: Number(row["price_usd"] ?? 0),
+  };
+}
+
 /** Identity is the subscription code (same capability model as a booking's ticket code). */
 export async function submitSubscriptionPayment(params: {
   subscriptionCode: string;

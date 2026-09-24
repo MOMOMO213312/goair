@@ -46,6 +46,7 @@ import { Route as AdminRentalVehiclesRouteImport } from './routes/admin.rental-v
 import { Route as AdminRequestsRouteImport } from './routes/admin.requests'
 import { Route as AdminSubscriptionPlansRouteImport } from './routes/admin.subscription-plans'
 import { Route as AdminTeamRouteImport } from './routes/admin.team'
+import { Route as GoCodeRouteImport } from './routes/go.$code'
 import { Route as GroundHandlingIndexRouteImport } from './routes/ground-handling.index'
 import { Route as GroundHandlingFlightsRouteImport } from './routes/ground-handling.flights'
 import { Route as GroundHandlingIncidentsRouteImport } from './routes/ground-handling.incidents'
@@ -261,6 +262,11 @@ const AdminTeamRoute = AdminTeamRouteImport.update({
   path: '/team',
   getParentRoute: () => AdminRoute,
 } as any)
+const GoCodeRoute = GoCodeRouteImport.update({
+  id: '/go/$code',
+  path: '/go/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GroundHandlingIndexRoute = GroundHandlingIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -445,6 +451,7 @@ export interface FileRoutesByFullPath {
   '/admin/requests': typeof AdminRequestsRoute
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
   '/admin/team': typeof AdminTeamRoute
+  '/go/$code': typeof GoCodeRoute
   '/ground-handling/flights': typeof GroundHandlingFlightsRoute
   '/ground-handling/incidents': typeof GroundHandlingIncidentsRoute
   '/ground-handling/reports': typeof GroundHandlingReportsRoute
@@ -508,6 +515,7 @@ export interface FileRoutesByTo {
   '/admin/requests': typeof AdminRequestsRoute
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
   '/admin/team': typeof AdminTeamRoute
+  '/go/$code': typeof GoCodeRoute
   '/ground-handling/flights': typeof GroundHandlingFlightsRoute
   '/ground-handling/incidents': typeof GroundHandlingIncidentsRoute
   '/ground-handling/reports': typeof GroundHandlingReportsRoute
@@ -577,6 +585,7 @@ export interface FileRoutesById {
   '/admin/requests': typeof AdminRequestsRoute
   '/admin/subscription-plans': typeof AdminSubscriptionPlansRoute
   '/admin/team': typeof AdminTeamRoute
+  '/go/$code': typeof GoCodeRoute
   '/ground-handling/flights': typeof GroundHandlingFlightsRoute
   '/ground-handling/incidents': typeof GroundHandlingIncidentsRoute
   '/ground-handling/reports': typeof GroundHandlingReportsRoute
@@ -647,6 +656,7 @@ export interface FileRouteTypes {
     | '/admin/requests'
     | '/admin/subscription-plans'
     | '/admin/team'
+    | '/go/$code'
     | '/ground-handling/flights'
     | '/ground-handling/incidents'
     | '/ground-handling/reports'
@@ -710,6 +720,7 @@ export interface FileRouteTypes {
     | '/admin/requests'
     | '/admin/subscription-plans'
     | '/admin/team'
+    | '/go/$code'
     | '/ground-handling/flights'
     | '/ground-handling/incidents'
     | '/ground-handling/reports'
@@ -778,6 +789,7 @@ export interface FileRouteTypes {
     | '/admin/requests'
     | '/admin/subscription-plans'
     | '/admin/team'
+    | '/go/$code'
     | '/ground-handling/flights'
     | '/ground-handling/incidents'
     | '/ground-handling/reports'
@@ -833,6 +845,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   SubscribeRoute: typeof SubscribeRoute
   TermsRoute: typeof TermsRoute
+  GoCodeRoute: typeof GoCodeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1095,6 +1108,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/team'
       preLoaderRoute: typeof AdminTeamRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/go/$code': {
+      id: '/go/$code'
+      path: '/go/$code'
+      fullPath: '/go/$code'
+      preLoaderRoute: typeof GoCodeRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/ground-handling/': {
       id: '/ground-handling/'
@@ -1460,6 +1480,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   SubscribeRoute: SubscribeRoute,
   TermsRoute: TermsRoute,
+  GoCodeRoute: GoCodeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
