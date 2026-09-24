@@ -119,25 +119,6 @@ function OperatorOverview() {
           </dl>
         </PortalCard>
       </div>
-
-      {d.salesReferralCode ? (
-        <PortalCard
-          title="بيع مباشر لعملائك"
-          description={
-            d.pendingSettlementCount > 0
-              ? `عندك ${formatOperatorMoney(d.pendingSettlementUsd)} مستحقة عليك لـ GoAir من ${d.pendingSettlementCount} حجز استلمت فلوسه بنفسك.`
-              : "احجز مباشرة لعميلك — هتتحوّل تلقائيًا لأسطولك."
-          }
-          action={
-            <Link
-              to="/operator/sell"
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-bold text-accent-foreground hover:bg-accent/90"
-            >
-              بيع لعميلي
-            </Link>
-          }
-        />
-      ) : null}
     </div>
   );
 }

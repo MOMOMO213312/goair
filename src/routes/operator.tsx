@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import {
-  CalendarPlus,
   LayoutDashboard,
   Route as RouteIcon,
   Truck,
@@ -29,7 +28,6 @@ export const Route = createFileRoute("/operator")({
 const OPERATOR_NAV: PortalNavEntry[] = [
   { to: "/operator", label: "نظرة عامة", icon: LayoutDashboard, exact: true },
   { to: "/operator/trips", label: "الرحلات المخصصة", icon: RouteIcon },
-  { to: "/operator/sell", label: "بيع لعميلي", icon: CalendarPlus },
   { to: "/operator/fleet", label: "أسطولي", icon: Truck },
   { to: "/operator/statements", label: "كشوف الحساب", icon: Wallet },
   { to: "/operator/team", label: "الأعضاء", icon: Users },
