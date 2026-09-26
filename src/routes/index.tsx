@@ -122,9 +122,40 @@ function Home() {
             <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.1] text-primary-foreground sm:text-6xl">
               {t("home.hero.title")}
             </h1>
-            <p className="mt-4 max-w-md text-base leading-relaxed text-primary-foreground/90 sm:text-lg">
+            <p className="mt-3 text-lg font-bold text-primary-foreground sm:text-xl">
+              {t("home.hero.tagline")}
+            </p>
+            <p className="mt-2 max-w-md text-base leading-relaxed text-primary-foreground/90 sm:text-lg">
               {t("home.hero.subtitle")}
             </p>
+
+            <a
+              href="#find-your-ride"
+              className="mt-6 inline-flex items-center justify-center rounded-full bg-accent px-6 py-3 text-sm font-bold text-accent-foreground shadow-lg transition hover:brightness-110 sm:text-base"
+            >
+              {t("home.hero.cta")}
+            </a>
+
+            <div className="mt-5 flex flex-wrap items-center gap-x-2 gap-y-2 text-xs font-semibold text-primary-foreground/90 sm:text-sm">
+              {[
+                t("home.hero.serviceShared"),
+                t("home.hero.servicePrivate"),
+                t("home.hero.serviceMeetAssist"),
+                t("home.hero.serviceFastTrack"),
+                t("home.hero.serviceBaggage"),
+              ].map((service, index, arr) => (
+                <span key={service} className="flex items-center gap-x-2">
+                  <span className="rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1">
+                    {service}
+                  </span>
+                  {index < arr.length - 1 && (
+                    <span aria-hidden="true" className="text-primary-foreground/40">
+                      |
+                    </span>
+                  )}
+                </span>
+              ))}
+            </div>
           </div>
 
           <div id="find-your-ride" className="mt-8 w-full scroll-mt-24">
