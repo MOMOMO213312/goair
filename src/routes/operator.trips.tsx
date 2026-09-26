@@ -308,6 +308,7 @@ function TripsPage() {
             label: `${passenger.fullName} — ${trip.origin} ← ${trip.destination} — ${trip.travelDate}`,
             airportCode: trip.airportCode,
             travelDate: trip.travelDate,
+            flightNumber: passenger.flightNumber,
           })
         }
       />

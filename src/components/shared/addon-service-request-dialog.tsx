@@ -24,6 +24,7 @@ export type AddonServiceRequestTarget = {
   label: string;
   airportCode: string | null;
   travelDate: string | null;
+  flightNumber: string | null;
 };
 
 /**
@@ -53,8 +54,9 @@ export function AddonServiceRequestDialog({
   });
 
   const ghQuery = useQuery({
-    queryKey: ["goair", "ground-handling-services", target?.airportCode, target?.travelDate],
-    queryFn: () => fetchPublicGroundHandlingServices(target!.airportCode!, target!.travelDate),
+    queryKey: ["goair", "ground-handling-services", target?.airportCode, target?.travelDate, target?.flightNumber],
+    queryFn: () =>
+      fetchPublicGroundHandlingServices(target!.airportCode!, target!.travelDate, target!.flightNumber),
     enabled: Boolean(target?.airportCode),
   });
 

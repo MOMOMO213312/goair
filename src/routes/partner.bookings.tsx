@@ -243,6 +243,7 @@ function BookingsPage() {
                                 label: `${row.fullName} — ${row.origin} ← ${row.destination} — ${formatDate(row.travelDate)}`,
                                 airportCode: row.airportCode,
                                 travelDate: row.travelDate,
+                                flightNumber: row.flightNumber,
                               })
                             }
                           >

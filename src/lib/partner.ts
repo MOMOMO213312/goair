@@ -140,6 +140,7 @@ export type PartnerBooking = {
   /** Needed to request a ground-handling addon service without a new transfer request. */
   ticketCode: string | null;
   airportCode: string | null;
+  flightNumber: string | null;
 };
 
 export async function getPartnerBookings(
@@ -174,6 +175,7 @@ export async function getPartnerBookings(
     roundTripGroupId: (row["round_trip_group_id"] as string | null) ?? null,
     ticketCode: (row["ticket_code"] as string | null) ?? null,
     airportCode: (row["airport_code"] as string | null) ?? null,
+    flightNumber: (row["flight_number"] as string | null) ?? null,
   }));
 }
 
