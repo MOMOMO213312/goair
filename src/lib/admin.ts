@@ -273,6 +273,70 @@ export async function adminAssignTrip(
   if (error) rpcError(error);
 }
 
+// --- Private bookings without a real vehicle assignment (orphaned) ---
+// A private booking created without p_vehicle_hold_id has no schedule_id and
+// no code path that can ever assign it a real vehicle via the normal shared-ride
+// flow (admin_assign_trip requires schedule_id). These two RPCs are the manual
+// fallback: list the orphans, then assign a real vehicle/driver to each by
+// booking_id directly.
+
+export type AdminOrphanedPrivateBooking = {
+  bookingId: string;
+  ticketCode: string | null;
+  fullName: string;
+  phoneNumber: string;
+  travelDate: string;
+  travelDatetime: string | null;
+  createdAt: string;
+  country: string;
+  origin: string;
+  destination: string;
+  vehicleTypeId: string | null;
+  seatsCount: number;
+};
+
+function mapOrphanedPrivateBooking(row: Record<string, unknown>): AdminOrphanedPrivateBooking {
+  return {
+    bookingId: String(row["booking_id"]),
+    ticketCode: (row["ticket_code"] as string | null) ?? null,
+    fullName: String(row["full_name"] ?? ""),
+    phoneNumber: String(row["phone_number"] ?? ""),
+    travelDate: String(row["travel_date"] ?? ""),
+    travelDatetime: (row["travel_datetime"] as string | null) ?? null,
+    createdAt: String(row["created_at"] ?? ""),
+    country: String(row["country"] ?? ""),
+    origin: String(row["origin"] ?? ""),
+    destination: String(row["destination"] ?? ""),
+    vehicleTypeId: (row["vehicle_type_id"] as string | null) ?? null,
+    seatsCount: Number(row["seats_count"] ?? 0),
+  };
+}
+
+export async function adminListOrphanedPrivateBookings(
+  token: string,
+): Promise<AdminOrphanedPrivateBooking[]> {
+  const { data, error } = await supabase.rpc("admin_list_orphaned_private_bookings", {
+    p_access_token: token,
+  });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map(mapOrphanedPrivateBooking);
+}
+
+export async function adminAssignPrivateBookingVehicle(
+  token: string,
+  bookingId: string,
+  vehicleId: string,
+  driverId: string | null = null,
+) {
+  const { error } = await supabase.rpc("admin_assign_private_booking_vehicle", {
+    p_access_token: token,
+    p_booking_id: bookingId,
+    p_vehicle_id: vehicleId,
+    p_driver_id: driverId,
+  });
+  if (error) rpcError(error);
+}
+
 export type AdminTripOptionRow = {
   tripOptionId: string;
   tripId: string;
