@@ -351,6 +351,8 @@ export type AdminTripOptionRow = {
   bookingType: string;
   priceUsd: number;
   optionIsActive: boolean;
+  /** تكلفة المورد الحقيقية (اختياري — null لو الأدمن لسه ما دخلهاش). لا تؤثر على السعر النهائي للعميل. */
+  supplierCostUsd: number | null;
 };
 
 function mapAdminTripOption(r: Record<string, unknown>): AdminTripOptionRow {
@@ -368,6 +370,9 @@ function mapAdminTripOption(r: Record<string, unknown>): AdminTripOptionRow {
     bookingType: String(r["booking_type"] ?? ""),
     priceUsd: Number(r["price_usd"] ?? 0),
     optionIsActive: r["option_is_active"] === true,
+    supplierCostUsd: r["supplier_cost_usd"] === null || r["supplier_cost_usd"] === undefined
+      ? null
+      : Number(r["supplier_cost_usd"]),
   };
 }
 
@@ -382,12 +387,14 @@ export async function adminUpdateTripOptionPrice(
   tripOptionId: string,
   priceUsd: number,
   isActive?: boolean,
+  supplierCostUsd?: number | null,
 ) {
   const { error } = await supabase.rpc("admin_update_trip_option_price", {
     p_access_token: token,
     p_trip_option_id: tripOptionId,
     p_price_usd: priceUsd,
     p_is_active: isActive ?? null,
+    p_supplier_cost_usd: supplierCostUsd ?? null,
   });
   if (error) rpcError(error);
 }

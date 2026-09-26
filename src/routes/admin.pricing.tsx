@@ -122,6 +122,8 @@ function PricingPage() {
                   <TableHead className="text-right">نوع العربية</TableHead>
                   <TableHead className="text-right">نوع الحجز</TableHead>
                   <TableHead className="text-right">السعر (USD)</TableHead>
+                  <TableHead className="text-right">تكلفة المورد (USD)</TableHead>
+                  <TableHead className="text-right">الهامش</TableHead>
                   <TableHead className="text-right">مفعّل</TableHead>
                   <TableHead className="text-right"></TableHead>
                 </TableRow>
@@ -184,20 +186,32 @@ function PriceRow({
   onSaved: () => void;
 }) {
   const [price, setPrice] = useState(String(option.priceUsd));
+  const [cost, setCost] = useState(option.supplierCostUsd === null ? "" : String(option.supplierCostUsd));
   const [active, setActive] = useState(option.optionIsActive);
   const [busy, setBusy] = useState(false);
 
-  const dirty = Number(price) !== option.priceUsd || active !== option.optionIsActive;
+  const priceValue = Number(price);
+  const costValue = cost.trim() === "" ? null : Number(cost);
+  const hasValidCost = costValue !== null && Number.isFinite(costValue);
+  const margin = hasValidCost && Number.isFinite(priceValue) ? priceValue - (costValue as number) : null;
+
+  const dirty =
+    priceValue !== option.priceUsd ||
+    active !== option.optionIsActive ||
+    (costValue ?? null) !== option.supplierCostUsd;
 
   async function save() {
-    const value = Number(price);
-    if (!Number.isFinite(value) || value < 0) {
+    if (!Number.isFinite(priceValue) || priceValue < 0) {
       toast.error("اكتب سعر صحيح.");
+      return;
+    }
+    if (cost.trim() !== "" && (!Number.isFinite(costValue) || (costValue as number) < 0)) {
+      toast.error("اكتب تكلفة مورد صحيحة.");
       return;
     }
     setBusy(true);
     try {
-      await adminUpdateTripOptionPrice(token, option.tripOptionId, value, active);
+      await adminUpdateTripOptionPrice(token, option.tripOptionId, priceValue, active, costValue);
       toast.success("تم تحديث السعر.");
       onSaved();
     } catch (error) {
@@ -222,6 +236,26 @@ function PriceRow({
           onChange={(e) => setPrice(e.target.value)}
           className="w-28"
         />
+      </TableCell>
+      <TableCell>
+        <Input
+          type="number"
+          min={0}
+          step="0.5"
+          placeholder="لسه مش مسجّلة"
+          value={cost}
+          onChange={(e) => setCost(e.target.value)}
+          className="w-32"
+        />
+      </TableCell>
+      <TableCell>
+        {margin === null ? (
+          <span className="text-xs text-muted-foreground">—</span>
+        ) : (
+          <span className={`text-sm font-bold ${margin >= 0 ? "text-emerald-600" : "text-destructive"}`}>
+            {margin.toFixed(2)} $
+          </span>
+        )}
       </TableCell>
       <TableCell>
         <Switch checked={active} onCheckedChange={setActive} />
