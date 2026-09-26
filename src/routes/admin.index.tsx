@@ -11,10 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
+  adminAssignPrivateBookingVehicle,
   adminAssignTrip,
   adminConfirmPayment,
   adminListBookings,
   adminListDrivers,
+  adminListOrphanedPrivateBookings,
   adminListVehicles,
   adminRejectPayment,
   bookingStatusLabel,
@@ -24,6 +26,7 @@ import {
   reviewStatusLabel,
   type AdminBookingRow,
   type AdminDriver,
+  type AdminOrphanedPrivateBooking,
   type AdminVehicle,
 } from "@/lib/admin";
 import { getComplianceStatus } from "@/lib/compliance";
@@ -57,6 +60,13 @@ function AdminBookingsPage() {
     retry: false,
     enabled: Boolean(token),
   });
+  const orphanedPrivateQuery = useQuery({
+    queryKey: ["admin-orphaned-private-bookings", token],
+    queryFn: () => adminListOrphanedPrivateBookings(token),
+    retry: false,
+    enabled: Boolean(token),
+    refetchInterval: 30_000,
+  });
 
   if (!token) return null;
   if (bookingsQuery.isPending) return <AdminLoading />;
@@ -70,6 +80,11 @@ function AdminBookingsPage() {
   const rest = bookings.filter((b) => b.status !== "pending" && (b.status !== "confirmed" || b.tripAssignmentId));
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["admin-bookings", token] });
+  const refreshOrphaned = () => {
+    queryClient.invalidateQueries({ queryKey: ["admin-orphaned-private-bookings", token] });
+    queryClient.invalidateQueries({ queryKey: ["admin-bookings", token] });
+  };
+  const orphanedPrivateBookings = orphanedPrivateQuery.data ?? [];
 
   return (
     <div className="space-y-8">
@@ -95,6 +110,25 @@ function AdminBookingsPage() {
               drivers={driversQuery.data ?? []}
               vehicles={vehiclesQuery.data ?? []}
               onDone={refresh}
+            />
+          ))
+        )}
+      </Section>
+
+      <Section title={`حجوزات خاصة بدون عربية حقيقية (${orphanedPrivateBookings.length})`}>
+        {orphanedPrivateQuery.isPending ? (
+          <Empty text="جاري التحميل..." />
+        ) : orphanedPrivateBookings.length === 0 ? (
+          <Empty text="مفيش حجوزات خاصة معلّقة بدون تخصيص عربية دلوقتي." />
+        ) : (
+          orphanedPrivateBookings.map((booking) => (
+            <PrivateAssignCard
+              key={booking.bookingId}
+              booking={booking}
+              token={token}
+              drivers={driversQuery.data ?? []}
+              vehicles={vehiclesQuery.data ?? []}
+              onDone={refreshOrphaned}
             />
           ))
         )}
@@ -139,6 +173,159 @@ function AdminBookingsPage() {
         )}
       </Section>
     </div>
+  );
+}
+
+function PrivateAssignCard({
+  booking,
+  token,
+  drivers,
+  vehicles,
+  onDone,
+}: {
+  booking: AdminOrphanedPrivateBooking;
+  token: string;
+  drivers: AdminDriver[];
+  vehicles: AdminVehicle[];
+  onDone: () => void;
+}) {
+  const [driverId, setDriverId] = useState("");
+  const [vehicleId, setVehicleId] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  // Prefer vehicles matching the trip's vehicle type (car/van/hiace...); fall
+  // back to the full fleet if none match so ops is never stuck with an empty list.
+  const matchingVehicles = booking.vehicleTypeId
+    ? vehicles.filter((v) => v.vehicle_type_id === booking.vehicleTypeId)
+    : vehicles;
+  const vehicleOptions = matchingVehicles.length > 0 ? matchingVehicles : vehicles;
+
+  const selectedDriver = drivers.find((d) => d.id === driverId) ?? null;
+  const selectedVehicle = vehicles.find((v) => v.id === vehicleId) ?? null;
+
+  const riskWarnings = useMemo(() => {
+    const warnings: string[] = [];
+    if (selectedDriver) {
+      const licenseStatus = getComplianceStatus(selectedDriver.license_expiry, new Date(booking.travelDate));
+      if (licenseStatus === "expired") {
+        warnings.push(`رخصة ${selectedDriver.full_name} منتهية بتاريخ ${selectedDriver.license_expiry} — قبل موعد الرحلة.`);
+      } else if (licenseStatus === "expiring_soon") {
+        warnings.push(`رخصة ${selectedDriver.full_name} قربت تنتهي (${selectedDriver.license_expiry}).`);
+      }
+    }
+    if (selectedVehicle) {
+      const registrationStatus = getComplianceStatus(selectedVehicle.registration_expiry, new Date(booking.travelDate));
+      const insuranceStatus = getComplianceStatus(selectedVehicle.insurance_expiry, new Date(booking.travelDate));
+      if (registrationStatus === "expired") {
+        warnings.push(`ترخيص عربية ${selectedVehicle.plate_number} منتهي بتاريخ ${selectedVehicle.registration_expiry} — قبل موعد الرحلة.`);
+      } else if (registrationStatus === "expiring_soon") {
+        warnings.push(`ترخيص عربية ${selectedVehicle.plate_number} قرّب ينتهي (${selectedVehicle.registration_expiry}).`);
+      }
+      if (insuranceStatus === "expired") {
+        warnings.push(`تأمين عربية ${selectedVehicle.plate_number} منتهي بتاريخ ${selectedVehicle.insurance_expiry} — قبل موعد الرحلة.`);
+      } else if (insuranceStatus === "expiring_soon") {
+        warnings.push(`تأمين عربية ${selectedVehicle.plate_number} قرّب ينتهي (${selectedVehicle.insurance_expiry}).`);
+      }
+    }
+    return warnings;
+  }, [selectedDriver, selectedVehicle, booking.travelDate]);
+
+  const hasBlockingRisk = riskWarnings.some((w) => w.includes("منتهي"));
+
+  async function assign() {
+    if (!vehicleId) {
+      toast.error("اختار العربية الأول.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await adminAssignPrivateBookingVehicle(token, booking.bookingId, vehicleId, driverId || null);
+      toast.success("تم تخصيص العربية للحجز.");
+      onDone();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Card className="flex flex-col gap-3 rounded-xl border-amber-500/40 bg-amber-500/5 p-4 shadow-[var(--shadow-card)]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="font-display text-base font-bold text-primary">
+            {booking.ticketCode ?? booking.bookingId.slice(0, 8)} — {booking.fullName}
+          </p>
+          <p className="mt-0.5 text-sm text-muted-foreground">
+            {booking.origin} ← {booking.destination} · {booking.travelDate} · {booking.seatsCount} راكب · {booking.country}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">{booking.phoneNumber}</p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Select value={vehicleId} onValueChange={setVehicleId}>
+            <SelectTrigger className="w-48"><SelectValue placeholder="العربية" /></SelectTrigger>
+            <SelectContent>
+              {vehicleOptions.map((v) => {
+                const status = getComplianceStatus(v.registration_expiry, new Date(booking.travelDate));
+                const insuranceStatus = getComplianceStatus(v.insurance_expiry, new Date(booking.travelDate));
+                const worst = status === "expired" || insuranceStatus === "expired"
+                  ? "expired"
+                  : status === "expiring_soon" || insuranceStatus === "expiring_soon"
+                    ? "expiring_soon"
+                    : "valid";
+                return (
+                  <SelectItem key={v.id} value={v.id}>
+                    <span className="flex items-center gap-1.5">
+                      {v.plate_number} — {v.vehicle_label}
+                      {worst !== "valid" ? <AlertTriangle className="size-3 text-amber-500" aria-hidden /> : null}
+                    </span>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+          <Select value={driverId} onValueChange={setDriverId}>
+            <SelectTrigger className="w-48"><SelectValue placeholder="السائق (اختياري)" /></SelectTrigger>
+            <SelectContent>
+              {drivers.map((d) => {
+                const status = getComplianceStatus(d.license_expiry, new Date(booking.travelDate));
+                return (
+                  <SelectItem key={d.id} value={d.id}>
+                    <span className="flex items-center gap-1.5">
+                      {d.full_name}
+                      {status !== "valid" ? <AlertTriangle className="size-3 text-amber-500" aria-hidden /> : null}
+                    </span>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+          <Button size="sm" disabled={busy} onClick={assign} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">
+            تخصيص
+          </Button>
+        </div>
+      </div>
+      {riskWarnings.length > 0 ? (
+        <div
+          className={cn(
+            "flex flex-col gap-1.5 rounded-lg border p-2.5 text-xs font-semibold",
+            hasBlockingRisk
+              ? "border-destructive/40 bg-destructive/10 text-destructive"
+              : "border-amber-500/40 bg-amber-500/10 text-amber-700",
+          )}
+        >
+          {riskWarnings.map((warning) => (
+            <span key={warning} className="flex items-start gap-1.5">
+              <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+              {warning}
+            </span>
+          ))}
+          {hasBlockingRisk ? (
+            <span className="font-normal opacity-90">النظام هيرفض التخصيص لحد ما تجدد البيانات دي.</span>
+          ) : null}
+        </div>
+      ) : null}
+    </Card>
   );
 }
 
