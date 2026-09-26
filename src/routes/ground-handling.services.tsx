@@ -22,9 +22,11 @@ import {
   groundHandlingServiceStatusLabel,
   isGroundHandlingAuthError,
   uploadGroundHandlingServicePhotos,
+  listGroundHandlingManagedAirlines,
   MAX_SERVICE_PHOTOS,
   type GroundHandlingService,
   type GroundHandlingServiceInput,
+  type GroundHandlingManagedAirline,
 } from "@/lib/ground-handling";
 import { useGroundHandlingSession, useGroundHandlingToken } from "@/lib/ground-handling-session";
 
@@ -70,6 +72,15 @@ function ServicesPage() {
     enabled: Boolean(token),
   });
 
+  // شركات الطيران اللي فوّضتنا بإدارة خدماتها — بتحدد اختيارات فورم الإضافة
+  // وبتوضح لو التفويض اتسحب على خدمة موجودة بالفعل.
+  const managedAirlinesQuery = useQuery({
+    queryKey: ["ground-handling-managed-airlines", token],
+    queryFn: () => listGroundHandlingManagedAirlines(token as string),
+    retry: false,
+    enabled: Boolean(token),
+  });
+
   if (!token) return null;
 
   function invalidate() {
@@ -82,6 +93,12 @@ function ServicesPage() {
   }
 
   const services = servicesQuery.data ?? [];
+  const managedAirlines = managedAirlinesQuery.data ?? [];
+
+  function airlineDelegationFor(service: GroundHandlingService): GroundHandlingManagedAirline | null {
+    if (!service.airlineCode) return null;
+    return managedAirlines.find((a) => a.airlineCode === service.airlineCode) ?? null;
+  }
 
   async function togglePause(service: GroundHandlingService) {
     try {
@@ -125,7 +142,11 @@ function ServicesPage() {
         <GHEmpty>لسه معملتش خدمات. ابدأ بإضافة أول خدمة.</GHEmpty>
       ) : (
         <div className="space-y-3">
-          {services.map((s) => (
+          {services.map((s) => {
+            const delegation = airlineDelegationFor(s);
+            // خدمة نيابة عن شركة طيران بس التفويض اتسحب (أو الربط اتلغى) — تفضل معروضة لكن مقفولة.
+            const delegationRevoked = Boolean(s.airlineCode) && !(delegation && delegation.agentManagesServices);
+            return (
             <Card key={s.id} className="space-y-2 rounded-xl border-border/80 p-4 shadow-[var(--shadow-card)]">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="flex min-w-0 gap-3">
@@ -144,6 +165,13 @@ function ServicesPage() {
                     ${s.priceUsd.toFixed(2)}
                     {s.slaMinutes ? <span className="mr-2 font-normal text-muted-foreground">· SLA {s.slaMinutes} دقيقة</span> : null}
                   </p>
+                  {s.airlineCode ? (
+                    <p className="mt-0.5 text-xs font-bold text-secondary-foreground">
+                      نيابة عن: {delegation?.airlineName || s.airlineCode}
+                    </p>
+                  ) : (
+                    <p className="mt-0.5 text-xs text-muted-foreground">خدمة عامة (شركتنا)</p>
+                  )}
                   </div>
                 </div>
                 <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${STATUS_TONE[s.status] ?? "bg-mist text-primary"}`}>
@@ -155,23 +183,29 @@ function ServicesPage() {
               {s.status === "rejected" && s.adminNotes ? (
                 <p className="text-sm text-destructive">سبب الرفض: {s.adminNotes}</p>
               ) : null}
+              {delegationRevoked ? (
+                <p className="text-sm text-destructive">
+                  شركة الطيران سحبت (أو أوقفت) تفويضها بإدارة خدماتها في هذا المطار — محتاجين يفوضوكوا تاني قبل أي تعديل.
+                </p>
+              ) : null}
               <div className="flex flex-wrap gap-2 pt-1">
-                <Button size="sm" variant="outline" onClick={() => { setEditing(s); setDialogOpen(true); }}>
+                <Button size="sm" variant="outline" disabled={delegationRevoked} onClick={() => { setEditing(s); setDialogOpen(true); }}>
                   تعديل
                 </Button>
                 {s.status === "approved" || s.status === "paused" ? (
-                  <Button size="sm" variant="outline" onClick={() => togglePause(s)}>
+                  <Button size="sm" variant="outline" disabled={delegationRevoked} onClick={() => togglePause(s)}>
                     {s.status === "paused" ? "استئناف الخدمة" : "إيقاف مؤقت"}
                   </Button>
                 ) : null}
                 {s.status !== "deletion_requested" ? (
-                  <Button size="sm" variant="outline" className="text-destructive" onClick={() => requestDeletion(s)}>
+                  <Button size="sm" variant="outline" className="text-destructive" disabled={delegationRevoked} onClick={() => requestDeletion(s)}>
                     طلب إلغاء الخدمة
                   </Button>
                 ) : null}
               </div>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -179,6 +213,7 @@ function ServicesPage() {
         token={token}
         open={dialogOpen}
         service={editing}
+        managedAirlines={managedAirlines.filter((a) => a.agentManagesServices)}
         onOpenChange={setDialogOpen}
         onSaved={invalidate}
       />
@@ -190,15 +225,19 @@ function ServiceFormDialog({
   token,
   open,
   service,
+  managedAirlines,
   onOpenChange,
   onSaved,
 }: {
   token: string;
   open: boolean;
   service: GroundHandlingService | null;
+  managedAirlines: GroundHandlingManagedAirline[];
   onOpenChange: (open: boolean) => void;
   onSaved: () => void;
 }) {
+  // "" = خدمة عامة تخص الشركة نفسها. غير قابل للتغيير بعد إنشاء الخدمة.
+  const [airlineCode, setAirlineCode] = useState<string>(service?.airlineCode ?? "");
   const [form, setForm] = useState<GroundHandlingServiceInput>(
     service
       ? {
@@ -226,6 +265,7 @@ function ServiceFormDialog({
   if (open && key !== openedFor) {
     setOpenedFor(key);
     setNewPhotoFiles([]);
+    setAirlineCode(service?.airlineCode ?? "");
     setForm(
       service
         ? {
@@ -260,7 +300,7 @@ function ServiceFormDialog({
         await updateGroundHandlingService(token, service.id, payload);
         toast.success("تم إرسال التعديل إلى GOAIR للمراجعة.");
       } else {
-        await createGroundHandlingService(token, payload);
+        await createGroundHandlingService(token, payload, airlineCode || null);
         toast.success("تم إرسال الخدمة إلى GOAIR للمراجعة.");
       }
       onOpenChange(false);
@@ -279,6 +319,30 @@ function ServiceFormDialog({
           <DialogTitle>{service ? "تعديل خدمة" : "إضافة خدمة جديدة"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {!service && managedAirlines.length > 0 ? (
+            <div className="space-y-1.5">
+              <Label>الخدمة دي لحساب</Label>
+              <Select value={airlineCode || "self"} onValueChange={(v) => setAirlineCode(v === "self" ? "" : v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="self">خدمة عامة (شركتنا)</SelectItem>
+                  {managedAirlines.map((a) => (
+                    <SelectItem key={`${a.airportCode}-${a.airlineCode}`} value={a.airlineCode}>
+                      نيابة عن {a.airlineName || a.airlineCode} ({a.airportCode})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                لو اخترت شركة طيران، الخدمة هتكون خاصة بيها بس ومش هتتغير بعد الإنشاء.
+              </p>
+            </div>
+          ) : null}
+          {service?.airlineCode ? (
+            <p className="text-xs font-bold text-secondary-foreground">
+              هذه الخدمة نيابة عن: {service.airlineCode} — لا يمكن تغيير الجهة بعد الإنشاء.
+            </p>
+          ) : null}
           <div className="space-y-1.5">
             <Label>اسم الخدمة</Label>
             <Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />

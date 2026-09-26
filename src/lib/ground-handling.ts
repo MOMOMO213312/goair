@@ -491,6 +491,10 @@ export type GroundHandlingService = {
   status: GroundHandlingServiceStatus;
   pendingAction: GroundHandlingServicePendingAction;
   adminNotes: string | null;
+  /** كود شركة الطيران لو الخدمة دي مُدارة نيابة عن شركة طيران، أو null لو خدمة عامة تخص الشريك نفسه. */
+  airlineCode: string | null;
+  /** مين آخر جهة أنشأت/عدّلت الخدمة: الشريك نفسه أو نيابة عن شركة طيران (agent) أو شركة الطيران مباشرة (airline). */
+  createdByRole: "partner" | "agent" | "airline" | null;
   createdAt: string | null;
 };
 
@@ -512,8 +516,31 @@ function mapService(row: Record<string, unknown>): GroundHandlingService {
     status: (row["status"] as GroundHandlingServiceStatus) ?? "pending_review",
     pendingAction: (row["pending_action"] as GroundHandlingServicePendingAction) ?? null,
     adminNotes: (row["admin_notes"] as string | null) ?? null,
+    airlineCode: (row["airline_code"] as string | null) ?? null,
+    createdByRole: (row["created_by_role"] as "partner" | "agent" | "airline" | null) ?? null,
     createdAt: (row["created_at"] as string | null) ?? null,
   };
+}
+
+export type GroundHandlingManagedAirline = {
+  airportCode: string;
+  airlineCode: string;
+  airlineName: string | null;
+  /** لو false يبقى شركة الطيران سحبت التفويض وممنوع نضيف/نعدّل خدمات نيابة عنها. */
+  agentManagesServices: boolean;
+};
+
+// شركات الطيران اللي فوّضت الشريك (شركة الخدمات الأرضية) بإدارة خدماتها — تُستخدم
+// لملء قايمة "إضافة خدمة نيابة عن شركة طيران" في فورم الخدمات.
+export async function listGroundHandlingManagedAirlines(token: string): Promise<GroundHandlingManagedAirline[]> {
+  const { data, error } = await supabase.rpc("list_ground_handling_managed_airlines", { p_access_token: token });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+    airportCode: String(row["airport_code"] ?? ""),
+    airlineCode: String(row["airline_code"] ?? ""),
+    airlineName: (row["airline_name"] as string | null) ?? null,
+    agentManagesServices: row["agent_manages_services"] !== false,
+  }));
 }
 
 export async function listGroundHandlingServices(token: string): Promise<GroundHandlingService[]> {
@@ -566,8 +593,10 @@ export async function uploadGroundHandlingServicePhotos(files: File[]): Promise<
 export async function createGroundHandlingService(
   token: string,
   input: GroundHandlingServiceInput,
+  /** لو محدد، الخدمة بتتضاف نيابة عن شركة الطيران دي (لازم تكون مفوّضة الشريك أصلًا). */
+  airlineCode?: string | null,
 ): Promise<GroundHandlingService> {
-  const { data, error } = await supabase.rpc("create_ground_handling_service", {
+  const basePayload = {
     p_access_token: token,
     p_name: input.name,
     p_description: input.description,
@@ -581,7 +610,13 @@ export async function createGroundHandlingService(
     p_price_usd: input.priceUsd,
     p_sla_minutes: input.slaMinutes,
     p_photos: input.photos,
-  });
+  };
+  // فيه نسختين من الدالة على القاعدة (بـ/من غير p_airline_code)؛ لازم نستبعد المفتاح
+  // تمامًا لما مفيش شركة طيران عشان PostgREST يختار النسخة الصح.
+  const { data, error } = await supabase.rpc(
+    "create_ground_handling_service",
+    airlineCode ? { ...basePayload, p_airline_code: airlineCode } : basePayload,
+  );
   if (error) rpcError(error);
   const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown>;
   return mapService(row);
@@ -972,6 +1007,79 @@ export async function adminUpdateGroundHandlingPartner(
 
 export async function adminDeleteGroundHandlingPartner(token: string, id: string): Promise<void> {
   const { error } = await supabase.rpc("admin_delete_ground_handling_partner", { p_access_token: token, p_id: id });
+  if (error) rpcError(error);
+}
+
+// ---------------------------------------------------------------------------
+// توزيع شركات الطيران على شركاء الخدمات الأرضية + تفويض إدارة الخدمات
+// ---------------------------------------------------------------------------
+
+export type GroundHandlingAirlineAssignment = {
+  id: string;
+  groundHandlingPartnerId: string;
+  partnerName: string;
+  airportCode: string;
+  airlineCode: string;
+  airlineName: string | null;
+  isActive: boolean;
+  agentManagesServices: boolean;
+  createdAt: string;
+};
+
+function mapAirlineAssignment(row: Record<string, unknown>): GroundHandlingAirlineAssignment {
+  return {
+    id: String(row["id"]),
+    groundHandlingPartnerId: String(row["ground_handling_partner_id"]),
+    partnerName: String(row["partner_name"] ?? ""),
+    airportCode: String(row["airport_code"] ?? ""),
+    airlineCode: String(row["airline_code"] ?? ""),
+    airlineName: (row["airline_name"] as string | null) ?? null,
+    isActive: row["is_active"] !== false,
+    agentManagesServices: row["agent_manages_services"] !== false,
+    createdAt: String(row["created_at"] ?? ""),
+  };
+}
+
+export async function adminListGroundHandlingAirlineAssignments(
+  token: string,
+): Promise<GroundHandlingAirlineAssignment[]> {
+  const { data, error } = await supabase.rpc("admin_list_ground_handling_airline_assignments", {
+    p_access_token: token,
+  });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map(mapAirlineAssignment);
+}
+
+export async function adminUpsertGroundHandlingAirlineAssignment(
+  token: string,
+  input: {
+    airportCode: string;
+    airlineCode: string;
+    airlineName: string | null;
+    groundHandlingPartnerId: string;
+    isActive: boolean;
+    agentManagesServices: boolean;
+  },
+): Promise<GroundHandlingAirlineAssignment> {
+  const { data, error } = await supabase.rpc("admin_upsert_ground_handling_airline_assignment", {
+    p_access_token: token,
+    p_airport_code: input.airportCode,
+    p_airline_code: input.airlineCode,
+    p_ground_handling_partner_id: input.groundHandlingPartnerId,
+    p_airline_name: input.airlineName,
+    p_is_active: input.isActive,
+    p_agent_manages_services: input.agentManagesServices,
+  });
+  if (error) rpcError(error);
+  const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown>;
+  return mapAirlineAssignment(row);
+}
+
+export async function adminDeleteGroundHandlingAirlineAssignment(token: string, id: string): Promise<void> {
+  const { error } = await supabase.rpc("admin_delete_ground_handling_airline_assignment", {
+    p_access_token: token,
+    p_id: id,
+  });
   if (error) rpcError(error);
 }
 
