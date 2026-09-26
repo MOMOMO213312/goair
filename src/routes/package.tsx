@@ -162,8 +162,8 @@ function PackagePage() {
   const selectedAddons = (addonsQuery.data ?? []).filter((a) => selectedAddonIds.includes(a.id));
 
   const groundHandlingQuery = useQuery({
-    queryKey: ["goair", "ground-handling-services", trip?.airport_code, date],
-    queryFn: () => fetchPublicGroundHandlingServices(trip!.airport_code, date),
+    queryKey: ["goair", "ground-handling-services", trip?.airport_code, date, flight],
+    queryFn: () => fetchPublicGroundHandlingServices(trip!.airport_code, date, flight),
     enabled: Boolean(trip?.airport_code),
   });
   const groundHandlingServices = groundHandlingQuery.data ?? [];

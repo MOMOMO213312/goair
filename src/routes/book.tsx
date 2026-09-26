@@ -112,8 +112,8 @@ function BookPage() {
   // airport is known; empty result means the addons step falls back to the
   // generic "airport" category automatically.
   const groundHandlingQuery = useQuery({
-    queryKey: ["goair", "ground-handling-services", trip?.airport_code, search.date],
-    queryFn: () => fetchPublicGroundHandlingServices(trip!.airport_code, search.date),
+    queryKey: ["goair", "ground-handling-services", trip?.airport_code, search.date, flight],
+    queryFn: () => fetchPublicGroundHandlingServices(trip!.airport_code, search.date, flight),
     enabled: Boolean(trip?.airport_code),
   });
   const groundHandlingServices = groundHandlingQuery.data ?? [];

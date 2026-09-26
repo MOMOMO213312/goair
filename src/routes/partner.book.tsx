@@ -181,8 +181,8 @@ function QuickBookingForm({ token, referralCode }: { token: string; referralCode
   const selectedTrip = trips.find((t) => t.id === tripId);
 
   const ghServicesQuery = useQuery({
-    queryKey: ["partner-book-ground-handling", selectedTrip?.airport_code, date],
-    queryFn: () => fetchPublicGroundHandlingServices(selectedTrip!.airport_code, date || null),
+    queryKey: ["partner-book-ground-handling", selectedTrip?.airport_code, date, flight],
+    queryFn: () => fetchPublicGroundHandlingServices(selectedTrip!.airport_code, date || null, flight),
     enabled: Boolean(selectedTrip?.airport_code),
   });
   const ghServices = ghServicesQuery.data ?? [];

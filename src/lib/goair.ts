@@ -111,10 +111,12 @@ export type GroundHandlingPublicService = {
 export async function fetchPublicGroundHandlingServices(
   airportCode: string,
   travelDate?: string | null,
+  flightNumber?: string | null,
 ): Promise<GroundHandlingPublicService[]> {
   const { data, error } = await supabase.rpc("get_public_ground_handling_services", {
     p_airport_code: airportCode,
     ...(travelDate ? { p_travel_date: travelDate } : {}),
+    ...(flightNumber?.trim() ? { p_flight_number: flightNumber.trim() } : {}),
   });
   if (error) throw new Error(error.message);
   return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
