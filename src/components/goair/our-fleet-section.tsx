@@ -10,18 +10,33 @@ import { useTranslation } from "@/lib/i18n/language-context";
 
 const vehicleTypesQueryKey = ["goair", "vehicle-types"] as const;
 
-// Real fleet photos the user supplied, in the same order as the Beirut
-// Transfer reference (Sedan → Mini Van → Full-size Van → Large Van).
-// vehicle_types has no image column, so these are matched by POSITION to
-// vehicleTypes sorted by capacity ascending (fetchVehicleTypes' own order),
-// not by id. If GoAir ever has a 5th/6th tier, those extra cards fall back
-// to the icon. Swap this array's order/URLs if the categories don't line up.
-const FLEET_PHOTOS = [
-  "https://imgcdn.bokun.tools/5f180f08-6e9a-49c2-8412-35f2c3fe629e.jpeg?fm=auto&mode=fit&crop=center&dpr=1&w=1678",
-  "https://imgcdn.bokun.tools/b3afc5a0-1c84-4602-a276-17c5c091d823.jpeg?fm=auto&mode=fit&crop=center&dpr=1&w=1678",
-  "https://imgcdn.bokun.tools/38421692-d6fa-40a2-adfd-5294002266fc.jpeg?fm=auto&mode=fit&crop=center&dpr=1&w=1678",
-  "https://imgcdn.bokun.tools/a7a5cd36-69be-4436-a47c-32efa649830d.jpeg?fm=auto&mode=fit&crop=center&dpr=1&w=1678",
-];
+// Real fleet photos the user supplied — a sedan, then three progressively
+// bigger vans (roughly the same idea as the Beirut Transfer reference:
+// Sedan → Mini Van → Full-size Van → Large Van). vehicle_types has no image
+// column, so these are matched by CAPACITY RANGE below, not by row position —
+// the live data turned out to not be sorted the way the query intended, and
+// GoAir's actual fleet includes a 50-seat "أوتوبيس" (bus) tier that none of
+// these 4 car/van photos fit, so that tier falls back to the Bus icon
+// instead of showing a mismatched sedan photo.
+const FLEET_PHOTOS = {
+  sedan:
+    "https://imgcdn.bokun.tools/5f180f08-6e9a-49c2-8412-35f2c3fe629e.jpeg?fm=auto&mode=fit&crop=center&dpr=1&w=1678",
+  miniVan:
+    "https://imgcdn.bokun.tools/b3afc5a0-1c84-4602-a276-17c5c091d823.jpeg?fm=auto&mode=fit&crop=center&dpr=1&w=1678",
+  fullSizeVan:
+    "https://imgcdn.bokun.tools/38421692-d6fa-40a2-adfd-5294002266fc.jpeg?fm=auto&mode=fit&crop=center&dpr=1&w=1678",
+  largeVan:
+    "https://imgcdn.bokun.tools/a7a5cd36-69be-4436-a47c-32efa649830d.jpeg?fm=auto&mode=fit&crop=center&dpr=1&w=1678",
+};
+
+/** Picks the closest-matching real photo for a vehicle's seat capacity; large-capacity tiers (buses) get no photo, so the card falls back to the Bus icon. */
+function pickFleetPhoto(capacity: number): string | undefined {
+  if (capacity <= 4) return FLEET_PHOTOS.sedan;
+  if (capacity <= 9) return FLEET_PHOTOS.miniVan;
+  if (capacity <= 15) return FLEET_PHOTOS.fullSizeVan;
+  if (capacity <= 20) return FLEET_PHOTOS.largeVan;
+  return undefined;
+}
 
 /**
  * "Our Fleet" — vehicle-tier cards under the hero, same idea as the
@@ -40,6 +55,10 @@ export function OurFleetSection() {
 
   if (!vehicleTypes || vehicleTypes.length === 0) return null;
 
+  // Defensive: always show smallest → largest regardless of what order the
+  // query actually returned (it didn't match ascending capacity live).
+  const sortedVehicleTypes = [...vehicleTypes].sort((a, b) => a.capacity - b.capacity);
+
   return (
     <section className="mx-auto max-w-6xl px-4 py-14 sm:py-16">
       <SectionHeader
@@ -50,8 +69,8 @@ export function OurFleetSection() {
       />
 
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {vehicleTypes.map((vehicle, index) => (
-          <FleetCard key={vehicle.id} vehicle={vehicle} photo={FLEET_PHOTOS[index]} />
+        {sortedVehicleTypes.map((vehicle) => (
+          <FleetCard key={vehicle.id} vehicle={vehicle} photo={pickFleetPhoto(vehicle.capacity)} />
         ))}
       </div>
     </section>
