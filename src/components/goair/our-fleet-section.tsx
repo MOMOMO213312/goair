@@ -85,7 +85,13 @@ function FleetCard({ vehicle, photo }: { vehicle: VehicleType; photo: string | u
 
   return (
     <div className="flex flex-col items-center overflow-hidden rounded-2xl border border-border/80 bg-card text-center shadow-[var(--shadow-card)] transition-shadow hover:shadow-[var(--shadow-float)]">
-      <div className="flex h-32 w-full items-center justify-center overflow-hidden bg-primary/5">
+      <div
+        className={
+          photo
+            ? "flex h-32 w-full items-center justify-center overflow-hidden"
+            : "flex h-32 w-full items-center justify-center overflow-hidden bg-gradient-to-br from-amber-100 via-amber-200 to-amber-300"
+        }
+      >
         {photo ? (
           <img
             src={photo}
@@ -94,7 +100,9 @@ function FleetCard({ vehicle, photo }: { vehicle: VehicleType; photo: string | u
             className="size-full object-cover"
           />
         ) : (
-          <Icon className="size-14 text-primary" aria-hidden />
+          <span className="flex size-16 items-center justify-center rounded-full bg-white/70 shadow-inner">
+            <Icon className="size-8 text-primary" aria-hidden />
+          </span>
         )}
       </div>
 

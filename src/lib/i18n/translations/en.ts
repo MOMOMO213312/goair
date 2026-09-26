@@ -7,6 +7,7 @@ const en = {
     loading: "Loading...",
     tryAgain: "Try again",
     home: "Home",
+    skipToContent: "Skip to content",
   },
   header: {
     home: "Home",

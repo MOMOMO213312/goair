@@ -97,6 +97,8 @@ export function SiteHeader() {
             size="icon"
             className="md:hidden"
             aria-label={t("header.menu")}
+            aria-expanded={open}
+            aria-controls="site-mobile-nav"
             onClick={() => setOpen((value) => !value)}
           >
             <Menu className="size-5" />
@@ -105,7 +107,7 @@ export function SiteHeader() {
       </div>
 
       {open ? (
-        <nav className="border-t border-border bg-background px-4 py-2 md:hidden">
+        <nav id="site-mobile-nav" className="border-t border-border bg-background px-4 py-2 md:hidden">
           <Link
             to="/"
             activeOptions={{ exact: true }}
@@ -118,6 +120,8 @@ export function SiteHeader() {
 
           <button
             type="button"
+            aria-expanded={exploreOpenMobile}
+            aria-controls="site-mobile-explore-submenu"
             onClick={() => setExploreOpenMobile((value) => !value)}
             className={`flex w-full items-center justify-between rounded-md px-3 py-3 text-sm font-semibold ${
               isExploreActive ? "text-primary" : "text-muted-foreground"
@@ -130,7 +134,7 @@ export function SiteHeader() {
             />
           </button>
           {exploreOpenMobile ? (
-            <div className="mr-3 border-r border-border pr-3">
+            <div id="site-mobile-explore-submenu" className="mr-3 border-r border-border pr-3">
               {EXPLORE_LINKS.map((item) => (
                 <Link
                   key={item.tab}

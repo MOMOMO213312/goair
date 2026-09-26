@@ -8,6 +8,7 @@ const ar = {
     loading: "بتحمّل...",
     tryAgain: "حاول تاني",
     home: "الرئيسية",
+    skipToContent: "تخطَّ إلى المحتوى",
   },
   header: {
     home: "الرئيسية",
