@@ -55,6 +55,8 @@ export type VehicleType = {
   labelAr: string;
   capacity: number;
   maxLuggage: number | null;
+  /** Real fleet photo set via the admin/DB `image_url` column — null shows the capacity icon instead. */
+  imageUrl: string | null;
 };
 
 /** Real vehicle tiers from `vehicle_types` — no fabricated tiers. */
@@ -196,6 +198,7 @@ export async function fetchVehicleTypes(): Promise<VehicleType[]> {
     labelAr: String(pick(row, ["label_ar"]) ?? ""),
     capacity: Number(pick(row, ["capacity"]) ?? 0),
     maxLuggage: pick<number>(row, ["max_luggage"]),
+    imageUrl: pick<string>(row, ["image_url"]),
   }));
 }
 
