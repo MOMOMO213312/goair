@@ -718,6 +718,13 @@ const en = {
       text: "A GoAir rep waits for you at arrivals with a sign bearing your name.",
     },
   },
+  ourFleet: {
+    sectionTitle: "Our Fleet",
+    sectionDescription: "Pick the vehicle size that fits your group and luggage, and start booking right away.",
+    passengers: "Up to {{count}} passengers",
+    luggage: "Up to {{count}} bags",
+    cta: "Book now",
+  },
   beforeYouLand: {
     sectionTitle: "Before you land, everything's ready",
     sectionDescription: "From the moment your plane touches down, we're a step ahead of you.",

@@ -694,6 +694,13 @@ const ar = {
     book: { title: "احجز", text: "أدخل بيانات المسافرين وأكّد الدفع — تذكرتك جاهزة فورًا." },
     pickup: { title: "استقبال", text: "مندوب GoAir مستنيك في صالة الوصول بلافتة عليها اسمك." },
   },
+  ourFleet: {
+    sectionTitle: "أسطولنا",
+    sectionDescription: "اختار فئة العربية اللي تناسب عدد أفراد رحلتك وشنطكم، وابدأ الحجز فورًا.",
+    passengers: "حتى {{count}} راكب",
+    luggage: "حتى {{count}} شنطة",
+    cta: "احجز الآن",
+  },
   beforeYouLand: {
     sectionTitle: "قبل أن تصل، كل شيء جاهز لاستقبالك",
     sectionDescription: "من لحظة ملامسة الطائرة للمدرج، نكون خطوة واحدة أمامك.",

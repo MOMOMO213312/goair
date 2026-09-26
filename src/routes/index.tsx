@@ -15,6 +15,7 @@ import { GoairServicesSection } from "@/components/goair/goair-services-section"
 import { HeroTrustStrip } from "@/components/goair/hero-trust-strip";
 import { HeroImageCarousel } from "@/components/hero-image-carousel";
 import { HowItWorks } from "@/components/goair/how-it-works";
+import { OurFleetSection } from "@/components/goair/our-fleet-section";
 import { SectionHeader } from "@/components/goair/section-header";
 import { ServiceHighlights } from "@/components/goair/service-highlights";
 import { FlightPath } from "@/components/flight-path";
@@ -157,6 +158,11 @@ function Home() {
       <div className="pt-10 sm:pt-8">
         <HeroTrustStrip />
       </div>
+
+      {/* Our Fleet — vehicle-tier cards right under the hero, same spot as the
+          Beirut Transfer reference layout (car cards + capacity + CTA before
+          any route browsing starts). Renders nothing if vehicle_types is empty. */}
+      <OurFleetSection />
 
       {/* Explore routes — one merged section (was: popular routes + by-airport grid +
           destinations grid, three views of the same data). Filterable by airport. */}
