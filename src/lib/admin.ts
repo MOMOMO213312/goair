@@ -399,6 +399,48 @@ export async function adminUpdateTripOptionPrice(
   if (error) rpcError(error);
 }
 
+export type AdminTripOptionRate = {
+  rateId: string;
+  operatorId: string;
+  operatorName: string;
+  supplierCostUsd: number;
+  isActive: boolean;
+  notes: string | null;
+  submittedAt: string;
+  updatedAt: string;
+};
+
+function mapTripOptionRate(r: Record<string, unknown>): AdminTripOptionRate {
+  return {
+    rateId: String(r["rate_id"]),
+    operatorId: String(r["operator_id"]),
+    operatorName: String(r["operator_name"] ?? ""),
+    supplierCostUsd: Number(r["supplier_cost_usd"] ?? 0),
+    isActive: r["is_active"] === true,
+    notes: (r["notes"] as string | null) ?? null,
+    submittedAt: String(r["submitted_at"] ?? ""),
+    updatedAt: String(r["updated_at"] ?? ""),
+  };
+}
+
+export async function adminListTripOptionRates(token: string, tripOptionId: string): Promise<AdminTripOptionRate[]> {
+  const { data, error } = await supabase.rpc("admin_list_trip_option_rates", {
+    p_access_token: token,
+    p_trip_option_id: tripOptionId,
+  });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map(mapTripOptionRate);
+}
+
+export async function adminSetActiveTripOperator(token: string, tripOptionId: string, operatorId: string) {
+  const { error } = await supabase.rpc("admin_set_active_trip_operator", {
+    p_access_token: token,
+    p_trip_option_id: tripOptionId,
+    p_operator_id: operatorId,
+  });
+  if (error) rpcError(error);
+}
+
 // --- Staff accounts (إدارة فريق لوحة الأدمن) ---
 
 export type AdminStaffAccount = {

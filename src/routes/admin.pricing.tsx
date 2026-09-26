@@ -7,15 +7,19 @@ import { AdminAuthError, AdminLoading } from "@/components/admin/admin-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAdminToken } from "@/lib/admin-session";
 import {
+  adminListTripOptionRates,
   adminListTripOptions,
+  adminSetActiveTripOperator,
   adminUpdateTripOptionPrice,
   isAdminAuthError,
+  type AdminTripOptionRate,
   type AdminTripOptionRow,
 } from "@/lib/admin";
 
@@ -125,6 +129,7 @@ function PricingPage() {
                   <TableHead className="text-right">تكلفة المورد (USD)</TableHead>
                   <TableHead className="text-right">الهامش</TableHead>
                   <TableHead className="text-right">مفعّل</TableHead>
+                  <TableHead className="text-right">عروض المشغلين</TableHead>
                   <TableHead className="text-right"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -261,6 +266,9 @@ function PriceRow({
         <Switch checked={active} onCheckedChange={setActive} />
       </TableCell>
       <TableCell>
+        <OperatorRatesButton tripOptionId={option.tripOptionId} token={token} onActivated={onSaved} />
+      </TableCell>
+      <TableCell>
         <Button
           size="sm"
           disabled={!dirty || busy}
@@ -271,5 +279,96 @@ function PriceRow({
         </Button>
       </TableCell>
     </TableRow>
+  );
+}
+
+function OperatorRatesButton({
+  tripOptionId,
+  token,
+  onActivated,
+}: {
+  tripOptionId: string;
+  token: string;
+  onActivated: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [rates, setRates] = useState<AdminTripOptionRate[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [activatingId, setActivatingId] = useState<string | null>(null);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const r = await adminListTripOptionRates(token, tripOptionId);
+      setRates(r);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function activate(operatorId: string) {
+    setActivatingId(operatorId);
+    try {
+      await adminSetActiveTripOperator(token, tripOptionId, operatorId);
+      toast.success("تم اعتماد المشغل على الخط ده.");
+      await load();
+      onActivated();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
+    } finally {
+      setActivatingId(null);
+    }
+  }
+
+  return (
+    <>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => {
+          setOpen(true);
+          void load();
+        }}
+      >
+        عرض العروض
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>عروض المشغلين على الخط ده</DialogTitle>
+          </DialogHeader>
+          {loading ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">جاري التحميل...</p>
+          ) : !rates || rates.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">لسه محدش من المشغلين دخّل تكلفته على الخط ده.</p>
+          ) : (
+            <ul className="divide-y divide-border/60">
+              {rates.map((r) => (
+                <li key={r.rateId} className="flex items-center justify-between gap-3 py-3">
+                  <div>
+                    <div className="font-bold">{r.operatorName}</div>
+                    <div className="text-sm text-muted-foreground">{r.supplierCostUsd.toFixed(2)} $</div>
+                  </div>
+                  {r.isActive ? (
+                    <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">شغال حاليًا</Badge>
+                  ) : (
+                    <Button
+                      size="sm"
+                      disabled={activatingId === r.operatorId}
+                      onClick={() => void activate(r.operatorId)}
+                      className="bg-accent font-bold text-accent-foreground hover:bg-accent/90"
+                    >
+                      اعتماد
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

@@ -59,6 +59,7 @@ import { Route as GroundHandlingTeamRouteImport } from './routes/ground-handling
 import { Route as GroundHandlingTravelersRouteImport } from './routes/ground-handling.travelers'
 import { Route as OperatorIndexRouteImport } from './routes/operator.index'
 import { Route as OperatorFleetRouteImport } from './routes/operator.fleet'
+import { Route as OperatorPricingRouteImport } from './routes/operator.pricing'
 import { Route as OperatorSellRouteImport } from './routes/operator.sell'
 import { Route as OperatorStatementsRouteImport } from './routes/operator.statements'
 import { Route as OperatorTeamRouteImport } from './routes/operator.team'
@@ -328,6 +329,11 @@ const OperatorFleetRoute = OperatorFleetRouteImport.update({
   path: '/fleet',
   getParentRoute: () => OperatorRoute,
 } as any)
+const OperatorPricingRoute = OperatorPricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => OperatorRoute,
+} as any)
 const OperatorSellRoute = OperatorSellRouteImport.update({
   id: '/sell',
   path: '/sell',
@@ -462,6 +468,7 @@ export interface FileRoutesByFullPath {
   '/ground-handling/team': typeof GroundHandlingTeamRoute
   '/ground-handling/travelers': typeof GroundHandlingTravelersRoute
   '/operator/fleet': typeof OperatorFleetRoute
+  '/operator/pricing': typeof OperatorPricingRoute
   '/operator/sell': typeof OperatorSellRoute
   '/operator/statements': typeof OperatorStatementsRoute
   '/operator/team': typeof OperatorTeamRoute
@@ -526,6 +533,7 @@ export interface FileRoutesByTo {
   '/ground-handling/team': typeof GroundHandlingTeamRoute
   '/ground-handling/travelers': typeof GroundHandlingTravelersRoute
   '/operator/fleet': typeof OperatorFleetRoute
+  '/operator/pricing': typeof OperatorPricingRoute
   '/operator/sell': typeof OperatorSellRoute
   '/operator/statements': typeof OperatorStatementsRoute
   '/operator/team': typeof OperatorTeamRoute
@@ -596,6 +604,7 @@ export interface FileRoutesById {
   '/ground-handling/team': typeof GroundHandlingTeamRoute
   '/ground-handling/travelers': typeof GroundHandlingTravelersRoute
   '/operator/fleet': typeof OperatorFleetRoute
+  '/operator/pricing': typeof OperatorPricingRoute
   '/operator/sell': typeof OperatorSellRoute
   '/operator/statements': typeof OperatorStatementsRoute
   '/operator/team': typeof OperatorTeamRoute
@@ -667,6 +676,7 @@ export interface FileRouteTypes {
     | '/ground-handling/team'
     | '/ground-handling/travelers'
     | '/operator/fleet'
+    | '/operator/pricing'
     | '/operator/sell'
     | '/operator/statements'
     | '/operator/team'
@@ -731,6 +741,7 @@ export interface FileRouteTypes {
     | '/ground-handling/team'
     | '/ground-handling/travelers'
     | '/operator/fleet'
+    | '/operator/pricing'
     | '/operator/sell'
     | '/operator/statements'
     | '/operator/team'
@@ -800,6 +811,7 @@ export interface FileRouteTypes {
     | '/ground-handling/team'
     | '/ground-handling/travelers'
     | '/operator/fleet'
+    | '/operator/pricing'
     | '/operator/sell'
     | '/operator/statements'
     | '/operator/team'
@@ -1200,6 +1212,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OperatorFleetRouteImport
       parentRoute: typeof OperatorRoute
     }
+    '/operator/pricing': {
+      id: '/operator/pricing'
+      path: '/pricing'
+      fullPath: '/operator/pricing'
+      preLoaderRoute: typeof OperatorPricingRouteImport
+      parentRoute: typeof OperatorRoute
+    }
     '/operator/sell': {
       id: '/operator/sell'
       path: '/sell'
@@ -1392,6 +1411,7 @@ const GroundHandlingRouteWithChildren = GroundHandlingRoute._addFileChildren(
 
 interface OperatorRouteChildren {
   OperatorFleetRoute: typeof OperatorFleetRoute
+  OperatorPricingRoute: typeof OperatorPricingRoute
   OperatorSellRoute: typeof OperatorSellRoute
   OperatorStatementsRoute: typeof OperatorStatementsRoute
   OperatorTeamRoute: typeof OperatorTeamRoute
@@ -1401,6 +1421,7 @@ interface OperatorRouteChildren {
 
 const OperatorRouteChildren: OperatorRouteChildren = {
   OperatorFleetRoute: OperatorFleetRoute,
+  OperatorPricingRoute: OperatorPricingRoute,
   OperatorSellRoute: OperatorSellRoute,
   OperatorStatementsRoute: OperatorStatementsRoute,
   OperatorTeamRoute: OperatorTeamRoute,

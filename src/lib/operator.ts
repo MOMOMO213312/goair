@@ -343,6 +343,59 @@ export function formatOperatorMoney(amount: number) {
   return `$${amount.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 }
 
+// --- Trip line pricing (operator submits their own cost per line; admin picks who's active) ---
+
+export type OperatorTripLine = {
+  tripOptionId: string;
+  country: string;
+  airportName: string;
+  origin: string;
+  destination: string;
+  vehicleLabelAr: string;
+  bookingType: string;
+  displayPriceUsd: number;
+  myRateUsd: number | null;
+  myRateIsActive: boolean;
+  activeOperatorName: string | null;
+};
+
+function mapOperatorTripLine(r: Record<string, unknown>): OperatorTripLine {
+  return {
+    tripOptionId: String(r["trip_option_id"]),
+    country: String(r["country"] ?? ""),
+    airportName: String(r["airport_name"] ?? ""),
+    origin: String(r["origin"] ?? ""),
+    destination: String(r["destination"] ?? ""),
+    vehicleLabelAr: String(r["vehicle_label_ar"] ?? ""),
+    bookingType: String(r["booking_type"] ?? ""),
+    displayPriceUsd: Number(r["display_price_usd"] ?? 0),
+    myRateUsd: r["my_rate_usd"] == null ? null : Number(r["my_rate_usd"]),
+    myRateIsActive: r["my_rate_is_active"] === true,
+    activeOperatorName: (r["active_operator_name"] as string | null) ?? null,
+  };
+}
+
+export async function getOperatorTripLines(token: string): Promise<OperatorTripLine[]> {
+  const { data, error } = await supabase.rpc("operator_list_trip_lines", { p_access_token: token });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map(mapOperatorTripLine);
+}
+
+export async function operatorSubmitTripRate(
+  token: string,
+  tripOptionId: string,
+  supplierCostUsd: number,
+  notes?: string | null,
+) {
+  const { error } = await supabase.rpc("operator_submit_trip_rate", {
+    p_access_token: token,
+    p_trip_option_id: tripOptionId,
+    p_supplier_cost_usd: supplierCostUsd,
+    p_notes: notes ?? null,
+  });
+  if (error) rpcError(error);
+}
+
 export type OperatorPassenger = {
   bookingId: string;
   fullName: string;
