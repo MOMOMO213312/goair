@@ -99,8 +99,6 @@ const en = {
   },
   travelExperience: {
     sectionTitle: "Choose your journey",
-    sectionDescription:
-      "Three simple ways to start — each one takes you straight to what you need.",
     departing: {
       title: "Departure",
       description: "From your location to the airport — book your seat at a fixed price and time.",
@@ -781,7 +779,6 @@ const en = {
   },
   chooseYourJourney: {
     sectionTitle: "Choose Your Journey",
-    sectionDescription: "From a simple ride to a full arrival experience — pick what fits you.",
     mostRequested: "Most requested",
     explore: "Explore",
     seeAll: "See all journeys",
@@ -792,9 +789,7 @@ const en = {
     cta: "Search your ride",
   },
   coverageCountries: {
-    sectionTitle: "Countries we currently cover ({{count}})",
-    sectionDescription:
-      "GoAir currently operates in these destinations, and is gradually expanding to new countries.",
+    sectionTitle: "Our coverage areas",
   },
   countryExploreCard: {
     activeRouteSingular: "active route",

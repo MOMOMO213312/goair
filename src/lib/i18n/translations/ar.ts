@@ -100,7 +100,6 @@ const ar = {
   },
   travelExperience: {
     sectionTitle: "اختار تجربة رحلتك",
-    sectionDescription: "ثلاث طرق بسيطة تبدأ بيها — كل واحدة بتوديك على طول للي محتاجه.",
     departing: {
       title: "ذهاب",
       description: "من موقعك إلى المطار — احجز مقعدك بسعر ثابت وموعد معروف.",
@@ -756,7 +755,6 @@ const ar = {
   },
   chooseYourJourney: {
     sectionTitle: "اختار رحلتك",
-    sectionDescription: "من رحلة بسيطة لتجربة استقبال كاملة — اختار اللي يناسبك.",
     mostRequested: "الأكثر طلبًا",
     explore: "اكتشف",
     seeAll: "شوف كل الرحلات",
@@ -767,8 +765,7 @@ const ar = {
     cta: "ابحث عن رحلتك",
   },
   coverageCountries: {
-    sectionTitle: "الدول اللي بنغطيها دلوقتي ({{count}})",
-    sectionDescription: "GoAir شغالة في الوجهات دي حاليًا، وبتوسّع تدريجيًا لدول جديدة.",
+    sectionTitle: "مناطق تغطيتنا",
   },
   countryExploreCard: {
     activeRouteSingular: "خط نشط",
