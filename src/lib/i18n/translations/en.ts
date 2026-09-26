@@ -319,6 +319,14 @@ const en = {
       confirming: "Confirming your booking...",
       confirmButton: "Confirm booking and continue to payment",
     },
+    vehiclePicker: {
+      title: "Choose your vehicle",
+      subtitle: "Pick the exact car for your trip — it's held for you for a few minutes while you confirm.",
+      loading: "Checking which vehicles are free...",
+      capacityAndLuggage: "Up to {{capacity}} passengers · {{luggage}} bags",
+      pickAnother: "Pick a different vehicle",
+      selectToContinue: "Pick a vehicle above to continue.",
+    },
     extrasStep: {
       title: "Add extras to your trip",
       subtitle: "Optional — you can continue without any extras.",

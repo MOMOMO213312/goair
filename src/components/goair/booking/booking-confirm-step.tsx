@@ -1,8 +1,10 @@
 import { Loader2, Luggage, Pencil, Phone, Plane, User } from "lucide-react";
 
 import { BookingCancellationNote } from "@/components/goair/booking/booking-cancellation-note";
+import { BookingVehiclePicker } from "@/components/goair/booking/booking-vehicle-picker";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import type { PrivateVehicle, VehicleHold } from "@/lib/goair";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +21,21 @@ type BookingConfirmStepProps = {
   onConfirm: () => void;
   busy: boolean;
   className?: string;
+  /**
+   * Real-vehicle selection for private bookings — all optional and only
+   * rendered when `vehicles` is a non-empty array. When omitted entirely
+   * (shared bookings, or a private route with no registered vehicles yet),
+   * this section doesn't render and Confirm behaves exactly as before.
+   */
+  vehicles?: PrivateVehicle[] | undefined;
+  vehiclesLoading?: boolean | undefined;
+  selectedVehicleId?: string | null | undefined;
+  vehicleHold?: VehicleHold | null | undefined;
+  vehicleHolding?: boolean | undefined;
+  vehicleHoldError?: string | null | undefined;
+  vehicleSecondsLeft?: number | undefined;
+  onSelectVehicle?: ((vehicleId: string) => void) | undefined;
+  onCancelVehicleSelection?: (() => void) | undefined;
 };
 
 /** Step 4 — final review before the booking is actually created and payment starts. */
@@ -35,19 +52,33 @@ export function BookingConfirmStep({
   onConfirm,
   busy,
   className,
+  vehicles,
+  vehiclesLoading,
+  selectedVehicleId,
+  vehicleHold,
+  vehicleHolding,
+  vehicleHoldError,
+  vehicleSecondsLeft,
+  onSelectVehicle,
+  onCancelVehicleSelection,
 }: BookingConfirmStepProps) {
   const { t, language } = useTranslation();
+  // Only ever blocks Confirm when there's actually something to pick from —
+  // a route with no registered vehicles yet behaves exactly as before.
+  const vehicleStepBlocking = Boolean(vehicles && vehicles.length > 0 && !vehicleHold);
   return (
     <Card className={cn("border-border/80 p-5 shadow-[var(--shadow-card)] sm:p-6", className)}>
-      <h2 className="font-display text-lg font-extrabold text-primary">{t("booking.confirmStep.title")}</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
-        {t("booking.confirmStep.subtitle")}
-      </p>
+      <h2 className="font-display text-lg font-extrabold text-primary">
+        {t("booking.confirmStep.title")}
+      </h2>
+      <p className="mt-1 text-sm text-muted-foreground">{t("booking.confirmStep.subtitle")}</p>
 
       {/* Extras */}
       <div className="mt-6 rounded-xl border border-border/80 p-4">
         <div className="flex items-center justify-between gap-3">
-          <p className="font-display text-sm font-bold text-primary">{t("booking.confirmStep.extrasTitle")}</p>
+          <p className="font-display text-sm font-bold text-primary">
+            {t("booking.confirmStep.extrasTitle")}
+          </p>
           <button
             type="button"
             onClick={onEditExtras}
@@ -59,8 +90,12 @@ export function BookingConfirmStep({
         </div>
         <dl className="mt-3 space-y-2 text-sm">
           <div className="flex items-center justify-between gap-3">
-            <dt className="inline-flex items-center gap-1.5 text-muted-foreground">{t("booking.confirmStep.package")}</dt>
-            <dd className="font-bold text-primary">{packageName ?? t("booking.confirmStep.noAddons")}</dd>
+            <dt className="inline-flex items-center gap-1.5 text-muted-foreground">
+              {t("booking.confirmStep.package")}
+            </dt>
+            <dd className="font-bold text-primary">
+              {packageName ?? t("booking.confirmStep.noAddons")}
+            </dd>
           </div>
           <div className="flex items-center justify-between gap-3">
             <dt className="inline-flex items-center gap-1.5 text-muted-foreground">
@@ -72,7 +107,9 @@ export function BookingConfirmStep({
           {addonNames && addonNames.length > 0 ? (
             <div className="flex items-start justify-between gap-3">
               <dt className="text-muted-foreground">{t("booking.confirmStep.extraServices")}</dt>
-              <dd className="max-w-[70%] text-end font-bold text-primary">{addonNames.join(language === "ar" ? "، " : ", ")}</dd>
+              <dd className="max-w-[70%] text-end font-bold text-primary">
+                {addonNames.join(language === "ar" ? "، " : ", ")}
+              </dd>
             </div>
           ) : null}
           {notes ? (
@@ -87,7 +124,9 @@ export function BookingConfirmStep({
       {/* Passenger */}
       <div className="mt-4 rounded-xl border border-border/80 p-4">
         <div className="flex items-center justify-between gap-3">
-          <p className="font-display text-sm font-bold text-primary">{t("booking.confirmStep.passengerTitle")}</p>
+          <p className="font-display text-sm font-bold text-primary">
+            {t("booking.confirmStep.passengerTitle")}
+          </p>
           <button
             type="button"
             onClick={onEditPassengers}
@@ -128,16 +167,37 @@ export function BookingConfirmStep({
         </dl>
       </div>
 
+      {vehicles && vehicles.length > 0 ? (
+        <BookingVehiclePicker
+          vehicles={vehicles}
+          loading={Boolean(vehiclesLoading)}
+          selectedVehicleId={selectedVehicleId ?? null}
+          hold={vehicleHold ?? null}
+          holding={Boolean(vehicleHolding)}
+          holdError={vehicleHoldError ?? null}
+          secondsLeft={vehicleSecondsLeft ?? 0}
+          onSelect={onSelectVehicle ?? (() => {})}
+          onCancelSelection={onCancelVehicleSelection ?? (() => {})}
+          className="mt-4"
+        />
+      ) : null}
+
       <div className="mt-6">
         <BookingCancellationNote />
       </div>
 
+      {vehicleStepBlocking ? (
+        <p className="mt-3 text-center text-xs font-bold text-amber-700">
+          {t("booking.vehiclePicker.selectToContinue")}
+        </p>
+      ) : null}
+
       <Button
         type="button"
         size="lg"
-        disabled={busy}
+        disabled={busy || vehicleStepBlocking}
         onClick={onConfirm}
-        className="mt-6 h-12 w-full bg-accent text-base font-bold text-accent-foreground hover:bg-accent/90"
+        className="mt-2 h-12 w-full bg-accent text-base font-bold text-accent-foreground hover:bg-accent/90"
       >
         {busy ? (
           <>

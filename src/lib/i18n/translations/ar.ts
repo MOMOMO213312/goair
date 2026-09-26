@@ -312,6 +312,14 @@ const ar = {
       confirming: "جاري تثبيت الحجز...",
       confirmButton: "تأكيد الحجز ومتابعة الدفع",
     },
+    vehiclePicker: {
+      title: "اختار العربية",
+      subtitle: "اختار العربية بالظبط لرحلتك — هتتحجز لك لدقايق معدودة لحد ما تأكد.",
+      loading: "بنتأكد من العربيات المتاحة...",
+      capacityAndLuggage: "حتى {{capacity}} ركاب · {{luggage}} شنط",
+      pickAnother: "اختار عربية تانية",
+      selectToContinue: "اختار عربية من فوق عشان تكمل.",
+    },
     extrasStep: {
       title: "إضافات على رحلتك",
       subtitle: "اختياري — تقدر تكمل من غير أي إضافة.",

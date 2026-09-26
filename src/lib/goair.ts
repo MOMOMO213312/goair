@@ -264,6 +264,99 @@ export async function fetchPrivateTripOptions(tripId: string): Promise<PrivateOp
   }));
 }
 
+export type PrivateVehicle = {
+  vehicleId: string;
+  vehicleTypeId: string;
+  makeModel: string | null;
+  vehicleYear: number | null;
+  color: string | null;
+  description: string | null;
+  photos: string[];
+  plateNumber: string | null;
+  capacity: number;
+  maxLuggage: number | null;
+  vehicleTypeLabelAr: string | null;
+  vehicleTypeLabelEn: string | null;
+  vehicleTypeImageUrl: string | null;
+};
+
+/** Real, registered vehicles (make/model/photo) free for this trip/date+time — `vehicles` + `vehicle_holds`, additive to the flat-priced private tiers above. Empty when this route has no registered vehicles yet, which is expected pre-launch. */
+export async function fetchAvailablePrivateVehicles(
+  tripId: string,
+  vehicleTypeId: string,
+  travelDatetime: string,
+): Promise<PrivateVehicle[]> {
+  const { data, error } = await supabase.rpc("list_available_private_vehicles", {
+    p_trip_id: tripId,
+    p_vehicle_type_id: vehicleTypeId,
+    p_travel_datetime: travelDatetime,
+  });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+    vehicleId: String(pick(row, ["vehicle_id"])),
+    vehicleTypeId: String(pick(row, ["vehicle_type_id"])),
+    makeModel: pick<string>(row, ["make_model"]),
+    vehicleYear: pick<number>(row, ["vehicle_year"]),
+    color: pick<string>(row, ["color"]),
+    description: pick<string>(row, ["description"]),
+    photos: (pick<string[]>(row, ["photos"]) ?? []) as string[],
+    plateNumber: pick<string>(row, ["plate_number"]),
+    capacity: Number(pick(row, ["capacity"]) ?? 0),
+    maxLuggage: pick<number>(row, ["max_luggage"]),
+    vehicleTypeLabelAr: pick<string>(row, ["vehicle_type_label_ar"]),
+    vehicleTypeLabelEn: pick<string>(row, ["vehicle_type_label_en"]),
+    vehicleTypeImageUrl: pick<string>(row, ["vehicle_type_image_url"]),
+  }));
+}
+
+export type VehicleHold = { holdId: string; expiresAt: string };
+
+const PRIVATE_SESSION_TOKEN_KEY = "goair_private_vehicle_session";
+
+/** Stable per-tab identifier for the vehicle_holds row — not real auth, just enough to let the customer release their own hold. */
+function getPrivateVehicleSessionToken(): string {
+  if (typeof window === "undefined") return crypto.randomUUID();
+  let token = window.sessionStorage.getItem(PRIVATE_SESSION_TOKEN_KEY);
+  if (!token) {
+    token = crypto.randomUUID();
+    window.sessionStorage.setItem(PRIVATE_SESSION_TOKEN_KEY, token);
+  }
+  return token;
+}
+
+/** Locks one specific vehicle for `holdMinutes` (default 10) so two customers can't confirm the same real vehicle. Throws with a friendly-enough message when another customer already holds it. */
+export async function holdPrivateVehicle(input: {
+  vehicleId: string;
+  tripId: string;
+  vehicleTypeId: string;
+  travelDatetime: string;
+  holdMinutes?: number;
+}): Promise<VehicleHold> {
+  const { data, error } = await supabase.rpc("hold_private_vehicle", {
+    p_vehicle_id: input.vehicleId,
+    p_trip_id: input.tripId,
+    p_vehicle_type_id: input.vehicleTypeId,
+    p_travel_datetime: input.travelDatetime,
+    p_session_token: getPrivateVehicleSessionToken(),
+    p_hold_minutes: input.holdMinutes ?? 10,
+  });
+  if (error) throw new Error(error.message);
+  const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown> | null;
+  const holdId = row ? pick<string>(row, ["hold_id"]) : null;
+  const expiresAt = row ? pick<string>(row, ["expires_at"]) : null;
+  if (!holdId || !expiresAt) throw new Error("لم يتم تأكيد حجز العربية المؤقت.");
+  return { holdId, expiresAt };
+}
+
+/** Releases a hold early (customer picked a different vehicle, or abandoned the step) — best-effort, errors are swallowed by the caller. */
+export async function releaseVehicleHold(holdId: string): Promise<void> {
+  const { error } = await supabase.rpc("release_vehicle_hold", {
+    p_hold_id: holdId,
+    p_session_token: getPrivateVehicleSessionToken(),
+  });
+  if (error) throw new Error(error.message);
+}
+
 export type CreatePrivateBookingInput = {
   tripId: string;
   vehicleTypeId: string;
@@ -284,6 +377,8 @@ export type CreatePrivateBookingInput = {
   groundHandlingServiceIds?: string[];
   /** One name per seat, saved to `booking_passengers` — array length must exactly match `seatsCount`. */
   passengerNames?: string[] | null;
+  /** A live `hold_private_vehicle` hold the customer confirmed — when present, the booking is linked to that exact real vehicle immediately instead of waiting for manual admin assignment. Omit when no real vehicle was selected (unchanged default behavior). */
+  vehicleHoldId?: string | null;
   /**
    * How payment for this booking is collected. Only meaningful when the
    * referral code resolves to a transport operator's own `partners` row
@@ -335,6 +430,7 @@ export async function createPrivateBookingSafe(input: CreatePrivateBookingInput)
       : {}),
     ...(input.paymentCollection ? { p_payment_collection: input.paymentCollection } : {}),
     ...(input.groupId ? { p_group_id: input.groupId } : {}),
+    ...(input.vehicleHoldId ? { p_vehicle_hold_id: input.vehicleHoldId } : {}),
   };
 
   let { data, error } = await supabase.rpc("create_private_booking_safe", {

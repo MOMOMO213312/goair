@@ -13,6 +13,7 @@ import { BookingPriceSummary } from "@/components/goair/booking/booking-price-su
 import { BookingStepper, type BookingStepId } from "@/components/goair/booking/booking-stepper";
 import { BookingTripSummary } from "@/components/goair/booking/booking-trip-summary";
 import { BookingTrustPanel } from "@/components/goair/booking/booking-trust-panel";
+import { usePrivateVehicleHold } from "@/hooks/use-private-vehicle-hold";
 import {
   createBookingSafe,
   createPrivateBookingSafe,
@@ -62,7 +63,8 @@ export const Route = createFileRoute("/book")({
     time: String(search["time"] ?? ""),
     price: Number(search["price"]) || 0,
     bookingType: search["bookingType"] === "private" ? "private" : "shared",
-    vehicleTypeId: typeof search["vehicleTypeId"] === "string" ? search["vehicleTypeId"] : undefined,
+    vehicleTypeId:
+      typeof search["vehicleTypeId"] === "string" ? search["vehicleTypeId"] : undefined,
     flight: typeof search["flight"] === "string" && search["flight"] ? search["flight"] : undefined,
   }),
   head: () => ({
@@ -93,12 +95,17 @@ function BookPage() {
   const [flight, setFlight] = useState(search.flight ?? "");
   const [busy, setBusy] = useState(false);
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
-  const [selectedGroundHandlingServiceIds, setSelectedGroundHandlingServiceIds] = useState<string[]>([]);
+  const [selectedGroundHandlingServiceIds, setSelectedGroundHandlingServiceIds] = useState<
+    string[]
+  >([]);
 
   const tripsQuery = useQuery({ queryKey: ["goair", "trips"], queryFn: fetchTrips });
   const trip = tripsQuery.data?.find((item) => item.id === search.tripId);
 
-  const addonsQuery = useQuery({ queryKey: ["goair", "addon-services"], queryFn: fetchAddonServices });
+  const addonsQuery = useQuery({
+    queryKey: ["goair", "addon-services"],
+    queryFn: fetchAddonServices,
+  });
   const selectedAddons = (addonsQuery.data ?? []).filter((a) => selectedAddonIds.includes(a.id));
 
   // Named partner services for this trip's airport — only queried once the
@@ -132,6 +139,18 @@ function BookPage() {
   const isPrivate = search.bookingType === "private";
   const rideTotal = isPrivate ? search.price : search.price * search.seats;
   const total = rideTotal + addonsTotal;
+  const travelDatetime = search.time ? `${search.date}T${search.time}` : undefined;
+
+  // Real-vehicle selection is only meaningful once the customer has reached
+  // the confirm step of a private booking — no point holding a car three
+  // steps early. Routes with no registered vehicles yet resolve to an empty
+  // list and the confirm step simply skips this section (see BookingConfirmStep).
+  const vehicleHold = usePrivateVehicleHold({
+    tripId: search.tripId,
+    vehicleTypeId: search.vehicleTypeId,
+    travelDatetime,
+    enabled: isPrivate && phase === "confirm",
+  });
 
   async function onConfirm() {
     if (fullName.trim().length < 3) {
@@ -165,6 +184,7 @@ function BookPage() {
             luggageCount: luggage,
             addonIds: selectedAddonIds,
             groundHandlingServiceIds: selectedGroundHandlingServiceIds,
+            vehicleHoldId: vehicleHold.hold?.holdId ?? null,
           })
         : await createBookingSafe({
             tripId: search.tripId,
@@ -182,12 +202,12 @@ function BookPage() {
             addonIds: selectedAddonIds,
             groundHandlingServiceIds: selectedGroundHandlingServiceIds,
           });
-      toast.success(isPrivate ? t("bookPage.privateBookingConfirmed") : t("bookPage.seatConfirmed"));
+      toast.success(
+        isPrivate ? t("bookPage.privateBookingConfirmed") : t("bookPage.seatConfirmed"),
+      );
       navigate({ to: "/payment", search: { ticket: ticketCode } });
     } catch (error) {
-      toast.error(
-        friendlyErrorMessage(error, t("bookPage.bookingCreateError")),
-      );
+      toast.error(friendlyErrorMessage(error, t("bookPage.bookingCreateError")));
     } finally {
       setBusy(false);
     }
@@ -284,6 +304,15 @@ function BookPage() {
                 onEditPassengers={() => setPhase("passengers")}
                 onConfirm={onConfirm}
                 busy={busy}
+                vehicles={isPrivate ? vehicleHold.vehicles : undefined}
+                vehiclesLoading={vehicleHold.vehiclesLoading}
+                selectedVehicleId={vehicleHold.selectedVehicleId}
+                vehicleHold={vehicleHold.hold}
+                vehicleHolding={vehicleHold.holding}
+                vehicleHoldError={vehicleHold.holdError}
+                vehicleSecondsLeft={vehicleHold.secondsLeft}
+                onSelectVehicle={vehicleHold.selectVehicle}
+                onCancelVehicleSelection={vehicleHold.cancelSelection}
               />
             ) : null}
 
