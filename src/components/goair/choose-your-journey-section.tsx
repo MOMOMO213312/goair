@@ -80,10 +80,7 @@ export function ChooseYourJourneySection() {
     <section className="goair-section bg-mist/60">
       <div className="goair-container">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <SectionHeader
-            title={t("chooseYourJourney.sectionTitle")}
-            description={t("chooseYourJourney.sectionDescription")}
-          />
+          <SectionHeader title={t("chooseYourJourney.sectionTitle")} />
           <Link
             to="/explore"
             search={{ tab: "packages" }}

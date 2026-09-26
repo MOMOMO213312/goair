@@ -27,10 +27,7 @@ export function CoverageCountriesSection({ trips, countries }: CoverageCountries
   return (
     <section className="bg-mist/60 py-14 sm:py-16">
       <div className="mx-auto max-w-6xl px-4">
-        <SectionHeader
-          title={t("coverageCountries.sectionTitle", { count: summaries.length })}
-          description={t("coverageCountries.sectionDescription")}
-        />
+        <SectionHeader title={t("coverageCountries.sectionTitle")} />
 
         <div className="mt-8 grid gap-5 sm:grid-cols-2">
           {summaries.map((summary) => {

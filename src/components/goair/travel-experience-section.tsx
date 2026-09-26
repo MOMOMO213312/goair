@@ -66,10 +66,7 @@ export function TravelExperienceSection() {
   return (
     <section className="goair-section pt-12 sm:pt-16">
       <div className="goair-container">
-        <SectionHeader
-          title={t("travelExperience.sectionTitle")}
-          description={t("travelExperience.sectionDescription")}
-        />
+        <SectionHeader title={t("travelExperience.sectionTitle")} />
 
         <div className="mt-8 grid gap-6 sm:grid-cols-3">
           {CARDS.map((card) => (
