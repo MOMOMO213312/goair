@@ -170,8 +170,11 @@
     color: var(--color-foreground);
     overflow-x: hidden;
     width: 100%;
-    /* Avoid the rubber-band overscroll flash reading as "still a browser tab". */
-    overscroll-behavior-y: none;
+    /* "contain" (not "none") — stops the rubber-band bounce chaining to the
+       browser's pull-to-refresh without blocking normal page scrolling.
+       "none" has a known bug on iOS Safari / some Android WebViews where it
+       can disable scrolling of the element entirely, not just the bounce. */
+    overscroll-behavior-y: contain;
   }
 
   /* Removes the ~300ms tap delay / accidental double-tap-zoom on touch
