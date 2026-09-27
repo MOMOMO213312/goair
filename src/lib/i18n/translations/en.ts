@@ -990,6 +990,23 @@ const en = {
     phoneChannel: "Phone call",
     emailChannel: "Email",
   },
+  chatWidget: {
+    open: "Contact us",
+    close: "Close",
+    title: "Need help?",
+    subtitle: "Send us a quick note and we'll reply as soon as we can.",
+    staffTitle: "Support",
+    staffSubtitle: "Send a note to the GoAir team.",
+    staffTag: "Staff",
+    nameLabel: "Name",
+    phoneLabel: "Mobile number",
+    messageLabel: "Message",
+    submit: "Send",
+    missingFields: "Enter your name and message.",
+    sendSuccess: "We got your message — we'll reply soon.",
+    sendError: "We couldn't send the message.",
+    sendAnother: "Send another message",
+  },
   rentYourCarPage: {
     meta: {
       title: "Rent Your Car with GoAir — Car + Driver",

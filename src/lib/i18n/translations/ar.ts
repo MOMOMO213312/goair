@@ -954,6 +954,23 @@ const ar = {
     phoneChannel: "اتصال هاتفي",
     emailChannel: "البريد الإلكتروني",
   },
+  chatWidget: {
+    open: "تواصل معنا",
+    close: "إغلاق",
+    title: "محتاج مساعدة؟",
+    subtitle: "ابعتلنا رسالة سريعة وهنرد عليك في أقرب وقت.",
+    staffTitle: "الدعم الفني",
+    staffSubtitle: "ابعت ملاحظة لفريق GoAir.",
+    staffTag: "موظف",
+    nameLabel: "الاسم",
+    phoneLabel: "رقم الموبايل",
+    messageLabel: "رسالتك",
+    submit: "إرسال",
+    missingFields: "اكتب اسمك ورسالتك.",
+    sendSuccess: "وصلتنا رسالتك — هنرد في أسرع وقت.",
+    sendError: "مقدرناش نبعت رسالتك.",
+    sendAnother: "إرسال رسالة تانية",
+  },
   rentYourCarPage: {
     meta: {
       title: "أجّر عربيتك مع GoAir — سايق وعربية",

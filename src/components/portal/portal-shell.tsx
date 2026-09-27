@@ -3,6 +3,8 @@ import { LogOut, Menu, Plane, X, type LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { ChatWidget } from "@/components/chat-widget";
+import { CHAT_WIDGET_ENABLED } from "@/lib/feature-flags";
 
 /**
  * Shared shell for every GoAir portal (Partner, Operator, Ground Handling, Rental Provider, Admin):
@@ -195,6 +197,7 @@ export function PortalShell({
         <main className="min-w-0 flex-1 p-4 sm:p-8">
           <div className="mx-auto w-full max-w-7xl">{children}</div>
         </main>
+        {CHAT_WIDGET_ENABLED ? <ChatWidget mode="staff" /> : null}
       </div>
     </div>
   );

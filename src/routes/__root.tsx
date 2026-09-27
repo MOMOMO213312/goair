@@ -17,6 +17,8 @@ import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { InstallAppBanner } from "@/components/install-app-banner";
+import { ChatWidget } from "@/components/chat-widget";
+import { CHAT_WIDGET_ENABLED } from "@/lib/feature-flags";
 import { Toaster } from "@/components/ui/sonner";
 import { CurrencyProvider } from "@/lib/currency";
 import { LanguageProvider } from "@/lib/i18n/language-context";
@@ -168,6 +170,7 @@ function AppBody() {
       </main>
       <SiteFooter />
       <InstallAppBanner />
+      {CHAT_WIDGET_ENABLED ? <ChatWidget mode="customer" /> : null}
       <MobileBottomNav />
     </div>
   );
