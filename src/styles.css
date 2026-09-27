@@ -170,6 +170,8 @@
     color: var(--color-foreground);
     overflow-x: hidden;
     width: 100%;
+    /* Avoid the rubber-band overscroll flash reading as "still a browser tab". */
+    overscroll-behavior-y: none;
   }
 
   h1,
@@ -204,4 +206,23 @@
    screen with their own sidebar layout, so the public site header + footer are hidden. */
 html[data-portal] [data-site-chrome] {
   display: none !important;
+}
+
+/*
+ * App-shell spacing for phones with a notch / home-indicator (installed PWA or
+ * plain mobile Safari/Chrome with viewport-fit=cover). Keeps content clear of
+ * the status bar and the fixed bottom tab bar (see mobile-bottom-nav.tsx).
+ */
+header[data-site-chrome] {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.pb-mobile-nav {
+  padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 768px) {
+  .pb-mobile-nav {
+    padding-bottom: 0;
+  }
 }
