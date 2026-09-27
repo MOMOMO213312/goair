@@ -55,8 +55,6 @@ export type VehicleType = {
   labelAr: string;
   capacity: number;
   maxLuggage: number | null;
-  /** Real fleet photo set via the admin/DB `image_url` column — null shows the capacity icon instead. */
-  imageUrl: string | null;
 };
 
 /** Real vehicle tiers from `vehicle_types` — no fabricated tiers. */
@@ -117,8 +115,8 @@ export async function fetchPublicGroundHandlingServices(
 ): Promise<GroundHandlingPublicService[]> {
   const { data, error } = await supabase.rpc("get_public_ground_handling_services", {
     p_airport_code: airportCode,
-    ...(travelDate ? { p_travel_date: travelDate } : {}),
-    ...(flightNumber?.trim() ? { p_flight_number: flightNumber.trim() } : {}),
+    p_travel_date: travelDate || null,
+    p_flight_number: flightNumber || null,
   });
   if (error) throw new Error(error.message);
   return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
@@ -198,7 +196,6 @@ export async function fetchVehicleTypes(): Promise<VehicleType[]> {
     labelAr: String(pick(row, ["label_ar"]) ?? ""),
     capacity: Number(pick(row, ["capacity"]) ?? 0),
     maxLuggage: pick<number>(row, ["max_luggage"]),
-    imageUrl: pick<string>(row, ["image_url"]),
   }));
 }
 

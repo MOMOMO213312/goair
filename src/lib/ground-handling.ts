@@ -491,10 +491,6 @@ export type GroundHandlingService = {
   status: GroundHandlingServiceStatus;
   pendingAction: GroundHandlingServicePendingAction;
   adminNotes: string | null;
-  /** كود شركة الطيران لو الخدمة دي مُدارة نيابة عن شركة طيران، أو null لو خدمة عامة تخص الشريك نفسه. */
-  airlineCode: string | null;
-  /** مين آخر جهة أنشأت/عدّلت الخدمة: الشريك نفسه أو نيابة عن شركة طيران (agent) أو شركة الطيران مباشرة (airline). */
-  createdByRole: "partner" | "agent" | "airline" | null;
   createdAt: string | null;
 };
 
@@ -516,31 +512,8 @@ function mapService(row: Record<string, unknown>): GroundHandlingService {
     status: (row["status"] as GroundHandlingServiceStatus) ?? "pending_review",
     pendingAction: (row["pending_action"] as GroundHandlingServicePendingAction) ?? null,
     adminNotes: (row["admin_notes"] as string | null) ?? null,
-    airlineCode: (row["airline_code"] as string | null) ?? null,
-    createdByRole: (row["created_by_role"] as "partner" | "agent" | "airline" | null) ?? null,
     createdAt: (row["created_at"] as string | null) ?? null,
   };
-}
-
-export type GroundHandlingManagedAirline = {
-  airportCode: string;
-  airlineCode: string;
-  airlineName: string | null;
-  /** لو false يبقى شركة الطيران سحبت التفويض وممنوع نضيف/نعدّل خدمات نيابة عنها. */
-  agentManagesServices: boolean;
-};
-
-// شركات الطيران اللي فوّضت الشريك (شركة الخدمات الأرضية) بإدارة خدماتها — تُستخدم
-// لملء قايمة "إضافة خدمة نيابة عن شركة طيران" في فورم الخدمات.
-export async function listGroundHandlingManagedAirlines(token: string): Promise<GroundHandlingManagedAirline[]> {
-  const { data, error } = await supabase.rpc("list_ground_handling_managed_airlines", { p_access_token: token });
-  if (error) rpcError(error);
-  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
-    airportCode: String(row["airport_code"] ?? ""),
-    airlineCode: String(row["airline_code"] ?? ""),
-    airlineName: (row["airline_name"] as string | null) ?? null,
-    agentManagesServices: row["agent_manages_services"] !== false,
-  }));
 }
 
 export async function listGroundHandlingServices(token: string): Promise<GroundHandlingService[]> {
@@ -593,10 +566,8 @@ export async function uploadGroundHandlingServicePhotos(files: File[]): Promise<
 export async function createGroundHandlingService(
   token: string,
   input: GroundHandlingServiceInput,
-  /** لو محدد، الخدمة بتتضاف نيابة عن شركة الطيران دي (لازم تكون مفوّضة الشريك أصلًا). */
-  airlineCode?: string | null,
 ): Promise<GroundHandlingService> {
-  const basePayload = {
+  const { data, error } = await supabase.rpc("create_ground_handling_service", {
     p_access_token: token,
     p_name: input.name,
     p_description: input.description,
@@ -610,13 +581,7 @@ export async function createGroundHandlingService(
     p_price_usd: input.priceUsd,
     p_sla_minutes: input.slaMinutes,
     p_photos: input.photos,
-  };
-  // فيه نسختين من الدالة على القاعدة (بـ/من غير p_airline_code)؛ لازم نستبعد المفتاح
-  // تمامًا لما مفيش شركة طيران عشان PostgREST يختار النسخة الصح.
-  const { data, error } = await supabase.rpc(
-    "create_ground_handling_service",
-    airlineCode ? { ...basePayload, p_airline_code: airlineCode } : basePayload,
-  );
+  });
   if (error) rpcError(error);
   const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown>;
   return mapService(row);
@@ -950,6 +915,11 @@ export type GroundHandlingPartner = {
   contactEmail: string | null;
   contactPhone: string | null;
   isActive: boolean;
+  /** Routing priority for automatic assignment of generic "airport" addon
+   * requests at this airport. Lower number = served first (Primary provider);
+   * partners with equal priority fall back to creation order. Does not affect
+   * ground_handling_services picked directly by id. */
+  priority: number;
 };
 
 function mapPartner(row: Record<string, unknown>): GroundHandlingPartner {
@@ -961,6 +931,7 @@ function mapPartner(row: Record<string, unknown>): GroundHandlingPartner {
     contactEmail: (row["contact_email"] as string | null) ?? null,
     contactPhone: (row["contact_phone"] as string | null) ?? null,
     isActive: row["is_active"] !== false,
+    priority: Number(row["priority"] ?? 100),
   };
 }
 
@@ -972,7 +943,7 @@ export async function adminListGroundHandlingPartners(token: string): Promise<Gr
 
 export async function adminCreateGroundHandlingPartner(
   token: string,
-  input: { name: string; airportCode: string; country: string | null; contactEmail: string | null; contactPhone: string | null },
+  input: { name: string; airportCode: string; country: string | null; contactEmail: string | null; contactPhone: string | null; priority?: number },
 ): Promise<GroundHandlingPartner> {
   const { data, error } = await supabase.rpc("admin_create_ground_handling_partner", {
     p_access_token: token,
@@ -981,6 +952,7 @@ export async function adminCreateGroundHandlingPartner(
     p_country: input.country,
     p_contact_email: input.contactEmail,
     p_contact_phone: input.contactPhone,
+    p_priority: input.priority ?? 100,
   });
   if (error) rpcError(error);
   const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown>;
@@ -990,7 +962,7 @@ export async function adminCreateGroundHandlingPartner(
 export async function adminUpdateGroundHandlingPartner(
   token: string,
   id: string,
-  input: { name: string; airportCode: string; country: string | null; contactEmail: string | null; contactPhone: string | null; isActive: boolean },
+  input: { name: string; airportCode: string; country: string | null; contactEmail: string | null; contactPhone: string | null; isActive: boolean; priority?: number },
 ): Promise<void> {
   const { error } = await supabase.rpc("admin_update_ground_handling_partner", {
     p_access_token: token,
@@ -1001,6 +973,7 @@ export async function adminUpdateGroundHandlingPartner(
     p_contact_email: input.contactEmail,
     p_contact_phone: input.contactPhone,
     p_is_active: input.isActive,
+    p_priority: input.priority ?? null,
   });
   if (error) rpcError(error);
 }
@@ -1011,7 +984,8 @@ export async function adminDeleteGroundHandlingPartner(token: string, id: string
 }
 
 // ---------------------------------------------------------------------------
-// توزيع شركات الطيران على شركاء الخدمات الأرضية + تفويض إدارة الخدمات
+// Admin: airline <-> ground-handling-partner exclusive assignment
+// (each airline has exactly one ground-handling agent per airport)
 // ---------------------------------------------------------------------------
 
 export type GroundHandlingAirlineAssignment = {
@@ -1022,8 +996,6 @@ export type GroundHandlingAirlineAssignment = {
   airlineCode: string;
   airlineName: string | null;
   isActive: boolean;
-  agentManagesServices: boolean;
-  createdAt: string;
 };
 
 function mapAirlineAssignment(row: Record<string, unknown>): GroundHandlingAirlineAssignment {
@@ -1035,8 +1007,6 @@ function mapAirlineAssignment(row: Record<string, unknown>): GroundHandlingAirli
     airlineCode: String(row["airline_code"] ?? ""),
     airlineName: (row["airline_name"] as string | null) ?? null,
     isActive: row["is_active"] !== false,
-    agentManagesServices: row["agent_manages_services"] !== false,
-    createdAt: String(row["created_at"] ?? ""),
   };
 }
 
@@ -1055,10 +1025,9 @@ export async function adminUpsertGroundHandlingAirlineAssignment(
   input: {
     airportCode: string;
     airlineCode: string;
-    airlineName: string | null;
     groundHandlingPartnerId: string;
-    isActive: boolean;
-    agentManagesServices: boolean;
+    airlineName?: string | null;
+    isActive?: boolean;
   },
 ): Promise<GroundHandlingAirlineAssignment> {
   const { data, error } = await supabase.rpc("admin_upsert_ground_handling_airline_assignment", {
@@ -1066,9 +1035,8 @@ export async function adminUpsertGroundHandlingAirlineAssignment(
     p_airport_code: input.airportCode,
     p_airline_code: input.airlineCode,
     p_ground_handling_partner_id: input.groundHandlingPartnerId,
-    p_airline_name: input.airlineName,
-    p_is_active: input.isActive,
-    p_agent_manages_services: input.agentManagesServices,
+    p_airline_name: input.airlineName ?? null,
+    p_is_active: input.isActive ?? true,
   });
   if (error) rpcError(error);
   const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown>;
