@@ -1015,36 +1015,6 @@ export async function adminDeleteGroundHandlingPartner(token: string, id: string
 }
 
 // ---------------------------------------------------------------------------
-// Partner-facing: airlines this ground-handling partner is delegated to manage
-// ---------------------------------------------------------------------------
-
-export type GroundHandlingManagedAirline = {
-  airportCode: string;
-  airlineCode: string;
-  airlineName: string | null;
-  agentManagesServices: boolean;
-};
-
-function mapManagedAirline(row: Record<string, unknown>): GroundHandlingManagedAirline {
-  return {
-    airportCode: String(row["airport_code"] ?? ""),
-    airlineCode: String(row["airline_code"] ?? ""),
-    airlineName: (row["airline_name"] as string | null) ?? null,
-    agentManagesServices: row["agent_manages_services"] === true,
-  };
-}
-
-export async function listGroundHandlingManagedAirlines(
-  token: string,
-): Promise<GroundHandlingManagedAirline[]> {
-  const { data, error } = await supabase.rpc("list_ground_handling_managed_airlines", {
-    p_access_token: token,
-  });
-  if (error) rpcError(error);
-  return ((data ?? []) as Record<string, unknown>[]).map(mapManagedAirline);
-}
-
-// ---------------------------------------------------------------------------
 // Admin: airline <-> ground-handling-partner exclusive assignment
 // (each airline has exactly one ground-handling agent per airport)
 // ---------------------------------------------------------------------------
