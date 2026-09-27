@@ -495,6 +495,8 @@ function PackagePage() {
                   groundHandlingServices={groundHandlingServices}
                   selectedGroundHandlingServiceIds={selectedGroundHandlingServiceIds}
                   onToggleGroundHandlingService={toggleGroundHandlingService}
+                  flightNumber={flight}
+                  onFlightNumberChange={setFlight}
                   className="mt-6"
                 />
               </>

@@ -261,6 +261,8 @@ function BookPage() {
                   groundHandlingServices={groundHandlingServices}
                   selectedGroundHandlingServiceIds={selectedGroundHandlingServiceIds}
                   onToggleGroundHandlingService={toggleGroundHandlingService}
+                  flightNumber={flight}
+                  onFlightNumberChange={setFlight}
                 />
                 <BookingExtrasStep
                   luggage={luggage}

@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import {
   adminCreateGroundHandlingPartner,
   adminDeleteGroundHandlingPartner,
@@ -37,6 +36,10 @@ import {
   adminReviewGroundHandlingService,
   adminUpdateGroundHandlingPartner,
   adminUpdateGroundHandlingStatement,
+  adminListGroundHandlingAirlineAssignments,
+  adminUpsertGroundHandlingAirlineAssignment,
+  adminDeleteGroundHandlingAirlineAssignment,
+  type GroundHandlingAirlineAssignment,
   formatGroundHandlingDate,
   groundHandlingServiceStatusLabel,
   groundHandlingStatementStatusLabel,
@@ -47,16 +50,12 @@ import {
   adminUpdateGroundHandlingIncident,
   groundHandlingIncidentSeverityLabel,
   groundHandlingIncidentStatusLabel,
-  adminListGroundHandlingAirlineAssignments,
-  adminUpsertGroundHandlingAirlineAssignment,
-  adminDeleteGroundHandlingAirlineAssignment,
   type GroundHandlingIncidentStatus,
   REQUEST_STATUS_ORDER,
   type GroundHandlingPartner,
   type GroundHandlingRequestStatus,
   type GroundHandlingServiceStatus,
   type GroundHandlingStatementStatus,
-  type GroundHandlingAirlineAssignment,
 } from "@/lib/ground-handling";
 import { isAdminAuthError } from "@/lib/admin";
 import { useAdminToken } from "@/lib/admin-session";
@@ -95,15 +94,18 @@ function AdminGroundHandlingPage() {
     <Tabs defaultValue="partners">
       <TabsList>
         <TabsTrigger value="partners">الشركاء ({partners.length})</TabsTrigger>
+        <TabsTrigger value="airlines">توزيع شركات الطيران</TabsTrigger>
         <TabsTrigger value="requests">طلبات الخدمات</TabsTrigger>
         <TabsTrigger value="services">مراجعة الخدمات</TabsTrigger>
         <TabsTrigger value="statements">التسويات المالية</TabsTrigger>
         <TabsTrigger value="incidents">المشاكل</TabsTrigger>
-        <TabsTrigger value="assignments">توزيع شركات الطيران</TabsTrigger>
       </TabsList>
 
       <TabsContent value="partners">
         <PartnersTab token={token} partners={partners} onRefresh={() => partnersQuery.refetch()} />
+      </TabsContent>
+      <TabsContent value="airlines">
+        <AirlineAssignmentsTab token={token} partners={partners} />
       </TabsContent>
       <TabsContent value="requests">
         <RequestsTab token={token} />
@@ -117,10 +119,141 @@ function AdminGroundHandlingPage() {
       <TabsContent value="incidents">
         <IncidentsTab token={token} />
       </TabsContent>
-      <TabsContent value="assignments">
-        <AssignmentsTab token={token} partners={partners} />
-      </TabsContent>
     </Tabs>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// تبويب: توزيع شركات الطيران (كل شركة طيران لها شريك خدمات أرضية واحد بس في كل مطار)
+// ---------------------------------------------------------------------------
+
+function AirlineAssignmentsTab({ token, partners }: { token: string; partners: GroundHandlingPartner[] }) {
+  const queryClient = useQueryClient();
+  const assignmentsQuery = useQuery({
+    queryKey: ["admin-ground-handling-airline-assignments", token],
+    queryFn: () => adminListGroundHandlingAirlineAssignments(token),
+    retry: false,
+    enabled: Boolean(token),
+  });
+
+  const [airportCode, setAirportCode] = useState("");
+  const [airlineCode, setAirlineCode] = useState("");
+  const [airlineName, setAirlineName] = useState("");
+  const [partnerId, setPartnerId] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const assignments = assignmentsQuery.data ?? [];
+
+  function refresh() {
+    void queryClient.invalidateQueries({ queryKey: ["admin-ground-handling-airline-assignments", token] });
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!airportCode.trim() || !airlineCode.trim() || !partnerId) {
+      toast.error("كود المطار وكود شركة الطيران والشريك مطلوبين.");
+      return;
+    }
+    setBusy(true);
+    try {
+      await adminUpsertGroundHandlingAirlineAssignment(token, {
+        airportCode: airportCode.trim(),
+        airlineCode: airlineCode.trim(),
+        groundHandlingPartnerId: partnerId,
+        airlineName: airlineName.trim() || null,
+      });
+      toast.success("تم الحفظ — أي طلب خدمة جديد لهذه الشركة في هذا المطار هيتوجّه لهذا الشريك تلقائيًا.");
+      setAirportCode("");
+      setAirlineCode("");
+      setAirlineName("");
+      setPartnerId("");
+      refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onDelete(id: string) {
+    if (!confirm("متأكد إنك عايز تمسح التوزيع ده؟")) return;
+    try {
+      await adminDeleteGroundHandlingAirlineAssignment(token, id);
+      toast.success("تم الحذف.");
+      refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
+    }
+  }
+
+  return (
+    <div className="mt-4 space-y-6">
+      <Card className="rounded-xl border-border/80 p-4">
+        <h2 className="font-display text-lg font-extrabold text-primary">توزيع شركة طيران على شريك خدمات أرضية</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          كل شركة طيران بيكون ليها شريك خدمات أرضية واحد بس في نفس المطار. لو غيّرت العقد، عدّل نفس السطر بدل ما تضيف
+          سطر جديد.
+        </p>
+        <form onSubmit={onSubmit} className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="space-y-2">
+            <Label htmlFor="aa-airport">كود المطار</Label>
+            <Input id="aa-airport" dir="ltr" placeholder="CAI" value={airportCode} onChange={(e) => setAirportCode(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="aa-airline-code">كود شركة الطيران (IATA)</Label>
+            <Input id="aa-airline-code" dir="ltr" placeholder="MS" value={airlineCode} onChange={(e) => setAirlineCode(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="aa-airline-name">اسم شركة الطيران (اختياري)</Label>
+            <Input id="aa-airline-name" placeholder="مصر للطيران" value={airlineName} onChange={(e) => setAirlineName(e.target.value)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="aa-partner">شريك الخدمات الأرضية</Label>
+            <Select value={partnerId} onValueChange={setPartnerId}>
+              <SelectTrigger id="aa-partner">
+                <SelectValue placeholder="اختار شريك" />
+              </SelectTrigger>
+              <SelectContent>
+                {partners.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.name} ({p.airportCode})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="sm:col-span-2 lg:col-span-4">
+            <Button type="submit" disabled={busy} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">
+              {busy ? "جاري الحفظ..." : "حفظ التوزيع"}
+            </Button>
+          </div>
+        </form>
+      </Card>
+
+      {assignmentsQuery.isPending ? (
+        <AdminLoading />
+      ) : assignments.length === 0 ? (
+        <Card className="rounded-xl border-dashed border-border p-6 text-center text-sm text-muted-foreground">
+          مفيش توزيعات لسه — أي طلب خدمة عام هيتوجّه مؤقتًا حسب أولوية الشريك في نفس المطار لحد ما تضيف توزيع صريح.
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {assignments.map((a) => (
+            <Card key={a.id} className="flex items-center justify-between gap-3 rounded-xl border-border/80 p-3">
+              <div className="text-sm">
+                <span className="font-bold text-primary">{a.airlineCode}</span>
+                {a.airlineName ? ` (${a.airlineName})` : ""} — {a.airportCode} ←{" "}
+                <span className="font-bold">{a.partnerName}</span>
+                {!a.isActive ? <span className="text-destructive"> (غير مفعّل)</span> : null}
+              </div>
+              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => onDelete(a.id)}>
+                حذف
+              </Button>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -183,6 +316,7 @@ function CreatePartnerDialog({ token, onDone }: { token: string; onDone: () => v
   const [country, setCountry] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   const [contactPhone, setContactPhone] = useState("");
+  const [priority, setPriority] = useState("100");
   const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
@@ -199,6 +333,7 @@ function CreatePartnerDialog({ token, onDone }: { token: string; onDone: () => v
         country: country.trim() || null,
         contactEmail: contactEmail.trim() || null,
         contactPhone: contactPhone.trim() || null,
+        priority: Number(priority) || 100,
       });
       toast.success("تم إنشاء الشريك — دلوقتي تقدر تعمله دعوة حساب دخول من كارت الشريك.");
       onDone();
@@ -252,6 +387,19 @@ function CreatePartnerDialog({ token, onDone }: { token: string; onDone: () => v
               onChange={(e) => setContactPhone(e.target.value)}
             />
           </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="gh-priority">أولوية التوجيه التلقائي في نفس المطار (اختياري)</Label>
+          <Input
+            id="gh-priority"
+            type="number"
+            dir="ltr"
+            value={priority}
+            onChange={(e) => setPriority(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            رقم أصغر = شريك أساسي (Primary) يتوجّه له طلب الخدمة أولاً عند نفس المطار. الافتراضي 100.
+          </p>
         </div>
         <DialogFooter>
           <Button
@@ -324,6 +472,7 @@ function PartnerCard({
         <p className="mt-0.5 text-sm text-muted-foreground">
           {partner.airportCode}
           {partner.country ? ` · ${partner.country}` : ""}
+          {" · "}أولوية التوجيه: {partner.priority}
         </p>
         {partner.contactEmail || partner.contactPhone ? (
           <p className="mt-0.5 text-xs text-muted-foreground">
@@ -462,6 +611,7 @@ function EditPartnerDialog({
   const [country, setCountry] = useState(partner.country ?? "");
   const [contactEmail, setContactEmail] = useState(partner.contactEmail ?? "");
   const [contactPhone, setContactPhone] = useState(partner.contactPhone ?? "");
+  const [priority, setPriority] = useState(String(partner.priority ?? 100));
   const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
@@ -475,6 +625,7 @@ function EditPartnerDialog({
         contactEmail: contactEmail.trim() || null,
         contactPhone: contactPhone.trim() || null,
         isActive: partner.isActive,
+        priority: Number(priority) || 100,
       });
       toast.success("تم التحديث.");
       onDone();
@@ -532,6 +683,19 @@ function EditPartnerDialog({
               onChange={(e) => setContactPhone(e.target.value)}
             />
           </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="edit-gh-priority">أولوية التوجيه التلقائي في نفس المطار</Label>
+          <Input
+            id="edit-gh-priority"
+            type="number"
+            dir="ltr"
+            value={priority}
+            onChange={(e) => setPriority(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            رقم أصغر = شريك أساسي (Primary). الشركاء التانيين في نفس المطار بيبقوا Fallback بالترتيب.
+          </p>
         </div>
         <DialogFooter>
           <Button
@@ -1289,221 +1453,5 @@ function StatementCard({
         </Dialog>
       </div>
     </Card>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// تبويب: توزيع شركات الطيران على الشركاء + تفويض إدارة الخدمات
-// ---------------------------------------------------------------------------
-
-function AssignmentsTab({ token, partners }: { token: string; partners: GroundHandlingPartner[] }) {
-  const queryClient = useQueryClient();
-  const [createOpen, setCreateOpen] = useState(false);
-
-  const assignmentsQuery = useQuery({
-    queryKey: ["admin-ground-handling-airline-assignments", token],
-    queryFn: () => adminListGroundHandlingAirlineAssignments(token),
-    retry: false,
-  });
-
-  function invalidate() {
-    queryClient.invalidateQueries({ queryKey: ["admin-ground-handling-airline-assignments", token] });
-  }
-
-  if (assignmentsQuery.isPending) return <AdminLoading />;
-  if (assignmentsQuery.isError) return <AdminAuthError message="حصل خطأ مؤقت." />;
-
-  const assignments = assignmentsQuery.data ?? [];
-
-  async function toggleDelegation(a: GroundHandlingAirlineAssignment, value: boolean) {
-    try {
-      await adminUpsertGroundHandlingAirlineAssignment(token, {
-        airportCode: a.airportCode,
-        airlineCode: a.airlineCode,
-        airlineName: a.airlineName,
-        groundHandlingPartnerId: a.groundHandlingPartnerId,
-        isActive: a.isActive,
-        agentManagesServices: value,
-      });
-      toast.success(value ? "تم تفويض الشريك بإدارة خدمات الشركة." : "تم سحب تفويض الشريك.");
-      invalidate();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
-    }
-  }
-
-  async function toggleActive(a: GroundHandlingAirlineAssignment) {
-    try {
-      await adminUpsertGroundHandlingAirlineAssignment(token, {
-        airportCode: a.airportCode,
-        airlineCode: a.airlineCode,
-        airlineName: a.airlineName,
-        groundHandlingPartnerId: a.groundHandlingPartnerId,
-        isActive: !a.isActive,
-        agentManagesServices: a.agentManagesServices,
-      });
-      invalidate();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
-    }
-  }
-
-  async function remove(a: GroundHandlingAirlineAssignment) {
-    if (!confirm(`تأكيد حذف ربط ${a.airlineName || a.airlineCode} بـ${a.partnerName} في ${a.airportCode}؟`)) return;
-    try {
-      await adminDeleteGroundHandlingAirlineAssignment(token, a.id);
-      toast.success("تم الحذف.");
-      invalidate();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
-    }
-  }
-
-  return (
-    <div>
-      <div className="mb-3 mt-4 flex items-center justify-between">
-        <h2 className="font-display text-lg font-extrabold text-primary">توزيع شركات الطيران على شركاء الخدمات الأرضية</h2>
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="bg-primary font-bold text-primary-foreground hover:bg-primary/90">
-              إضافة ربط
-            </Button>
-          </DialogTrigger>
-          <AssignmentFormDialog
-            token={token}
-            partners={partners}
-            onDone={() => {
-              setCreateOpen(false);
-              invalidate();
-            }}
-          />
-        </Dialog>
-      </div>
-      <p className="mb-3 text-xs text-muted-foreground">
-        كل صف بيحدد إن شريك خدمات أرضية معيّن هو المتعاقد مع شركة طيران معيّنة في مطار معيّن، وهل الشريك مفوّض
-        (agent_manages_services) بإضافة/تعديل خدمات نيابة عن شركة الطيران دي في نفس المطار ولا لأ. سحب التفويض
-        بيقفل فورًا أي خدمة قديمة مضافة نيابة عنها لحد ما التفويض يتفعّل تاني.
-      </p>
-
-      {assignments.length === 0 ? (
-        <Card className="rounded-xl border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          مفيش أي ربط لسه.
-        </Card>
-      ) : (
-        <div className="space-y-3">
-          {assignments.map((a) => (
-            <Card key={a.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border-border/80 p-4">
-              <div>
-                <p className="font-bold text-primary">
-                  {a.airlineName || a.airlineCode} <span className="font-normal text-muted-foreground">({a.airlineCode})</span>
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  المطار: {a.airportCode} · الشريك: {a.partnerName}
-                  {!a.isActive ? <span className="mr-2 font-bold text-destructive">— غير مفعّل</span> : null}
-                </p>
-              </div>
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 text-sm">
-                  <span>تفويض إدارة الخدمات</span>
-                  <Switch checked={a.agentManagesServices} onCheckedChange={(v) => toggleDelegation(a, v)} />
-                </label>
-                <Button size="sm" variant="outline" onClick={() => toggleActive(a)}>
-                  {a.isActive ? "تعطيل الربط" : "تفعيل الربط"}
-                </Button>
-                <Button size="sm" variant="outline" className="text-destructive" onClick={() => remove(a)}>
-                  حذف
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function AssignmentFormDialog({
-  token,
-  partners,
-  onDone,
-}: {
-  token: string;
-  partners: GroundHandlingPartner[];
-  onDone: () => void;
-}) {
-  const [airportCode, setAirportCode] = useState("");
-  const [airlineCode, setAirlineCode] = useState("");
-  const [airlineName, setAirlineName] = useState("");
-  const [partnerId, setPartnerId] = useState<string>(partners[0]?.id ?? "");
-  const [agentManagesServices, setAgentManagesServices] = useState(true);
-  const [busy, setBusy] = useState(false);
-
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!airportCode.trim() || !airlineCode.trim() || !partnerId) {
-      toast.error("كود المطار وكود شركة الطيران والشريك مطلوبين.");
-      return;
-    }
-    setBusy(true);
-    try {
-      await adminUpsertGroundHandlingAirlineAssignment(token, {
-        airportCode: airportCode.trim(),
-        airlineCode: airlineCode.trim(),
-        airlineName: airlineName.trim() || null,
-        groundHandlingPartnerId: partnerId,
-        isActive: true,
-        agentManagesServices,
-      });
-      toast.success("تم الحفظ.");
-      onDone();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "حصل خطأ.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>ربط شركة طيران بشريك خدمات أرضية</DialogTitle>
-      </DialogHeader>
-      <form onSubmit={onSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <Label>كود المطار</Label>
-            <Input dir="ltr" value={airportCode} onChange={(e) => setAirportCode(e.target.value.toUpperCase())} />
-          </div>
-          <div className="space-y-2">
-            <Label>كود شركة الطيران (IATA)</Label>
-            <Input dir="ltr" value={airlineCode} onChange={(e) => setAirlineCode(e.target.value.toUpperCase())} />
-          </div>
-        </div>
-        <div className="space-y-2">
-          <Label>اسم شركة الطيران (اختياري)</Label>
-          <Input value={airlineName} onChange={(e) => setAirlineName(e.target.value)} />
-        </div>
-        <div className="space-y-2">
-          <Label>شريك الخدمات الأرضية</Label>
-          <Select value={partnerId} onValueChange={setPartnerId}>
-            <SelectTrigger><SelectValue placeholder="اختار شريك" /></SelectTrigger>
-            <SelectContent>
-              {partners.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.name} ({p.airportCode})</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <label className="flex items-center justify-between rounded-lg border border-border p-3 text-sm">
-          <span>تفويض الشريك بإدارة خدمات شركة الطيران دي (إضافة/تعديل/حذف)</span>
-          <Switch checked={agentManagesServices} onCheckedChange={setAgentManagesServices} />
-        </label>
-        <DialogFooter>
-          <Button type="submit" disabled={busy} className="bg-accent font-bold text-accent-foreground hover:bg-accent/90">
-            {busy ? "جاري الحفظ..." : "حفظ"}
-          </Button>
-        </DialogFooter>
-      </form>
-    </DialogContent>
   );
 }
