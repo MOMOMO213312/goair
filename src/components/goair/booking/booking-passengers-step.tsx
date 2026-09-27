@@ -140,7 +140,7 @@ export function BookingPassengersStep({
 
         <fieldset className="space-y-2">
           <Label htmlFor="flight" className="font-medium">
-            {t("booking.passengerForm.flightNumber")} <span className="text-xs text-muted-foreground">{t("booking.passengerForm.optional")}</span>
+            {t("booking.passengerForm.flightNumber")}
           </Label>
           <div className="relative">
             <Plane
@@ -153,6 +153,7 @@ export function BookingPassengersStep({
               onChange={(event) => onFlightChange(event.target.value.toUpperCase())}
               placeholder="MS 706"
               className="h-11 ps-10"
+              required
               autoComplete="off"
             />
           </div>

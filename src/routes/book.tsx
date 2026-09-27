@@ -163,6 +163,11 @@ function BookPage() {
       setPhase("passengers");
       return;
     }
+    if (!flight.trim()) {
+      toast.error(t("bookPage.flightNumberRequired"));
+      setPhase("passengers");
+      return;
+    }
     if (isPrivate && !search.vehicleTypeId) {
       toast.error(t("bookPage.vehicleTypeMissing"));
       return;
@@ -180,7 +185,7 @@ function BookPage() {
             fullName: fullName.trim(),
             phoneNumber: phone.trim(),
             customerEmail: email.trim() || null,
-            flightNumber: flight.trim() || null,
+            flightNumber: flight.trim(),
             luggageCount: luggage,
             addonIds: selectedAddonIds,
             groundHandlingServiceIds: selectedGroundHandlingServiceIds,
@@ -197,7 +202,7 @@ function BookPage() {
             fullName: fullName.trim(),
             phoneNumber: phone.trim(),
             customerEmail: email.trim() || null,
-            flightNumber: flight.trim() || null,
+            flightNumber: flight.trim(),
             luggageCount: luggage,
             addonIds: selectedAddonIds,
             groundHandlingServiceIds: selectedGroundHandlingServiceIds,
@@ -221,6 +226,10 @@ function BookPage() {
     }
     if (phone.trim().length < 7) {
       toast.error(t("bookPage.invalidPhone"));
+      return;
+    }
+    if (!flight.trim()) {
+      toast.error(t("bookPage.flightNumberRequired"));
       return;
     }
     setPhase("confirm");
