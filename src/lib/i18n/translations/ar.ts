@@ -19,6 +19,19 @@ const ar = {
     trackBooking: "تتبع حجزي",
     menu: "القائمة",
   },
+  bottomNav: {
+    home: "الرئيسية",
+    search: "بحث",
+    explore: "استكشف",
+    bookings: "حجوزاتي",
+  },
+  installBanner: {
+    title: "ثبّت تطبيق GoAir",
+    androidBody: "أضف GoAir على شاشتك الرئيسية عشان وصول أسرع وبدون متصفح.",
+    iosBody: "لإضافة GoAir على شاشتك الرئيسية: افتح زر المشاركة ⬆️ من Safari واختر \"إضافة إلى الشاشة الرئيسية\".",
+    install: "تثبيت",
+    dismiss: "لأ شكرًا",
+  },
   languageToggle: {
     label: "اللغة",
     ar: "عربي",

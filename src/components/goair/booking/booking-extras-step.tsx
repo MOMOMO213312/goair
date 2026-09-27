@@ -47,7 +47,7 @@ export function BookingExtrasStep({
           <button
             type="button"
             onClick={() => onLuggageChange(Math.max(0, luggage - 1))}
-            className="flex size-8 items-center justify-center rounded-full border border-border text-lg font-bold text-primary hover:bg-secondary"
+            className="flex size-11 items-center justify-center rounded-full border border-border text-lg font-bold text-primary hover:bg-secondary"
             aria-label={t("booking.extrasStep.decreaseLuggage")}
           >
             −
@@ -56,7 +56,7 @@ export function BookingExtrasStep({
           <button
             type="button"
             onClick={() => onLuggageChange(Math.min(20, luggage + 1))}
-            className="flex size-8 items-center justify-center rounded-full border border-border text-lg font-bold text-primary hover:bg-secondary"
+            className="flex size-11 items-center justify-center rounded-full border border-border text-lg font-bold text-primary hover:bg-secondary"
             aria-label={t("booking.extrasStep.increaseLuggage")}
           >
             +

@@ -82,7 +82,7 @@ export function BookingConfirmStep({
           <button
             type="button"
             onClick={onEditExtras}
-            className="inline-flex items-center gap-1 text-xs font-bold text-accent hover:underline"
+            className="-m-2 inline-flex items-center gap-1 p-2 text-xs font-bold text-accent hover:underline"
           >
             <Pencil className="size-3.5" aria-hidden />
             {t("booking.confirmStep.edit")}
@@ -130,7 +130,7 @@ export function BookingConfirmStep({
           <button
             type="button"
             onClick={onEditPassengers}
-            className="inline-flex items-center gap-1 text-xs font-bold text-accent hover:underline"
+            className="-m-2 inline-flex items-center gap-1 p-2 text-xs font-bold text-accent hover:underline"
           >
             <Pencil className="size-3.5" aria-hidden />
             {t("booking.confirmStep.edit")}
