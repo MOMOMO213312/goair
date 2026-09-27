@@ -24,6 +24,13 @@ const en = {
     explore: "Explore",
     bookings: "My bookings",
   },
+  installBanner: {
+    title: "Install the GoAir app",
+    androidBody: "Add GoAir to your home screen for faster access, no browser needed.",
+    iosBody: "To add GoAir to your home screen: open the Share button ⬆️ in Safari and choose \"Add to Home Screen\".",
+    install: "Install",
+    dismiss: "Not now",
+  },
   languageToggle: {
     label: "Language",
     ar: "عربي",

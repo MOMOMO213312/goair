@@ -16,6 +16,7 @@ import { captureEcosystemLinkFromUrl } from "@/lib/ecosystem-link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { MobileBottomNav } from "@/components/mobile-bottom-nav";
+import { InstallAppBanner } from "@/components/install-app-banner";
 import { Toaster } from "@/components/ui/sonner";
 import { CurrencyProvider } from "@/lib/currency";
 import { LanguageProvider } from "@/lib/i18n/language-context";
@@ -166,6 +167,7 @@ function AppBody() {
         <Outlet />
       </main>
       <SiteFooter />
+      <InstallAppBanner />
       <MobileBottomNav />
     </div>
   );
