@@ -14,6 +14,7 @@ import {
   MapPinned,
   PackageOpen,
   ParkingCircle,
+  Plane,
   Plus,
   ShieldCheck,
   ShoppingBag,
@@ -27,6 +28,8 @@ import {
 } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useStockPhoto } from "@/hooks/use-stock-photo";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { localize } from "@/lib/i18n/localize";
@@ -286,6 +289,13 @@ type BookingAddonsStepProps = {
   groundHandlingServices?: GroundHandlingPublicService[];
   selectedGroundHandlingServiceIds?: string[];
   onToggleGroundHandlingService?: (id: string) => void;
+  /** When provided, shows an early flight-number field so the airline's
+   * exclusive ground-handling partner catalog (if any) can be resolved and
+   * shown here — instead of only after the flight is entered in a later
+   * step, by which point the customer may have already picked the wrong
+   * partner's service. */
+  flightNumber?: string;
+  onFlightNumberChange?: (value: string) => void;
   className?: string;
 };
 
@@ -303,6 +313,8 @@ export function BookingAddonsStep({
   groundHandlingServices = [],
   selectedGroundHandlingServiceIds = [],
   onToggleGroundHandlingService,
+  flightNumber,
+  onFlightNumberChange,
   className,
 }: BookingAddonsStepProps) {
   const { t } = useTranslation();
@@ -324,6 +336,34 @@ export function BookingAddonsStep({
     <Card className={cn("border-border/80 p-5 shadow-[var(--shadow-card)] sm:p-6", className)}>
       <h2 className="font-display text-lg font-extrabold text-primary">{t("booking.addonsStep.title")}</h2>
       <p className="mt-1 text-sm text-muted-foreground">{t("booking.addonsStep.subtitle")}</p>
+
+      {onFlightNumberChange ? (
+        <div className="mt-4 space-y-2 rounded-lg border border-dashed border-border bg-secondary/20 p-3">
+          <Label htmlFor="addons-flight" className="text-xs font-bold text-primary">
+            {t("booking.passengerForm.flightNumber")}{" "}
+            <span className="font-normal text-muted-foreground">{t("booking.passengerForm.optional")}</span>
+          </Label>
+          <div className="relative">
+            <Plane
+              className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              id="addons-flight"
+              value={flightNumber ?? ""}
+              onChange={(event) => onFlightNumberChange(event.target.value.toUpperCase())}
+              placeholder="MS 706"
+              className="h-10 ps-10"
+              autoComplete="off"
+            />
+          </div>
+          {hasPartnerCatalog ? (
+            <p className="text-xs text-muted-foreground">
+              الخدمات اللي تحت "{ADDON_CATEGORY_LABEL.airport}" متوجّهة تلقائيًا لشريك الخدمات الأرضية المتعاقد مع شركة طيرانك في المطار ده.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
       {addonsLoading ? (
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
