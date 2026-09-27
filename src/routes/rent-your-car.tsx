@@ -4,10 +4,13 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { Building2, User } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,6 +34,9 @@ export const Route = createFileRoute("/rent-your-car")({
 });
 
 const emptyForm = {
+  providerType: "individual" as "individual" | "company",
+  companyName: "",
+  fleetSize: "",
   fullName: "",
   phone: "",
   email: "",
@@ -59,9 +65,16 @@ function RentYourCarPage() {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
 
+  const isCompany = form.providerType === "company";
+
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (!form.fullName.trim() || !form.phone.trim() || !form.country || !form.carMakeModel.trim()) {
+    if (isCompany) {
+      if (!form.fullName.trim() || !form.phone.trim() || !form.country || !form.companyName.trim()) {
+        toast.error(t("rentYourCarPage.companyMissingFields"));
+        return;
+      }
+    } else if (!form.fullName.trim() || !form.phone.trim() || !form.country || !form.carMakeModel.trim()) {
       toast.error(t("rentYourCarPage.missingFields"));
       return;
     }
@@ -78,6 +91,9 @@ function RentYourCarPage() {
         categoryId: form.categoryId,
         hasDriverLicense: form.hasDriverLicense,
         notes: form.notes.trim(),
+        providerType: form.providerType,
+        companyName: form.companyName.trim(),
+        fleetSize: form.fleetSize.trim(),
       });
       setDone(true);
       setForm(emptyForm);
@@ -110,6 +126,59 @@ function RentYourCarPage() {
 
       <Card className="mt-6 rounded-xl p-6 shadow-[var(--shadow-card)]">
         <form onSubmit={onSubmit} className="space-y-5">
+          <div className="space-y-2">
+            <Label>{t("rentYourCarPage.providerTypeLabel")}</Label>
+            <RadioGroup
+              value={form.providerType}
+              onValueChange={(value) => setForm({ ...form, providerType: value as "individual" | "company" })}
+              className="grid gap-3 sm:grid-cols-2"
+            >
+              <label
+                className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                  form.providerType === "individual" ? "border-accent bg-accent/5" : "border-border"
+                }`}
+              >
+                <RadioGroupItem value="individual" id="pt-individual" className="mt-0.5" />
+                <span className="flex items-center gap-1.5 text-sm font-bold text-primary">
+                  <User className="size-4" aria-hidden /> {t("rentYourCarPage.providerTypeIndividual")}
+                </span>
+              </label>
+              <label
+                className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                  form.providerType === "company" ? "border-accent bg-accent/5" : "border-border"
+                }`}
+              >
+                <RadioGroupItem value="company" id="pt-company" className="mt-0.5" />
+                <span className="flex items-center gap-1.5 text-sm font-bold text-primary">
+                  <Building2 className="size-4" aria-hidden /> {t("rentYourCarPage.providerTypeCompany")}
+                </span>
+              </label>
+            </RadioGroup>
+          </div>
+
+          {isCompany ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="r-company-name">{t("rentYourCarPage.companyNameLabel")}</Label>
+                <Input
+                  id="r-company-name"
+                  placeholder={t("rentYourCarPage.companyNamePlaceholder")}
+                  value={form.companyName}
+                  onChange={(event) => setForm({ ...form, companyName: event.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="r-fleet-size">{t("rentYourCarPage.fleetSizeLabel")}</Label>
+                <Input
+                  id="r-fleet-size"
+                  inputMode="numeric"
+                  value={form.fleetSize}
+                  onChange={(event) => setForm({ ...form, fleetSize: event.target.value })}
+                />
+              </div>
+            </div>
+          ) : null}
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="r-name">{t("rentYourCarPage.nameLabel")}</Label>
@@ -165,53 +234,57 @@ function RentYourCarPage() {
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="r-car">{t("rentYourCarPage.carMakeModelLabel")}</Label>
-              <Input
-                id="r-car"
-                placeholder={t("rentYourCarPage.carMakeModelPlaceholder")}
-                value={form.carMakeModel}
-                onChange={(event) => setForm({ ...form, carMakeModel: event.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="r-year">{t("rentYourCarPage.carYearLabel")}</Label>
-              <Input
-                id="r-year"
-                inputMode="numeric"
-                value={form.carYear}
-                onChange={(event) => setForm({ ...form, carYear: event.target.value })}
-              />
-            </div>
-          </div>
+          {!isCompany ? (
+            <>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="r-car">{t("rentYourCarPage.carMakeModelLabel")}</Label>
+                  <Input
+                    id="r-car"
+                    placeholder={t("rentYourCarPage.carMakeModelPlaceholder")}
+                    value={form.carMakeModel}
+                    onChange={(event) => setForm({ ...form, carMakeModel: event.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="r-year">{t("rentYourCarPage.carYearLabel")}</Label>
+                  <Input
+                    id="r-year"
+                    inputMode="numeric"
+                    value={form.carYear}
+                    onChange={(event) => setForm({ ...form, carYear: event.target.value })}
+                  />
+                </div>
+              </div>
 
-          <div className="space-y-2">
-            <Label>{t("rentYourCarPage.categoryLabel")}</Label>
-            <Select value={form.categoryId} onValueChange={(value) => setForm({ ...form, categoryId: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder={t("rentYourCarPage.categoryPlaceholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                {(categoriesQuery.data ?? []).map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {localize(category.label_ar, category.label_en, language)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="space-y-2">
+                <Label>{t("rentYourCarPage.categoryLabel")}</Label>
+                <Select value={form.categoryId} onValueChange={(value) => setForm({ ...form, categoryId: value })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("rentYourCarPage.categoryPlaceholder")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(categoriesQuery.data ?? []).map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {localize(category.label_ar, category.label_en, language)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          <div className="flex items-center justify-between rounded-xl border border-border px-4 py-3">
-            <Label htmlFor="r-license" className="cursor-pointer">
-              {t("rentYourCarPage.hasDriverLicenseLabel")}
-            </Label>
-            <Switch
-              id="r-license"
-              checked={form.hasDriverLicense}
-              onCheckedChange={(checked) => setForm({ ...form, hasDriverLicense: checked })}
-            />
-          </div>
+              <div className="flex items-center justify-between rounded-xl border border-border px-4 py-3">
+                <Label htmlFor="r-license" className="cursor-pointer">
+                  {t("rentYourCarPage.hasDriverLicenseLabel")}
+                </Label>
+                <Switch
+                  id="r-license"
+                  checked={form.hasDriverLicense}
+                  onCheckedChange={(checked) => setForm({ ...form, hasDriverLicense: checked })}
+                />
+              </div>
+            </>
+          ) : null}
 
           <div className="space-y-2">
             <Label htmlFor="r-notes">{t("rentYourCarPage.notesLabel")}</Label>

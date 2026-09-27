@@ -984,6 +984,13 @@ const en = {
     title: "Rent Your Car with GoAir",
     subtitle:
       "Have a car and drive it yourself? Register your details here — our team will review and reach out to activate your partner account.",
+    providerTypeLabel: "Register as",
+    providerTypeIndividual: "Individual (my own car, I drive it)",
+    providerTypeCompany: "Company (I have a fleet)",
+    companyNameLabel: "Company name",
+    companyNamePlaceholder: "Your company name",
+    fleetSizeLabel: "Approximate fleet size",
+    companyMissingFields: "Enter your name, phone number, country, and company name.",
     nameLabel: "Full name",
     phoneLabel: "Mobile number",
     emailLabel: "Email (optional)",

@@ -1040,6 +1040,8 @@ export type AdminRentalPartnerRow = {
   verifiedAt: string | null;
   rejectionReason: string | null;
   createdAt: string;
+  linkedTransportOperatorId: string | null;
+  linkedTransportOperatorName: string | null;
 };
 
 function mapRentalPartner(row: Record<string, unknown>): AdminRentalPartnerRow {
@@ -1064,6 +1066,8 @@ function mapRentalPartner(row: Record<string, unknown>): AdminRentalPartnerRow {
     verifiedAt: (row["verified_at"] as string | null) ?? null,
     rejectionReason: (row["rejection_reason"] as string | null) ?? null,
     createdAt: String(row["created_at"]),
+    linkedTransportOperatorId: (row["linked_transport_operator_id"] as string | null) ?? null,
+    linkedTransportOperatorName: (row["linked_transport_operator_name"] as string | null) ?? null,
   };
 }
 

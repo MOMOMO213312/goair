@@ -948,6 +948,13 @@ const ar = {
     title: "أجّر عربيتك مع GoAir",
     subtitle:
       "عندك عربية وسايق؟ سجّل بياناتك هنا، وفريقنا هيراجع الطلب ويتواصل معاك لتفعيل حسابك كشريك.",
+    providerTypeLabel: "هتسجّل كـ",
+    providerTypeIndividual: "فرد (عربيتي وسايقها بنفسي)",
+    providerTypeCompany: "شركة (عندي أسطول عربيات)",
+    companyNameLabel: "اسم الشركة",
+    companyNamePlaceholder: "اسم شركتك",
+    fleetSizeLabel: "عدد العربيات تقريبًا",
+    companyMissingFields: "اكتب الاسم ورقم الموبايل والدولة واسم الشركة.",
     nameLabel: "الاسم",
     phoneLabel: "رقم الموبايل",
     emailLabel: "البريد الإلكتروني (اختياري)",

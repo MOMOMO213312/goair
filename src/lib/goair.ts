@@ -1403,6 +1403,9 @@ export async function sendRentalPartnerApplication(params: {
   categoryId: string;
   hasDriverLicense: boolean;
   notes: string;
+  providerType?: "individual" | "company";
+  companyName?: string;
+  fleetSize?: string;
 }) {
   const { error } = await supabase.from("rental_partner_applications").insert({
     full_name: params.fullName,
@@ -1410,11 +1413,14 @@ export async function sendRentalPartnerApplication(params: {
     email: params.email || null,
     country: params.country,
     city: params.city || null,
-    car_make_model: params.carMakeModel,
+    car_make_model: params.carMakeModel || null,
     car_year: params.carYear ? Number(params.carYear) : null,
     category_id: params.categoryId || null,
     has_driver_license: params.hasDriverLicense,
     notes: params.notes || null,
+    provider_type: params.providerType ?? "individual",
+    company_name: params.providerType === "company" ? params.companyName || null : null,
+    fleet_size: params.providerType === "company" && params.fleetSize ? Number(params.fleetSize) : null,
   });
   if (error) throw new Error(error.message);
   return true;

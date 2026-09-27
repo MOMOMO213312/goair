@@ -185,6 +185,9 @@ function PartnerCard({ partner, onDone }: { partner: AdminRentalPartnerRow; onDo
           >
             {rentalVerificationStatusLabel(partner.verificationStatus)}
           </Badge>
+          {partner.linkedTransportOperatorName && (
+            <Badge variant="secondary">شركة نقل شريكة: {partner.linkedTransportOperatorName}</Badge>
+          )}
         </div>
         <p className="mt-0.5 text-sm text-muted-foreground">
           {partner.companyName ? `مسؤول التواصل: ${partner.fullName} · ` : ""}
