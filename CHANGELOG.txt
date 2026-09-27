@@ -1,0 +1,35 @@
+GoAir — تعديلات "الشكل القريب من التطبيق" على الموبايل
+========================================================
+
+كل ملف هنا بيروح مكان ملف موجود بنفس المسار بالظبط ويستبدل محتواه بالكامل،
+ما عدا الاتنين المعلّم عليهم "ملف جديد".
+
+src/routes/__root.tsx
+  - viewport-fit=cover + دمج MobileBottomNav وInstallAppBanner في هيكل الصفحة
+
+src/styles.css
+  - دعم safe-area (notch / home indicator) للهيدر والمحتوى
+  - منع overscroll bounce (إحساس المتصفح)
+  - touch-action: manipulation على كل الأزرار والروابط (إلغاء تأخير اللمس)
+  - مساحة تحت المحتوى (.pb-mobile-nav) عشان الـ bottom nav ميغطيش آخر المحتوى
+
+src/components/mobile-bottom-nav.tsx   [ملف جديد]
+  - شريط تنقل سفلي (الرئيسية / بحث / استكشف / حجوزاتي) يظهر على الموبايل بس
+
+src/components/install-app-banner.tsx   [ملف جديد]
+  - بانر "ثبّت التطبيق" — تثبيت أصلي على أندرويد، تعليمات يدوية على آيفون
+
+src/lib/i18n/translations/ar.ts
+src/lib/i18n/translations/en.ts
+  - نصوص الترجمة الجديدة لـ bottomNav وinstallBanner
+
+src/components/goair/booking/booking-extras-step.tsx
+  - أزرار +/- عدد الشنط كبرت من 32px لـ 44px (مساحة لمس مريحة)
+
+src/components/goair/booking/booking-confirm-step.tsx
+  - زرار "تعديل" (في مراجعة الإضافات والمسافر) مساحة اللمس بتاعته كبرت
+    من غير ما يتغير شكله الظاهر
+
+تم التأكد: tsc --noEmit وvite build نضاف بعد كل تعديل، من غير أي error جديد
+(الأخطاء العشرة الموجودة قبل التعديلات دي مش لها علاقة بيها — خاصة بصفحة
+ground-handling.services.tsx وملف our-fleet-section.tsx).
