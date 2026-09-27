@@ -24,7 +24,9 @@ export type AddonServiceRequestTarget = {
   label: string;
   airportCode: string | null;
   travelDate: string | null;
-  flightNumber: string | null;
+  /** Booking's flight number, if known — lets the exclusive partner catalog
+   * (if any) resolve correctly instead of showing every partner's services. */
+  flightNumber?: string | null;
 };
 
 /**
@@ -55,8 +57,7 @@ export function AddonServiceRequestDialog({
 
   const ghQuery = useQuery({
     queryKey: ["goair", "ground-handling-services", target?.airportCode, target?.travelDate, target?.flightNumber],
-    queryFn: () =>
-      fetchPublicGroundHandlingServices(target!.airportCode!, target!.travelDate, target!.flightNumber),
+    queryFn: () => fetchPublicGroundHandlingServices(target!.airportCode!, target!.travelDate, target?.flightNumber),
     enabled: Boolean(target?.airportCode),
   });
 
