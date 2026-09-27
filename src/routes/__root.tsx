@@ -15,6 +15,7 @@ import { captureReferralFromUrl } from "@/lib/referral";
 import { captureEcosystemLinkFromUrl } from "@/lib/ecosystem-link";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 import { Toaster } from "@/components/ui/sonner";
 import { CurrencyProvider } from "@/lib/currency";
 import { LanguageProvider } from "@/lib/i18n/language-context";
@@ -84,7 +85,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      {
+        name: "viewport",
+        content: "width=device-width, initial-scale=1, viewport-fit=cover",
+      },
       { title: "GoAir — نقل مشترك من وإلى المطار" },
       {
         name: "description",
@@ -157,11 +161,12 @@ function AppBody() {
         {t("common.skipToContent")}
       </a>
       <SiteHeader />
-      <main id="main-content" className="flex-1">
+      <main id="main-content" className="flex-1 pb-mobile-nav">
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </main>
       <SiteFooter />
+      <MobileBottomNav />
     </div>
   );
 }
