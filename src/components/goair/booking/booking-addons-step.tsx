@@ -340,8 +340,7 @@ export function BookingAddonsStep({
       {onFlightNumberChange ? (
         <div className="mt-4 space-y-2 rounded-lg border border-dashed border-border bg-secondary/20 p-3">
           <Label htmlFor="addons-flight" className="text-xs font-bold text-primary">
-            {t("booking.passengerForm.flightNumber")}{" "}
-            <span className="font-normal text-muted-foreground">{t("booking.passengerForm.optional")}</span>
+            {t("booking.passengerForm.flightNumber")}
           </Label>
           <div className="relative">
             <Plane
