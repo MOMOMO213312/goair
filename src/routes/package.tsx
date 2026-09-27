@@ -219,6 +219,10 @@ function PackagePage() {
       toast.error(t("packagePage.phoneValidRequired"));
       return;
     }
+    if (!flight.trim()) {
+      toast.error(t("packagePage.flightNumberRequired"));
+      return;
+    }
     setPhase("confirm");
   }
 
@@ -238,6 +242,11 @@ function PackagePage() {
       setPhase("passengers");
       return;
     }
+    if (!flight.trim()) {
+      toast.error(t("packagePage.flightNumberRequired"));
+      setPhase("passengers");
+      return;
+    }
 
     setBusy(true);
     try {
@@ -252,7 +261,7 @@ function PackagePage() {
         fullName: fullName.trim(),
         phoneNumber: phone.trim(),
         customerEmail: email.trim() || null,
-        flightNumber: flight.trim() || null,
+        flightNumber: flight.trim(),
         luggageCount: luggage,
         packageId: pkg?.id ?? null,
         addonIds: selectedAddonIds,

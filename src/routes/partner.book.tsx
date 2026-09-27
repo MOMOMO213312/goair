@@ -283,6 +283,10 @@ function QuickBookingForm({ token, referralCode }: { token: string; referralCode
       toast.error("اكتب اسم العميل المسؤول عن الجروب ورقم تليفونه.");
       return;
     }
+    if (!flight.trim()) {
+      toast.error("اكتب رقم الرحلة.");
+      return;
+    }
     if (isPrivate) {
       if (!selectedVehicle) {
         toast.error("اختار نوع العربية للحجز الخاص.");
@@ -345,7 +349,7 @@ function QuickBookingForm({ token, referralCode }: { token: string; referralCode
             seatsCount: seats,
             fullName: fullName.trim(),
             phoneNumber: phone.trim(),
-            flightNumber: flight.trim() || null,
+            flightNumber: flight.trim(),
             luggageCount: 0,
             referralCodeOverride: referralCode,
             packageId: packageId || null,
@@ -364,7 +368,7 @@ function QuickBookingForm({ token, referralCode }: { token: string; referralCode
             seatsCount: seats,
             fullName: fullName.trim(),
             phoneNumber: phone.trim(),
-            flightNumber: flight.trim() || null,
+            flightNumber: flight.trim(),
             luggageCount: 0,
             referralCodeOverride: referralCode,
             packageId: packageId || null,
@@ -665,8 +669,8 @@ function QuickBookingForm({ token, referralCode }: { token: string; referralCode
           />
         </Field>
 
-        <Field label="رقم رحلة الطيران (اختياري)">
-          <Input value={flight} onChange={(e) => setFlight(e.target.value)} placeholder="MSXXX" />
+        <Field label="رقم رحلة الطيران">
+          <Input value={flight} onChange={(e) => setFlight(e.target.value)} placeholder="MSXXX" required />
         </Field>
 
         <Field label="باقة إضافية (اختياري)">
