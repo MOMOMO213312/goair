@@ -161,7 +161,11 @@
   }
 
   html {
-    overflow-x: hidden;
+    /* NOT overflow-x: hidden here — that's a well-known iOS Safari bug:
+       overflow-x hidden on <html> itself can disable ALL scrolling
+       (vertical included) on the page, not just horizontal. body below
+       already clips horizontal overflow site-wide, so this is redundant
+       and actively breaks mobile scroll. */
     width: 100%;
   }
 
