@@ -359,6 +359,8 @@ const ar = {
       flightNumber: "رقم الرحلة",
       optional: "(اختياري)",
       flightHint: "يساعدنا ننسّق استقبالك من المطار مع موعد وصول رحلتك.",
+      flightRequiredHint: "مطلوب لإتمام الحجز — بيساعدنا ننسّق استقبالك مع موعد وصول رحلتك فعليًا.",
+      flightRequiredError: "رقم الرحلة مطلوب لإتمام الحجز.",
       luggageCount: "عدد الشنط",
       notes: "ملاحظات",
       notesPlaceholder: "كرسي أطفال، مساعدة في الشنط…",

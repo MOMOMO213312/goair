@@ -492,6 +492,10 @@ export type GroundHandlingService = {
   pendingAction: GroundHandlingServicePendingAction;
   adminNotes: string | null;
   createdAt: string | null;
+  /** Set when this service is created/managed on behalf of an airline that
+   * delegated it to this ground-handling partner. Null = the partner's own
+   * general service. Immutable after creation. */
+  airlineCode: string | null;
 };
 
 function mapService(row: Record<string, unknown>): GroundHandlingService {
@@ -513,6 +517,7 @@ function mapService(row: Record<string, unknown>): GroundHandlingService {
     pendingAction: (row["pending_action"] as GroundHandlingServicePendingAction) ?? null,
     adminNotes: (row["admin_notes"] as string | null) ?? null,
     createdAt: (row["created_at"] as string | null) ?? null,
+    airlineCode: (row["airline_code"] as string | null) ?? null,
   };
 }
 
@@ -566,8 +571,9 @@ export async function uploadGroundHandlingServicePhotos(files: File[]): Promise<
 export async function createGroundHandlingService(
   token: string,
   input: GroundHandlingServiceInput,
+  airlineCode?: string | null,
 ): Promise<GroundHandlingService> {
-  const { data, error } = await supabase.rpc("create_ground_handling_service", {
+  const baseArgs = {
     p_access_token: token,
     p_name: input.name,
     p_description: input.description,
@@ -581,7 +587,10 @@ export async function createGroundHandlingService(
     p_price_usd: input.priceUsd,
     p_sla_minutes: input.slaMinutes,
     p_photos: input.photos,
-  });
+  };
+  const { data, error } = airlineCode
+    ? await supabase.rpc("create_ground_handling_service", { ...baseArgs, p_airline_code: airlineCode })
+    : await supabase.rpc("create_ground_handling_service", baseArgs);
   if (error) rpcError(error);
   const row = (Array.isArray(data) ? data[0] : data) as Record<string, unknown>;
   return mapService(row);
@@ -633,6 +642,28 @@ export async function requestGroundHandlingServiceDeletion(
     p_service_id: serviceId,
   });
   if (error) rpcError(error);
+}
+
+// Airlines that delegated management of their airport services to this
+// ground-handling partner (ground_handling_airline_assignments, scoped to
+// this partner via list_ground_handling_managed_airlines).
+export type GroundHandlingManagedAirline = {
+  airportCode: string;
+  airlineCode: string;
+  airlineName: string | null;
+  /** false = delegation was revoked/paused; existing services for this airline stay locked. */
+  agentManagesServices: boolean;
+};
+
+export async function listGroundHandlingManagedAirlines(token: string): Promise<GroundHandlingManagedAirline[]> {
+  const { data, error } = await supabase.rpc("list_ground_handling_managed_airlines", { p_access_token: token });
+  if (error) rpcError(error);
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+    airportCode: String(row["airport_code"] ?? ""),
+    airlineCode: String(row["airline_code"] ?? ""),
+    airlineName: (row["airline_name"] as string | null) ?? null,
+    agentManagesServices: Boolean(row["agent_manages_services"]),
+  }));
 }
 
 // ---------------------------------------------------------------------------

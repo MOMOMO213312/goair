@@ -365,6 +365,8 @@ const en = {
       flightNumber: "Flight number",
       optional: "(optional)",
       flightHint: "Helps us time your airport pickup with your flight's actual arrival.",
+      flightRequiredHint: "Required to complete your booking — helps us time your pickup with your flight's actual arrival.",
+      flightRequiredError: "Flight number is required to complete your booking.",
       luggageCount: "Number of bags",
       notes: "Notes",
       notesPlaceholder: "Child seat, help with luggage…",

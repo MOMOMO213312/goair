@@ -55,6 +55,7 @@ export type VehicleType = {
   labelAr: string;
   capacity: number;
   maxLuggage: number | null;
+  imageUrl: string | null;
 };
 
 /** Real vehicle tiers from `vehicle_types` — no fabricated tiers. */
@@ -196,6 +197,7 @@ export async function fetchVehicleTypes(): Promise<VehicleType[]> {
     labelAr: String(pick(row, ["label_ar"]) ?? ""),
     capacity: Number(pick(row, ["capacity"]) ?? 0),
     maxLuggage: pick<number>(row, ["max_luggage"]),
+    imageUrl: pick<string>(row, ["image_url"]),
   }));
 }
 
@@ -602,7 +604,7 @@ export async function fetchScheduleOptions(
 
   const [schedules, options, market] = await Promise.all([
     supabase.from("schedules").select("*").eq("trip_id", tripId),
-    supabase.from("trip_options").select("*").eq("trip_id", tripId),
+    supabase.from("trip_options").select("id, trip_id, vehicle_type_id, price_usd, is_active, booking_type, vehicle_class").eq("trip_id", tripId),
     fetchMarketScheduleConfig(fallbackTrip.country),
   ]);
 

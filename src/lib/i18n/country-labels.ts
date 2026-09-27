@@ -10,6 +10,10 @@ import type { Language } from "./translations";
 const COUNTRY_LABELS_EN: Record<string, string> = {
   مصر: "Egypt",
   لبنان: "Lebanon",
+  السعودية: "Saudi Arabia",
+  بنجلاديش: "Bangladesh",
+  الأردن: "Jordan",
+  أوغندا: "Uganda",
 };
 
 export function getCountryLabel(country: string, language: Language): string {

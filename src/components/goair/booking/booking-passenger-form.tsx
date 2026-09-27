@@ -132,7 +132,7 @@ export function BookingPassengerForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="flight" className="font-medium">
-                {t("booking.passengerForm.flightNumber")} <span className="text-xs text-muted-foreground">{t("booking.passengerForm.optional")}</span>
+                {t("booking.passengerForm.flightNumber")}
               </Label>
               <div className="relative">
                 <Plane
@@ -146,10 +146,11 @@ export function BookingPassengerForm({
                   placeholder="MS 706"
                   className="h-11 ps-10"
                   autoComplete="off"
+                  required
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                {t("booking.passengerForm.flightHint")}
+                {t("booking.passengerForm.flightRequiredHint")}
               </p>
             </div>
 
