@@ -18,6 +18,12 @@ const en = {
     trackBooking: "Track my booking",
     menu: "Menu",
   },
+  bottomNav: {
+    home: "Home",
+    search: "Search",
+    explore: "Explore",
+    bookings: "My bookings",
+  },
   languageToggle: {
     label: "Language",
     ar: "عربي",

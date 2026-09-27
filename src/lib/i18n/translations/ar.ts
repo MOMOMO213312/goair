@@ -19,6 +19,12 @@ const ar = {
     trackBooking: "تتبع حجزي",
     menu: "القائمة",
   },
+  bottomNav: {
+    home: "الرئيسية",
+    search: "بحث",
+    explore: "استكشف",
+    bookings: "حجوزاتي",
+  },
   languageToggle: {
     label: "اللغة",
     ar: "عربي",
