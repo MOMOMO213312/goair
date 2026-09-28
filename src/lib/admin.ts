@@ -749,6 +749,8 @@ export type AdminAddonService = {
   isHighlighted: boolean;
   isActive: boolean;
   sortOrder: number;
+  // 'goair' = خدمة تملكها GoAir (التأمين وeSIM)، 'transitional' = خدمة مؤقتة تتبع شركة الطيران/الأرضية
+  ownerType: "goair" | "transitional";
 };
 
 function mapAdminAddonService(r: Record<string, unknown>): AdminAddonService {
@@ -762,6 +764,7 @@ function mapAdminAddonService(r: Record<string, unknown>): AdminAddonService {
     isHighlighted: r["is_highlighted"] === true,
     isActive: r["is_active"] === true,
     sortOrder: Number(r["sort_order"] ?? 0),
+    ownerType: r["owner_type"] === "goair" ? "goair" : "transitional",
   };
 }
 
