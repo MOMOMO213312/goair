@@ -68,6 +68,8 @@ type PortalShellProps = {
   userName?: string | undefined;
   nav: PortalNavEntry[];
   onSignOut: () => void;
+  /** Optional controls rendered in the top bar before the avatar (e.g. the admin notification bell). */
+  headerActions?: ReactNode;
   children: ReactNode;
 };
 
@@ -78,6 +80,7 @@ export function PortalShell({
   userName,
   nav,
   onSignOut,
+  headerActions,
   children,
 }: PortalShellProps) {
   const pathname = useRouterState({ select: (state) => state.location.pathname });
@@ -170,6 +173,7 @@ export function PortalShell({
             {roleLabel}
           </span>
           <div className="flex items-center gap-2">
+            {headerActions}
             <span
               className="flex size-9 items-center justify-center rounded-full bg-[var(--portal-accent)] text-sm font-extrabold text-white"
               title={userName}

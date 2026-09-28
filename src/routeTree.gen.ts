@@ -36,6 +36,7 @@ import { Route as AdminAddonServicesRouteImport } from './routes/admin.addon-ser
 import { Route as AdminAnnouncementsRouteImport } from './routes/admin.announcements'
 import { Route as AdminFleetRouteImport } from './routes/admin.fleet'
 import { Route as AdminGroundHandlingRouteImport } from './routes/admin.ground-handling'
+import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
 import { Route as AdminOverviewRouteImport } from './routes/admin.overview'
 import { Route as AdminPackagesRouteImport } from './routes/admin.packages'
 import { Route as AdminPartnersRouteImport } from './routes/admin.partners'
@@ -211,6 +212,11 @@ const AdminFleetRoute = AdminFleetRouteImport.update({
 const AdminGroundHandlingRoute = AdminGroundHandlingRouteImport.update({
   id: '/ground-handling',
   path: '/ground-handling',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminOverviewRoute = AdminOverviewRouteImport.update({
@@ -447,6 +453,7 @@ export interface FileRoutesByFullPath {
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/fleet': typeof AdminFleetRoute
   '/admin/ground-handling': typeof AdminGroundHandlingRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/overview': typeof AdminOverviewRoute
   '/admin/packages': typeof AdminPackagesRoute
   '/admin/partners': typeof AdminPartnersRoute
@@ -512,6 +519,7 @@ export interface FileRoutesByTo {
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/fleet': typeof AdminFleetRoute
   '/admin/ground-handling': typeof AdminGroundHandlingRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/overview': typeof AdminOverviewRoute
   '/admin/packages': typeof AdminPackagesRoute
   '/admin/partners': typeof AdminPartnersRoute
@@ -583,6 +591,7 @@ export interface FileRoutesById {
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/fleet': typeof AdminFleetRoute
   '/admin/ground-handling': typeof AdminGroundHandlingRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/overview': typeof AdminOverviewRoute
   '/admin/packages': typeof AdminPackagesRoute
   '/admin/partners': typeof AdminPartnersRoute
@@ -655,6 +664,7 @@ export interface FileRouteTypes {
     | '/admin/announcements'
     | '/admin/fleet'
     | '/admin/ground-handling'
+    | '/admin/notifications'
     | '/admin/overview'
     | '/admin/packages'
     | '/admin/partners'
@@ -720,6 +730,7 @@ export interface FileRouteTypes {
     | '/admin/announcements'
     | '/admin/fleet'
     | '/admin/ground-handling'
+    | '/admin/notifications'
     | '/admin/overview'
     | '/admin/packages'
     | '/admin/partners'
@@ -790,6 +801,7 @@ export interface FileRouteTypes {
     | '/admin/announcements'
     | '/admin/fleet'
     | '/admin/ground-handling'
+    | '/admin/notifications'
     | '/admin/overview'
     | '/admin/packages'
     | '/admin/partners'
@@ -1049,6 +1061,13 @@ declare module '@tanstack/react-router' {
       path: '/ground-handling'
       fullPath: '/admin/ground-handling'
       preLoaderRoute: typeof AdminGroundHandlingRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/notifications': {
+      id: '/admin/notifications'
+      path: '/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AdminNotificationsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/overview': {
@@ -1346,6 +1365,7 @@ interface AdminRouteChildren {
   AdminAnnouncementsRoute: typeof AdminAnnouncementsRoute
   AdminFleetRoute: typeof AdminFleetRoute
   AdminGroundHandlingRoute: typeof AdminGroundHandlingRoute
+  AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminOverviewRoute: typeof AdminOverviewRoute
   AdminPackagesRoute: typeof AdminPackagesRoute
   AdminPartnersRoute: typeof AdminPartnersRoute
@@ -1364,6 +1384,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAnnouncementsRoute: AdminAnnouncementsRoute,
   AdminFleetRoute: AdminFleetRoute,
   AdminGroundHandlingRoute: AdminGroundHandlingRoute,
+  AdminNotificationsRoute: AdminNotificationsRoute,
   AdminOverviewRoute: AdminOverviewRoute,
   AdminPackagesRoute: AdminPackagesRoute,
   AdminPartnersRoute: AdminPartnersRoute,

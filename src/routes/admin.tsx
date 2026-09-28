@@ -1,5 +1,6 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import {
+  Bell,
   Building2,
   Car,
   ClipboardList,
@@ -18,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { AdminLoginForm } from "@/components/admin/admin-login-form";
+import { AdminNotificationBell } from "@/components/admin/notification-bell";
 import { PortalShell, type PortalNavEntry } from "@/components/portal/portal-shell";
 import { AdminSessionProvider, useAdminSession } from "@/lib/admin-session";
 
@@ -32,6 +34,7 @@ export const Route = createFileRoute("/admin")({
 const ADMIN_NAV: PortalNavEntry[] = [
   { to: "/admin/overview", label: "نظرة عامة", icon: LayoutDashboard },
   { to: "/admin", label: "الحجوزات", icon: ClipboardList, exact: true },
+  { to: "/admin/notifications", label: "الإشعارات", icon: Bell },
   { heading: "التشغيل" },
   { to: "/admin/fleet", label: "السائقين والعربيات", icon: Truck },
   { to: "/admin/ground-handling", label: "التشغيل الأرضي", icon: PlaneTakeoff },
@@ -47,7 +50,7 @@ const ADMIN_NAV: PortalNavEntry[] = [
   { to: "/admin/rental-applications", label: "طلبات تأجير السيارات", icon: FileText },
   { to: "/admin/rental-vehicles", label: "عربيات التأجير", icon: Car },
   { heading: "النظام" },
-  { to: "/admin/announcements", label: "الإشعارات", icon: Megaphone },
+  { to: "/admin/announcements", label: "إعلانات الموقع", icon: Megaphone },
   { to: "/admin/team", label: "فريق العمل", icon: Users },
 ];
 
@@ -78,6 +81,7 @@ function AdminLayout() {
       userName="فريق GoAir"
       nav={ADMIN_NAV}
       onSignOut={() => signOut()}
+      headerActions={<AdminNotificationBell />}
     >
       <Outlet />
     </PortalShell>

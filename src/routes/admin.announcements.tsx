@@ -17,7 +17,7 @@ import {
 import { isAdminAuthError } from "@/lib/admin";
 
 export const Route = createFileRoute("/admin/announcements")({
-  head: () => ({ meta: [{ title: "الإشعارات — لوحة تشغيل GoAir" }, { name: "robots", content: "noindex" }] }),
+  head: () => ({ meta: [{ title: "إعلانات الموقع — لوحة تشغيل GoAir" }, { name: "robots", content: "noindex" }] }),
   component: AnnouncementsPage,
 });
 
