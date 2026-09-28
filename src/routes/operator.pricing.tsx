@@ -123,11 +123,11 @@ function LineRow({
     if (line.myRateIsActive) {
       return <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">أنت الشغال على الخط ده</Badge>;
     }
-    if (line.activeOperatorName) {
-      return <Badge variant="secondary">شغال حاليًا: {line.activeOperatorName}</Badge>;
+    if (line.otherOperatorActive) {
+      return <Badge variant="secondary">الخط مشغّل حاليًا</Badge>;
     }
     return <Badge variant="outline">لسه محدش متفعّل</Badge>;
-  }, [line.myRateIsActive, line.activeOperatorName]);
+  }, [line.myRateIsActive, line.otherOperatorActive]);
 
   return (
     <TableRow>
