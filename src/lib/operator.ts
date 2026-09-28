@@ -353,10 +353,9 @@ export type OperatorTripLine = {
   destination: string;
   vehicleLabelAr: string;
   bookingType: string;
-  displayPriceUsd: number;
   myRateUsd: number | null;
   myRateIsActive: boolean;
-  activeOperatorName: string | null;
+  otherOperatorActive: boolean;
 };
 
 function mapOperatorTripLine(r: Record<string, unknown>): OperatorTripLine {
@@ -368,10 +367,9 @@ function mapOperatorTripLine(r: Record<string, unknown>): OperatorTripLine {
     destination: String(r["destination"] ?? ""),
     vehicleLabelAr: String(r["vehicle_label_ar"] ?? ""),
     bookingType: String(r["booking_type"] ?? ""),
-    displayPriceUsd: Number(r["display_price_usd"] ?? 0),
     myRateUsd: r["my_rate_usd"] == null ? null : Number(r["my_rate_usd"]),
     myRateIsActive: r["my_rate_is_active"] === true,
-    activeOperatorName: (r["active_operator_name"] as string | null) ?? null,
+    otherOperatorActive: r["other_operator_active"] === true,
   };
 }
 
