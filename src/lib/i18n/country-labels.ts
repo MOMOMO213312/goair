@@ -22,3 +22,18 @@ export function getCountryLabel(country: string, language: Language): string {
   }
   return country;
 }
+
+/** ISO code for a country's stored Arabic name — used only to call RPCs that
+ * are keyed by ISO code (get_country_airports / get_hub_origins). */
+const COUNTRY_ISO: Record<string, string> = {
+  مصر: "EG",
+  لبنان: "LB",
+  السعودية: "SA",
+  بنجلاديش: "BD",
+  الأردن: "JO",
+  أوغندا: "UG",
+};
+
+export function getCountryIso(country: string): string | null {
+  return COUNTRY_ISO[country] ?? null;
+}

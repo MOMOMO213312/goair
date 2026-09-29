@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import {
   CalendarDays,
@@ -22,11 +23,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getCountryLabel } from "@/lib/i18n/country-labels";
+import { getCountryIso, getCountryLabel } from "@/lib/i18n/country-labels";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { localize } from "@/lib/i18n/localize";
-import { fetchServiceZones, type ServiceZone, type Trip } from "@/lib/goair";
-import { HubOfferCard } from "@/components/goair/search/hub-offer-card";
+import {
+  fetchCountryAirports,
+  fetchHubOrigins,
+  fetchServiceZones,
+  type ServiceZone,
+  type Trip,
+} from "@/lib/goair";
 import {
   getAirportsForCountry,
   getAirportsForDestination,
@@ -120,8 +126,40 @@ export function SearchWidget({
     [visibleTrips, country, destination, airports],
   );
 
-  const destinations = isDeparting ? allDestinationsInCountry : destinationsForAirport;
+  // Merged Hub search (2026-09 decision): the search no longer stops at the
+  // airports/cities that already have a scheduled trip. Every active airport
+  // in the country is selectable, and towns that only exist as hub pickup
+  // points (no trip yet) are selectable too. A pair with no scheduled trip
+  // lands on the quote-request card on /search instead of a dead end.
+  const countryIso = getCountryIso(country);
+  const countryAirportsQuery = useQuery({
+    queryKey: ["goair", "country-airports", countryIso],
+    queryFn: () => fetchCountryAirports(countryIso!),
+    enabled: Boolean(countryIso),
+    staleTime: 60 * 60 * 1000,
+  });
+  const hubOriginsQuery = useQuery({
+    queryKey: ["goair", "hub-origins", countryIso],
+    queryFn: () => fetchHubOrigins(countryIso!),
+    enabled: Boolean(countryIso),
+    staleTime: 60 * 60 * 1000,
+  });
+
+  const baseDestinations = isDeparting ? allDestinationsInCountry : destinationsForAirport;
+  const extraCities = useMemo(() => {
+    const known = new Set(allDestinationsInCountry);
+    return (hubOriginsQuery.data ?? []).filter((origin) => !known.has(origin.nameAr));
+  }, [hubOriginsQuery.data, allDestinationsInCountry]);
+  const destinations = useMemo(
+    () => [...baseDestinations, ...extraCities.map((origin) => origin.nameAr)],
+    [baseDestinations, extraCities],
+  );
+
   const airportChoices = isDeparting ? airportsForDestination : airports;
+  const extraAirports = useMemo(() => {
+    const official = new Set(airportChoices.map((item) => item.code));
+    return (countryAirportsQuery.data ?? []).filter((item) => !official.has(item.code));
+  }, [countryAirportsQuery.data, airportChoices]);
 
   useEffect(() => {
     if (!country && countries[0]) setCountry(countries[0]);
@@ -134,11 +172,19 @@ export function SearchWidget({
   }, [isDeparting, airport, airports]);
 
   useEffect(() => {
-    if (isDeparting && destination && !airport && airportsForDestination.length === 1) {
+    // Only auto-pick when it's genuinely the sole choice — the customer must
+    // stay free to pick a different airport (e.g. Cairo for an Assiut trip).
+    if (
+      isDeparting &&
+      destination &&
+      !airport &&
+      airportsForDestination.length === 1 &&
+      extraAirports.length === 0
+    ) {
       const only = airportsForDestination[0];
       if (only) setAirport(only.code);
     }
-  }, [isDeparting, destination, airport, airportsForDestination]);
+  }, [isDeparting, destination, airport, airportsForDestination, extraAirports]);
 
   useEffect(() => {
     if (!airport) {
@@ -183,8 +229,19 @@ export function SearchWidget({
   }
 
   const airportOptions = useMemo(
-    () => airportChoices.map((item) => ({ value: item.code, label: localize(item.name, item.nameEn ?? null, language), hint: item.code })),
-    [airportChoices, language],
+    () => [
+      ...airportChoices.map((item) => ({
+        value: item.code,
+        label: localize(item.name, item.nameEn ?? null, language),
+        hint: item.code,
+      })),
+      ...extraAirports.map((item) => ({
+        value: item.code,
+        label: localize(item.nameAr ?? item.nameEn, item.nameEn, language),
+        hint: `${item.code} · ${t("searchWidget.quoteOnlyHint")}`,
+      })),
+    ],
+    [airportChoices, extraAirports, language, t],
   );
 
   // Arabic destination string -> English translation, built from the raw
@@ -195,8 +252,11 @@ export function SearchWidget({
     for (const trip of visibleTrips) {
       if (trip.destination_en) map.set(trip.destination, trip.destination_en);
     }
+    for (const origin of extraCities) {
+      if (origin.nameEn) map.set(origin.nameAr, origin.nameEn);
+    }
     return map;
-  }, [visibleTrips]);
+  }, [visibleTrips, extraCities]);
 
   const destinationOptions = useMemo(
     () =>
@@ -514,11 +574,6 @@ export function SearchWidget({
       </div>
     ) : null}
 
-    {/* Hub Mobility Master (2026-09 decision): a global "pick your city"
-        fallback for towns with no scheduled route/trip yet — feeds
-        get_airport_offers and submits into the existing custom_requests
-        flow, entirely separate from the scheduled-trip search above. */}
-    <HubOfferCard />
     </>
   );
 }

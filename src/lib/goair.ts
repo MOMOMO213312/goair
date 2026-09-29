@@ -1038,6 +1038,11 @@ export async function submitCustomRequest(params: {
   /** Vehicle preference for this request (e.g. "van" | "hiace") when it comes from a
    * private-booking quote ask rather than the generic "no schedule on this route" form. */
   tier?: string;
+  /** Trip direction and the airport/city the customer chose, stored as
+   * structured columns so ops don't have to parse route_name. */
+  direction?: "to_airport" | "from_airport";
+  airportCode?: string;
+  originName?: string;
 }) {
   const { error } = await supabase.from("custom_requests").insert({
     country: params.country,
@@ -1048,6 +1053,9 @@ export async function submitCustomRequest(params: {
     phone: params.phone,
     pax: params.pax,
     tier: params.tier ?? null,
+    direction: params.direction ?? null,
+    airport_code: params.airportCode ?? null,
+    origin_name: params.originName ?? null,
   });
   if (error) throw new Error(error.message);
   return true;
@@ -1291,6 +1299,22 @@ export async function fetchHubOrigins(countryCode?: string): Promise<HubOrigin[]
     hubId: String(row["hub_id"]),
     hubNameAr: String(row["hub_name_ar"]),
     countryCode: String(row["country_code"]),
+  }));
+}
+
+export type CountryAirport = { code: string; nameEn: string; nameAr: string | null };
+
+/** Every active airport in a country (not only the ones that have a scheduled
+ * trip), so the customer can pick the airport their flight actually uses. */
+export async function fetchCountryAirports(countryCode: string): Promise<CountryAirport[]> {
+  const { data, error } = await supabase.rpc("get_country_airports", {
+    p_country_code: countryCode,
+  });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+    code: String(row["airport_code"]),
+    nameEn: String(row["airport_name"]),
+    nameAr: row["airport_name_ar"] ? String(row["airport_name_ar"]) : null,
   }));
 }
 

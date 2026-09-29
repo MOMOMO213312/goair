@@ -8,6 +8,7 @@ import {
   type SearchParams,
 } from "@/components/goair/search/custom-request-card";
 import { BookingStepper } from "@/components/goair/booking/booking-stepper";
+import { NoRouteQuoteCard } from "@/components/goair/search/no-route-quote-card";
 import { BookingTrustPanel } from "@/components/goair/booking/booking-trust-panel";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { SearchEmptyState } from "@/components/goair/search/search-empty-state";
@@ -196,7 +197,15 @@ function SearchPage() {
           </div>
         ) : null}
 
-        {tripNotFound ? (
+        {/* Merged Hub search (2026-09 decision): a city/airport pair with no
+            scheduled trip is no longer a dead end — the customer's own
+            search (direction, city, airport, date, seats) becomes a
+            quote request. */}
+        {tripNotFound && params.destination && params.airport ? (
+          <NoRouteQuoteCard params={params} />
+        ) : null}
+
+        {tripNotFound && !(params.destination && params.airport) ? (
           <div className="mt-8">
             <SearchEmptyState
               title={t("searchPage.tripNotFoundTitle")}
