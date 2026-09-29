@@ -46,6 +46,7 @@ const ADMIN_NAV: PortalNavEntry[] = [
   { to: "/admin/subscription-plans", label: "خطط الاشتراك", icon: Sparkles },
   { heading: "الشركاء" },
   { to: "/admin/partners", label: "الوكالات والشركاء", icon: Handshake },
+  { to: "/admin/contracts", label: "العقود", icon: FileText },
   { to: "/admin/rental-partners", label: "مزوّدو التأجير", icon: Building2 },
   { to: "/admin/rental-applications", label: "طلبات تأجير السيارات", icon: FileText },
   { to: "/admin/rental-vehicles", label: "عربيات التأجير", icon: Car },
