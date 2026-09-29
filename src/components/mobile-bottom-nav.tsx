@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Compass, Home, Search, Ticket } from "lucide-react";
+import { Compass, Home, Search, UserRound } from "lucide-react";
 
 import { useTranslation } from "@/lib/i18n/language-context";
 
@@ -7,7 +7,7 @@ const TABS = [
   { to: "/" as const, icon: Home, key: "home", exact: true },
   { to: "/search" as const, icon: Search, key: "search", exact: false },
   { to: "/explore" as const, icon: Compass, key: "explore", exact: false },
-  { to: "/my-bookings" as const, icon: Ticket, key: "bookings", exact: false },
+  { to: "/account" as const, icon: UserRound, key: "account", exact: false },
 ] as const;
 
 /**
@@ -39,7 +39,9 @@ export function MobileBottomNav() {
               }`}
             >
               <Icon className="size-5" aria-hidden strokeWidth={isActive ? 2.5 : 2} />
-              {t(`bottomNav.${key}` as const)}
+              {key === "account"
+                ? t("account.nav.bottom")
+                : t(`bottomNav.${key}` as "bottomNav.home")}
             </Link>
           );
         })}

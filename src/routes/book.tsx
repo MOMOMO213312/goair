@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { BookingAddonsStep } from "@/components/goair/booking/booking-addons-step";
@@ -25,6 +25,7 @@ import {
 import { useTranslation } from "@/lib/i18n/language-context";
 import { localize } from "@/lib/i18n/localize";
 import { translations, DEFAULT_LANGUAGE } from "@/lib/i18n/translations";
+import { customerGetProfile, useCustomerAuth } from "@/lib/customer-account";
 
 const pageMeta = translations[DEFAULT_LANGUAGE].bookPage.meta;
 
@@ -93,6 +94,27 @@ function BookPage() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [flight, setFlight] = useState(search.flight ?? "");
+
+  // Signed-in customers get their saved details pre-filled (never overwrites what they typed).
+  const { user: accountUser } = useCustomerAuth();
+  const accountUserId = accountUser?.id;
+  useEffect(() => {
+    if (!accountUserId) return;
+    let active = true;
+    customerGetProfile()
+      .then((p) => {
+        if (!active) return;
+        setFullName((v) => v || p.fullName || "");
+        setPhone((v) => v || p.phoneNumber || "");
+        setEmail((v) => v || p.email || "");
+      })
+      .catch(() => {
+        /* prefill is a convenience only */
+      });
+    return () => {
+      active = false;
+    };
+  }, [accountUserId]);
   const [busy, setBusy] = useState(false);
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
   const [selectedGroundHandlingServiceIds, setSelectedGroundHandlingServiceIds] = useState<

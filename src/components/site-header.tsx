@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ChevronDown, Menu, Plane, Ticket } from "lucide-react";
+import { ChevronDown, Menu, Plane, Ticket, UserRound } from "lucide-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -84,10 +84,16 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Button asChild size="sm" variant="outline" className="hidden gap-1.5 sm:inline-flex">
+          <Button asChild size="sm" variant="ghost" className="hidden gap-1.5 lg:inline-flex">
             <Link to="/my-bookings" search={{ ticket: "" }}>
               <Ticket className="size-4" aria-hidden />
               {t("header.trackBooking")}
+            </Link>
+          </Button>
+          <Button asChild size="sm" variant="outline" className="hidden gap-1.5 sm:inline-flex">
+            <Link to="/account">
+              <UserRound className="size-4" aria-hidden />
+              {t("account.nav.myAccount")}
             </Link>
           </Button>
           <LanguageToggle className="hidden sm:inline-flex" />
@@ -107,7 +113,10 @@ export function SiteHeader() {
       </div>
 
       {open ? (
-        <nav id="site-mobile-nav" className="border-t border-border bg-background px-4 py-2 md:hidden">
+        <nav
+          id="site-mobile-nav"
+          className="border-t border-border bg-background px-4 py-2 md:hidden"
+        >
           <Link
             to="/"
             activeOptions={{ exact: true }}
@@ -163,10 +172,18 @@ export function SiteHeader() {
           </Link>
 
           <Link
+            to="/account"
+            onClick={() => setOpen(false)}
+            className="mt-1 flex items-center gap-1.5 rounded-md px-3 py-3 text-sm font-bold text-primary"
+          >
+            <UserRound className="size-4" aria-hidden />
+            {t("account.nav.myAccount")}
+          </Link>
+          <Link
             to="/my-bookings"
             search={{ ticket: "" }}
             onClick={() => setOpen(false)}
-            className="mt-1 flex items-center gap-1.5 rounded-md px-3 py-3 text-sm font-bold text-primary"
+            className="flex items-center gap-1.5 rounded-md px-3 py-3 text-sm font-semibold text-muted-foreground"
           >
             <Ticket className="size-4" aria-hidden />
             {t("header.trackBooking")}

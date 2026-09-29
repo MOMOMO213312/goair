@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccountRouteImport } from './routes/account'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AgencyRouteImport } from './routes/agency'
 import { Route as BookRouteImport } from './routes/book'
@@ -31,6 +32,13 @@ import { Route as RentalProviderRouteImport } from './routes/rental-provider'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as SubscribeRouteImport } from './routes/subscribe'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as AccountIndexRouteImport } from './routes/account.index'
+import { Route as AccountNotificationsRouteImport } from './routes/account.notifications'
+import { Route as AccountPaymentsRouteImport } from './routes/account.payments'
+import { Route as AccountProfileRouteImport } from './routes/account.profile'
+import { Route as AccountRentalsRouteImport } from './routes/account.rentals'
+import { Route as AccountSubscriptionsRouteImport } from './routes/account.subscriptions'
+import { Route as AccountTripsRouteImport } from './routes/account.trips'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAddonServicesRouteImport } from './routes/admin.addon-services'
 import { Route as AdminAnnouncementsRouteImport } from './routes/admin.announcements'
@@ -82,6 +90,11 @@ import { Route as RentalProviderVehiclesRouteImport } from './routes/rental-prov
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -188,6 +201,41 @@ const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AccountIndexRoute = AccountIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountNotificationsRoute = AccountNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountPaymentsRoute = AccountPaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountProfileRoute = AccountProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountRentalsRoute = AccountRentalsRouteImport.update({
+  id: '/rentals',
+  path: '/rentals',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountSubscriptionsRoute = AccountSubscriptionsRouteImport.update({
+  id: '/subscriptions',
+  path: '/subscriptions',
+  getParentRoute: () => AccountRoute,
+} as any)
+const AccountTripsRoute = AccountTripsRouteImport.update({
+  id: '/trips',
+  path: '/trips',
+  getParentRoute: () => AccountRoute,
 } as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
@@ -428,6 +476,7 @@ const RentalProviderVehiclesRoute = RentalProviderVehiclesRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/account': typeof AccountRouteWithChildren
   '/admin': typeof AdminRouteWithChildren
   '/agency': typeof AgencyRoute
   '/book': typeof BookRoute
@@ -449,6 +498,12 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/subscribe': typeof SubscribeRoute
   '/terms': typeof TermsRoute
+  '/account/notifications': typeof AccountNotificationsRoute
+  '/account/payments': typeof AccountPaymentsRoute
+  '/account/profile': typeof AccountProfileRoute
+  '/account/rentals': typeof AccountRentalsRoute
+  '/account/subscriptions': typeof AccountSubscriptionsRoute
+  '/account/trips': typeof AccountTripsRoute
   '/admin/addon-services': typeof AdminAddonServicesRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/fleet': typeof AdminFleetRoute
@@ -491,6 +546,7 @@ export interface FileRoutesByFullPath {
   '/rental-provider/bookings': typeof RentalProviderBookingsRoute
   '/rental-provider/team': typeof RentalProviderTeamRoute
   '/rental-provider/vehicles': typeof RentalProviderVehiclesRoute
+  '/account/': typeof AccountIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/ground-handling/': typeof GroundHandlingIndexRoute
   '/operator/': typeof OperatorIndexRoute
@@ -515,6 +571,12 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/subscribe': typeof SubscribeRoute
   '/terms': typeof TermsRoute
+  '/account/notifications': typeof AccountNotificationsRoute
+  '/account/payments': typeof AccountPaymentsRoute
+  '/account/profile': typeof AccountProfileRoute
+  '/account/rentals': typeof AccountRentalsRoute
+  '/account/subscriptions': typeof AccountSubscriptionsRoute
+  '/account/trips': typeof AccountTripsRoute
   '/admin/addon-services': typeof AdminAddonServicesRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/fleet': typeof AdminFleetRoute
@@ -557,6 +619,7 @@ export interface FileRoutesByTo {
   '/rental-provider/bookings': typeof RentalProviderBookingsRoute
   '/rental-provider/team': typeof RentalProviderTeamRoute
   '/rental-provider/vehicles': typeof RentalProviderVehiclesRoute
+  '/account': typeof AccountIndexRoute
   '/admin': typeof AdminIndexRoute
   '/ground-handling': typeof GroundHandlingIndexRoute
   '/operator': typeof OperatorIndexRoute
@@ -566,6 +629,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/account': typeof AccountRouteWithChildren
   '/admin': typeof AdminRouteWithChildren
   '/agency': typeof AgencyRoute
   '/book': typeof BookRoute
@@ -587,6 +651,12 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/subscribe': typeof SubscribeRoute
   '/terms': typeof TermsRoute
+  '/account/notifications': typeof AccountNotificationsRoute
+  '/account/payments': typeof AccountPaymentsRoute
+  '/account/profile': typeof AccountProfileRoute
+  '/account/rentals': typeof AccountRentalsRoute
+  '/account/subscriptions': typeof AccountSubscriptionsRoute
+  '/account/trips': typeof AccountTripsRoute
   '/admin/addon-services': typeof AdminAddonServicesRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
   '/admin/fleet': typeof AdminFleetRoute
@@ -629,6 +699,7 @@ export interface FileRoutesById {
   '/rental-provider/bookings': typeof RentalProviderBookingsRoute
   '/rental-provider/team': typeof RentalProviderTeamRoute
   '/rental-provider/vehicles': typeof RentalProviderVehiclesRoute
+  '/account/': typeof AccountIndexRoute
   '/admin/': typeof AdminIndexRoute
   '/ground-handling/': typeof GroundHandlingIndexRoute
   '/operator/': typeof OperatorIndexRoute
@@ -639,6 +710,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/account'
     | '/admin'
     | '/agency'
     | '/book'
@@ -660,6 +732,12 @@ export interface FileRouteTypes {
     | '/search'
     | '/subscribe'
     | '/terms'
+    | '/account/notifications'
+    | '/account/payments'
+    | '/account/profile'
+    | '/account/rentals'
+    | '/account/subscriptions'
+    | '/account/trips'
     | '/admin/addon-services'
     | '/admin/announcements'
     | '/admin/fleet'
@@ -702,6 +780,7 @@ export interface FileRouteTypes {
     | '/rental-provider/bookings'
     | '/rental-provider/team'
     | '/rental-provider/vehicles'
+    | '/account/'
     | '/admin/'
     | '/ground-handling/'
     | '/operator/'
@@ -726,6 +805,12 @@ export interface FileRouteTypes {
     | '/search'
     | '/subscribe'
     | '/terms'
+    | '/account/notifications'
+    | '/account/payments'
+    | '/account/profile'
+    | '/account/rentals'
+    | '/account/subscriptions'
+    | '/account/trips'
     | '/admin/addon-services'
     | '/admin/announcements'
     | '/admin/fleet'
@@ -768,6 +853,7 @@ export interface FileRouteTypes {
     | '/rental-provider/bookings'
     | '/rental-provider/team'
     | '/rental-provider/vehicles'
+    | '/account'
     | '/admin'
     | '/ground-handling'
     | '/operator'
@@ -776,6 +862,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/account'
     | '/admin'
     | '/agency'
     | '/book'
@@ -797,6 +884,12 @@ export interface FileRouteTypes {
     | '/search'
     | '/subscribe'
     | '/terms'
+    | '/account/notifications'
+    | '/account/payments'
+    | '/account/profile'
+    | '/account/rentals'
+    | '/account/subscriptions'
+    | '/account/trips'
     | '/admin/addon-services'
     | '/admin/announcements'
     | '/admin/fleet'
@@ -839,6 +932,7 @@ export interface FileRouteTypes {
     | '/rental-provider/bookings'
     | '/rental-provider/team'
     | '/rental-provider/vehicles'
+    | '/account/'
     | '/admin/'
     | '/ground-handling/'
     | '/operator/'
@@ -848,6 +942,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccountRoute: typeof AccountRouteWithChildren
   AdminRoute: typeof AdminRouteWithChildren
   AgencyRoute: typeof AgencyRoute
   BookRoute: typeof BookRoute
@@ -879,6 +974,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -1027,6 +1129,55 @@ declare module '@tanstack/react-router' {
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/account/': {
+      id: '/account/'
+      path: '/'
+      fullPath: '/account/'
+      preLoaderRoute: typeof AccountIndexRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/notifications': {
+      id: '/account/notifications'
+      path: '/notifications'
+      fullPath: '/account/notifications'
+      preLoaderRoute: typeof AccountNotificationsRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/payments': {
+      id: '/account/payments'
+      path: '/payments'
+      fullPath: '/account/payments'
+      preLoaderRoute: typeof AccountPaymentsRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/profile': {
+      id: '/account/profile'
+      path: '/profile'
+      fullPath: '/account/profile'
+      preLoaderRoute: typeof AccountProfileRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/rentals': {
+      id: '/account/rentals'
+      path: '/rentals'
+      fullPath: '/account/rentals'
+      preLoaderRoute: typeof AccountRentalsRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/subscriptions': {
+      id: '/account/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/account/subscriptions'
+      preLoaderRoute: typeof AccountSubscriptionsRouteImport
+      parentRoute: typeof AccountRoute
+    }
+    '/account/trips': {
+      id: '/account/trips'
+      path: '/trips'
+      fullPath: '/account/trips'
+      preLoaderRoute: typeof AccountTripsRouteImport
+      parentRoute: typeof AccountRoute
     }
     '/admin/': {
       id: '/admin/'
@@ -1360,6 +1511,29 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AccountRouteChildren {
+  AccountNotificationsRoute: typeof AccountNotificationsRoute
+  AccountPaymentsRoute: typeof AccountPaymentsRoute
+  AccountProfileRoute: typeof AccountProfileRoute
+  AccountRentalsRoute: typeof AccountRentalsRoute
+  AccountSubscriptionsRoute: typeof AccountSubscriptionsRoute
+  AccountTripsRoute: typeof AccountTripsRoute
+  AccountIndexRoute: typeof AccountIndexRoute
+}
+
+const AccountRouteChildren: AccountRouteChildren = {
+  AccountNotificationsRoute: AccountNotificationsRoute,
+  AccountPaymentsRoute: AccountPaymentsRoute,
+  AccountProfileRoute: AccountProfileRoute,
+  AccountRentalsRoute: AccountRentalsRoute,
+  AccountSubscriptionsRoute: AccountSubscriptionsRoute,
+  AccountTripsRoute: AccountTripsRoute,
+  AccountIndexRoute: AccountIndexRoute,
+}
+
+const AccountRouteWithChildren =
+  AccountRoute._addFileChildren(AccountRouteChildren)
+
 interface AdminRouteChildren {
   AdminAddonServicesRoute: typeof AdminAddonServicesRoute
   AdminAnnouncementsRoute: typeof AdminAnnouncementsRoute
@@ -1501,6 +1675,7 @@ const RentalProviderRouteWithChildren = RentalProviderRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccountRoute: AccountRouteWithChildren,
   AdminRoute: AdminRouteWithChildren,
   AgencyRoute: AgencyRoute,
   BookRoute: BookRoute,
