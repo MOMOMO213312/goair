@@ -42,6 +42,7 @@ import { Route as AccountTripsRouteImport } from './routes/account.trips'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminAddonServicesRouteImport } from './routes/admin.addon-services'
 import { Route as AdminAnnouncementsRouteImport } from './routes/admin.announcements'
+import { Route as AdminContractsRouteImport } from './routes/admin.contracts'
 import { Route as AdminFleetRouteImport } from './routes/admin.fleet'
 import { Route as AdminGroundHandlingRouteImport } from './routes/admin.ground-handling'
 import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
@@ -250,6 +251,11 @@ const AdminAddonServicesRoute = AdminAddonServicesRouteImport.update({
 const AdminAnnouncementsRoute = AdminAnnouncementsRouteImport.update({
   id: '/announcements',
   path: '/announcements',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminContractsRoute = AdminContractsRouteImport.update({
+  id: '/contracts',
+  path: '/contracts',
   getParentRoute: () => AdminRoute,
 } as any)
 const AdminFleetRoute = AdminFleetRouteImport.update({
@@ -506,6 +512,7 @@ export interface FileRoutesByFullPath {
   '/account/trips': typeof AccountTripsRoute
   '/admin/addon-services': typeof AdminAddonServicesRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
+  '/admin/contracts': typeof AdminContractsRoute
   '/admin/fleet': typeof AdminFleetRoute
   '/admin/ground-handling': typeof AdminGroundHandlingRoute
   '/admin/notifications': typeof AdminNotificationsRoute
@@ -579,6 +586,7 @@ export interface FileRoutesByTo {
   '/account/trips': typeof AccountTripsRoute
   '/admin/addon-services': typeof AdminAddonServicesRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
+  '/admin/contracts': typeof AdminContractsRoute
   '/admin/fleet': typeof AdminFleetRoute
   '/admin/ground-handling': typeof AdminGroundHandlingRoute
   '/admin/notifications': typeof AdminNotificationsRoute
@@ -659,6 +667,7 @@ export interface FileRoutesById {
   '/account/trips': typeof AccountTripsRoute
   '/admin/addon-services': typeof AdminAddonServicesRoute
   '/admin/announcements': typeof AdminAnnouncementsRoute
+  '/admin/contracts': typeof AdminContractsRoute
   '/admin/fleet': typeof AdminFleetRoute
   '/admin/ground-handling': typeof AdminGroundHandlingRoute
   '/admin/notifications': typeof AdminNotificationsRoute
@@ -740,6 +749,7 @@ export interface FileRouteTypes {
     | '/account/trips'
     | '/admin/addon-services'
     | '/admin/announcements'
+    | '/admin/contracts'
     | '/admin/fleet'
     | '/admin/ground-handling'
     | '/admin/notifications'
@@ -813,6 +823,7 @@ export interface FileRouteTypes {
     | '/account/trips'
     | '/admin/addon-services'
     | '/admin/announcements'
+    | '/admin/contracts'
     | '/admin/fleet'
     | '/admin/ground-handling'
     | '/admin/notifications'
@@ -892,6 +903,7 @@ export interface FileRouteTypes {
     | '/account/trips'
     | '/admin/addon-services'
     | '/admin/announcements'
+    | '/admin/contracts'
     | '/admin/fleet'
     | '/admin/ground-handling'
     | '/admin/notifications'
@@ -1198,6 +1210,13 @@ declare module '@tanstack/react-router' {
       path: '/announcements'
       fullPath: '/admin/announcements'
       preLoaderRoute: typeof AdminAnnouncementsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/contracts': {
+      id: '/admin/contracts'
+      path: '/contracts'
+      fullPath: '/admin/contracts'
+      preLoaderRoute: typeof AdminContractsRouteImport
       parentRoute: typeof AdminRoute
     }
     '/admin/fleet': {
@@ -1537,6 +1556,7 @@ const AccountRouteWithChildren =
 interface AdminRouteChildren {
   AdminAddonServicesRoute: typeof AdminAddonServicesRoute
   AdminAnnouncementsRoute: typeof AdminAnnouncementsRoute
+  AdminContractsRoute: typeof AdminContractsRoute
   AdminFleetRoute: typeof AdminFleetRoute
   AdminGroundHandlingRoute: typeof AdminGroundHandlingRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
@@ -1556,6 +1576,7 @@ interface AdminRouteChildren {
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAddonServicesRoute: AdminAddonServicesRoute,
   AdminAnnouncementsRoute: AdminAnnouncementsRoute,
+  AdminContractsRoute: AdminContractsRoute,
   AdminFleetRoute: AdminFleetRoute,
   AdminGroundHandlingRoute: AdminGroundHandlingRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
