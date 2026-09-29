@@ -1626,3 +1626,173 @@ export async function adminGetDashboardStats(token: string): Promise<AdminDashbo
     activePartnersCount: Number(row["active_partners_count"] ?? 0),
   };
 }
+
+// --- Airline contracts (عقود شركات الطيران) ---
+
+export type ContractStatus = "draft" | "active" | "suspended" | "expired" | "terminated";
+export type ContractPayerModel = "passenger_direct" | "airline_pays" | "passenger_via_ticket";
+export type ContractBillingCycle = "weekly" | "biweekly" | "monthly" | "per_trip";
+export type ContractPricingBasis = "per_vehicle" | "per_passenger" | "tiered";
+
+export type AdminContractPartner = { id: string; name: string; airlineCode: string | null };
+
+export type AdminContractTier = { fromQty: number; unitPrice: number };
+
+export type AdminContractLine = {
+  id: string;
+  contractId: string;
+  airportCode: string;
+  hubId: string | null;
+  bookingType: string | null;
+  vehicleCode: string | null;
+  pricingBasis: ContractPricingBasis;
+  unitPrice: number | null;
+  capPerVehicleTrip: number | null;
+  minMonthlyAmount: number | null;
+  validFrom: string;
+  validTo: string | null;
+  isActive: boolean;
+  tiers: AdminContractTier[];
+};
+
+export type AdminContract = {
+  id: string;
+  partnerId: string;
+  partnerName: string;
+  contractRef: string;
+  status: ContractStatus;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  currency: string;
+  payerModel: ContractPayerModel;
+  billingCycle: ContractBillingCycle;
+  paymentTermsDays: number;
+  notes: string | null;
+  lines: AdminContractLine[];
+};
+
+const numOrNull = (v: unknown): number | null => (v === null || v === undefined ? null : Number(v));
+
+export async function adminListContractPartners(token: string): Promise<AdminContractPartner[]> {
+  const { data, error } = await supabase.rpc("admin_list_contract_partners", { p_access_token: token });
+  if (error) rpcError(error);
+  return ((data ?? []) as any[]).map((r) => ({
+    id: String(r.id),
+    name: String(r.name ?? ""),
+    airlineCode: (r.airline_code as string | null) ?? null,
+  }));
+}
+
+export async function adminListAirlineContracts(token: string): Promise<AdminContract[]> {
+  const { data, error } = await supabase.rpc("admin_get_airline_contracts", {
+    p_access_token: token,
+    p_partner_id: null,
+  });
+  if (error) rpcError(error);
+  return ((data ?? []) as any[]).map((row) => {
+    const c = row.contract;
+    return {
+      id: c.id,
+      partnerId: c.partner_id,
+      partnerName: row.partner_name ?? "",
+      contractRef: c.contract_ref,
+      status: c.status,
+      effectiveFrom: c.effective_from,
+      effectiveTo: c.effective_to ?? null,
+      currency: c.currency,
+      payerModel: c.payer_model,
+      billingCycle: c.billing_cycle,
+      paymentTermsDays: Number(c.payment_terms_days),
+      notes: c.notes ?? null,
+      lines: ((row.lines ?? []) as any[]).map((l) => ({
+        id: l.id,
+        contractId: l.contract_id,
+        airportCode: l.airport_code,
+        hubId: l.hub_id ?? null,
+        bookingType: l.booking_type ?? null,
+        vehicleCode: l.vehicle_code ?? null,
+        pricingBasis: l.pricing_basis,
+        unitPrice: numOrNull(l.unit_price),
+        capPerVehicleTrip: numOrNull(l.cap_per_vehicle_trip),
+        minMonthlyAmount: numOrNull(l.min_monthly_amount),
+        validFrom: l.valid_from,
+        validTo: l.valid_to ?? null,
+        isActive: Boolean(l.is_active),
+        tiers: ((l.tiers ?? []) as any[]).map((t) => ({
+          fromQty: Number(t.from_qty),
+          unitPrice: Number(t.unit_price),
+        })),
+      })),
+    } satisfies AdminContract;
+  });
+}
+
+export type AdminContractInput = {
+  id: string | null;
+  partnerId: string;
+  contractRef: string;
+  status: ContractStatus;
+  effectiveFrom: string;
+  effectiveTo: string | null;
+  currency: string;
+  payerModel: ContractPayerModel;
+  billingCycle: ContractBillingCycle;
+  paymentTermsDays: number;
+  notes: string | null;
+};
+
+export async function adminSaveAirlineContract(token: string, i: AdminContractInput): Promise<string> {
+  const { data, error } = await supabase.rpc("admin_upsert_airline_contract", {
+    p_access_token: token,
+    p_id: i.id,
+    p_partner_id: i.partnerId,
+    p_contract_ref: i.contractRef,
+    p_status: i.status,
+    p_effective_from: i.effectiveFrom,
+    p_effective_to: i.effectiveTo,
+    p_currency: i.currency,
+    p_payer_model: i.payerModel,
+    p_billing_cycle: i.billingCycle,
+    p_payment_terms_days: i.paymentTermsDays,
+    p_notes: i.notes,
+  });
+  if (error) rpcError(error);
+  return data as string;
+}
+
+export type AdminContractLineInput = {
+  id: string | null;
+  contractId: string;
+  airportCode: string;
+  hubId: string | null;
+  bookingType: string | null;
+  vehicleCode: string | null;
+  pricingBasis: ContractPricingBasis;
+  unitPrice: number | null;
+  capPerVehicleTrip: number | null;
+  minMonthlyAmount: number | null;
+  validFrom: string | null;
+  validTo: string | null;
+  tiers: AdminContractTier[] | null;
+};
+
+export async function adminSaveContractRateLine(token: string, i: AdminContractLineInput): Promise<string> {
+  const { data, error } = await supabase.rpc("admin_upsert_contract_rate_line", {
+    p_access_token: token,
+    p_id: i.id,
+    p_contract_id: i.contractId,
+    p_airport_code: i.airportCode,
+    p_hub_id: i.hubId,
+    p_booking_type: i.bookingType,
+    p_vehicle_code: i.vehicleCode,
+    p_pricing_basis: i.pricingBasis,
+    p_unit_price: i.unitPrice,
+    p_cap_per_vehicle_trip: i.capPerVehicleTrip,
+    p_min_monthly_amount: i.minMonthlyAmount,
+    p_valid_from: i.validFrom,
+    p_valid_to: i.validTo,
+    p_tiers: i.tiers ? i.tiers.map((t) => ({ from_qty: t.fromQty, unit_price: t.unitPrice })) : null,
+  });
+  if (error) rpcError(error);
+  return data as string;
+}
