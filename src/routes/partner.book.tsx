@@ -15,6 +15,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { HubOfferCard } from "@/components/goair/search/hub-offer-card";
 import {
   createTravelGroup,
   getPartnerDashboard,
@@ -413,6 +414,7 @@ function QuickBookingForm({ token, referralCode }: { token: string; referralCode
   }
 
   return (
+    <>
     <PartnerSection
       title="حجز بالنيابة عن عميلك"
       description="هيتسجل تلقائيًا معزوّ لعمولة وكالتك — بدون ما العميل يحتاج يفتح الموقع."
@@ -852,6 +854,17 @@ function QuickBookingForm({ token, referralCode }: { token: string; referralCode
         </Button>
       </form>
     </PartnerSection>
+
+    {/* Hub Mobility Master (2026-09 decision): lets the partner request a
+        ride for a customer whose town/area has no scheduled trip yet.
+        referralCode is passed explicitly (this partner's own code, not the
+        visiting customer's stored cookie) so any active partner_route_contracts
+        price applies. Submits into the same custom_requests table used by
+        the public site's fallback — no impact on trip/trip_options/booking. */}
+    <PartnerSection title="مسار لسه مفيش خط رسمي عليه؟" description="اختار مدينة العميل وشوف أقرب مطار والسعر المتاح.">
+      <HubOfferCard referralCode={referralCode} />
+    </PartnerSection>
+    </>
   );
 }
 
