@@ -1265,6 +1265,89 @@ export async function fetchServiceZones(airportCode?: string): Promise<ServiceZo
   }));
 }
 
+/** A pickable pickup point for the Hub Mobility Master (2026-09 decision):
+ * either a hub itself or a feeder town/district that connects to one. Used
+ * to populate a "pick your city/area" list ahead of fetchAirportOffers. */
+export type HubOrigin = {
+  originId: string;
+  nameAr: string;
+  nameEn: string | null;
+  role: "Hub" | "Feeder";
+  hubId: string;
+  hubNameAr: string;
+  countryCode: string;
+};
+
+export async function fetchHubOrigins(countryCode?: string): Promise<HubOrigin[]> {
+  const { data, error } = await supabase.rpc("get_hub_origins", {
+    p_country_code: countryCode ?? null,
+  });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+    originId: String(row["origin_id"]),
+    nameAr: String(row["name_ar"]),
+    nameEn: row["name_en"] ? String(row["name_en"]) : null,
+    role: row["role"] === "Hub" ? "Hub" : "Feeder",
+    hubId: String(row["hub_id"]),
+    hubNameAr: String(row["hub_name_ar"]),
+    countryCode: String(row["country_code"]),
+  }));
+}
+
+/** A single product (shared seat or private vehicle) priced from a pickup
+ * point to a candidate airport. `priceUsd` is null whenever no supplier or
+ * historical data backs the route yet — the UI must show "request a quote"
+ * rather than inventing a number (2026-09 pricing-model decision). */
+export type AirportOffer = {
+  airportCode: string;
+  airportName: string;
+  pairType: "primary" | "secondary" | "extra";
+  isNearest: boolean;
+  distanceKmApprox: number;
+  bookingType: "shared" | "private";
+  vehicleCode: "car" | "van" | "hiace";
+  vehicleCapacity: number;
+  priceUnit: "per_seat" | "per_vehicle";
+  priceUsd: number | null;
+  priceBasis: string | null;
+  quoteRequired: boolean;
+  pickupMode: "hub" | "doorstep";
+  hubId: string;
+  hubNameAr: string;
+  meetingPointSuggestion: string;
+};
+
+export async function fetchAirportOffers(
+  originId: string,
+  referralCodeOverride?: string | null,
+): Promise<AirportOffer[]> {
+  const pendingReferralCode =
+    referralCodeOverride !== undefined ? referralCodeOverride : getStoredReferralCode();
+  const { data, error } = await supabase.rpc("get_airport_offers", {
+    p_origin_id: originId,
+    ...(pendingReferralCode ? { p_referral_code: pendingReferralCode } : {}),
+  });
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Record<string, unknown>[]).map((row) => ({
+    airportCode: String(row["airport_code"]),
+    airportName: String(row["airport_name"]),
+    pairType: (row["pair_type"] as AirportOffer["pairType"]) ?? "extra",
+    isNearest: Boolean(row["is_nearest"]),
+    distanceKmApprox: Number(row["distance_km_approx"] ?? 0),
+    bookingType: row["booking_type"] === "private" ? "private" : "shared",
+    vehicleCode: (row["vehicle_code"] as AirportOffer["vehicleCode"]) ?? "car",
+    vehicleCapacity: Number(row["vehicle_capacity"] ?? 0),
+    priceUnit: row["price_unit"] === "per_vehicle" ? "per_vehicle" : "per_seat",
+    priceUsd: row["price_usd"] == null ? null : Number(row["price_usd"]),
+    priceBasis: row["price_basis"] ? String(row["price_basis"]) : null,
+    quoteRequired: Boolean(row["quote_required"]),
+    pickupMode: row["pickup_mode"] === "doorstep" ? "doorstep" : "hub",
+    hubId: String(row["hub_id"]),
+    hubNameAr: String(row["hub_name_ar"]),
+    meetingPointSuggestion: String(row["meeting_point_suggestion"] ?? ""),
+  }));
+}
+
 export type RentalAddonService = {
   id: string;
   code: string;
