@@ -26,6 +26,7 @@ import { getCountryLabel } from "@/lib/i18n/country-labels";
 import { useTranslation } from "@/lib/i18n/language-context";
 import { localize } from "@/lib/i18n/localize";
 import { fetchServiceZones, type ServiceZone, type Trip } from "@/lib/goair";
+import { HubOfferCard } from "@/components/goair/search/hub-offer-card";
 import {
   getAirportsForCountry,
   getAirportsForDestination,
@@ -512,6 +513,12 @@ export function SearchWidget({
         ))}
       </div>
     ) : null}
+
+    {/* Hub Mobility Master (2026-09 decision): a global "pick your city"
+        fallback for towns with no scheduled route/trip yet — feeds
+        get_airport_offers and submits into the existing custom_requests
+        flow, entirely separate from the scheduled-trip search above. */}
+    <HubOfferCard />
     </>
   );
 }
