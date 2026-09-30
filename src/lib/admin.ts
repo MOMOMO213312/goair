@@ -1632,7 +1632,7 @@ export async function adminGetDashboardStats(token: string): Promise<AdminDashbo
 export type ContractStatus = "draft" | "active" | "suspended" | "expired" | "terminated";
 export type ContractPayerModel = "passenger_direct" | "airline_pays" | "passenger_via_ticket";
 export type ContractBillingCycle = "weekly" | "biweekly" | "monthly" | "per_trip";
-export type ContractPricingBasis = "per_vehicle" | "per_passenger" | "tiered";
+export type ContractPricingBasis = "per_vehicle" | "per_passenger" | "per_trip" | "tiered";
 
 export type AdminContractPartner = { id: string; name: string; airlineCode: string | null };
 

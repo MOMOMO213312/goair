@@ -51,8 +51,9 @@ const BILLING_LABELS: Record<ContractBillingCycle, string> = {
   per_trip: "لكل رحلة",
 };
 const BASIS_LABELS: Record<ContractPricingBasis, string> = {
-  per_vehicle: "بالعربية (سعر ثابت)",
+  per_vehicle: "بالعربية (سعر ثابت للعربية كلها — حجز خاص)",
   per_passenger: "بالراكب",
+  per_trip: "بالرحلة (سعر ثابت للحجز الواحد)",
   tiered: "شرائح حسب الحجم",
 };
 const CURRENCIES = ["EGP", "USD", "SAR", "AED", "KWD", "QAR", "BHD", "OMR", "YER", "BDT"];
@@ -78,7 +79,7 @@ function describeLine(l: AdminContractLine, currency: string) {
   if (l.pricingBasis === "tiered") {
     return l.tiers.map((t) => `من ${t.fromQty}: ${t.unitPrice}`).join(" • ");
   }
-  const base = `${l.unitPrice} ${currency}${l.pricingBasis === "per_passenger" ? " / راكب" : " / عربية"}`;
+  const base = `${l.unitPrice} ${currency}${l.pricingBasis === "per_passenger" ? " / راكب" : l.pricingBasis === "per_trip" ? " / رحلة" : " / عربية"}`;
   return l.capPerVehicleTrip != null ? `${base} (سقف ${l.capPerVehicleTrip})` : base;
 }
 
@@ -513,7 +514,7 @@ function LineDialog({
           </Field>
 
           {basis !== "tiered" && (
-            <Field label={`السعر (${contract.currency}) ${basis === "per_passenger" ? "للراكب" : "للعربية"}`}>
+            <Field label={`السعر (${contract.currency}) ${basis === "per_passenger" ? "للراكب" : basis === "per_trip" ? "للرحلة" : "للعربية"}`}>
               <Input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} />
             </Field>
           )}
